@@ -25,8 +25,14 @@ from requests.exceptions import HTTPError, ConnectionError, Timeout, RequestExce
 
 
 class NodeHTTPProvider:
-    def __init__(self, endpoint_uri: URI | str, auth_token: str | None = None):
+    def __init__(
+        self, 
+        endpoint_uri: URI | str,
+        api_version: str = "v1",
+        auth_token: str | None = None,
+    ):
         self.endpoint_uri = URI(endpoint_uri)
+        self.api_version = api_version
         self.auth_token = auth_token
 
     def make_request(
@@ -36,7 +42,7 @@ class NodeHTTPProvider:
         params: dict[str, Any] = {},
         data: dict[str, Any] = {},
     ) -> NodeResponseDict:
-        url = f"{self.endpoint_uri}/{path}"
+        url = f"{self.endpoint_uri}/{self.api_version}/{path}"
         headers = (
             {"Authorization": f"Bearer {self.auth_token}"} if self.auth_token else {}
         )

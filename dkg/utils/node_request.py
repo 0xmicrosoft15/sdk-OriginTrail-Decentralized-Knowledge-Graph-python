@@ -77,7 +77,7 @@ class NodeRequest:
     query = NodeCall(
         method=HTTPRequestMethod.POST,
         path="query",
-        data={"query": str, "type": str, "repository": str},
+        data={"query": str, "type": str, "repository": str | None, "paranet_ual": str | None},
     )
 
 

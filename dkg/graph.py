@@ -37,12 +37,13 @@ class Graph(Module):
     def query(
         self,
         query: str,
-        repository: str,
+        repository: str | None = None,
+        paranet_ual: str | None = None,
     ) -> NQuads:
         parsed_query = parseQuery(query)
         query_type = parsed_query[1].name.replace("Query", "").upper()
 
-        operation_id: NodeResponseDict = self._query(query, query_type, repository)[
+        operation_id: NodeResponseDict = self._query(query, query_type, repository, paranet_ual)[
             "operationId"
         ]
         operation_result = self.get_operation_result(operation_id, "query")
