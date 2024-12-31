@@ -177,17 +177,17 @@ divider()
 
 query_operation_result = dkg.graph.query(
     """
-    PREFIX gs1: <https://gs1.org/voc/> PREFIX schema: <http://schema.org/>
-
-        SELECT ?recipeNameRaw ?baseUal
-        WHERE {
-          ?recipe a schema:Recipe ;
-          GRAPH ?ual {
-              ?recipe     schema:name ?recipeNameRaw ;
-          }
-           FILTER (STRSTARTS(STR(?ual), "did:dkg:base:84532/0x4e8ebfce9a0f4be374709f1ef2791e8ca6371ecb/"))
-        BIND (REPLACE(STR(?ual), "(did:dkg:base:[^/]+/[^/]+/[^/]+)(/.*)?", "$1") AS ?baseUal)
+    PREFIX gs1: <https://gs1.org/voc/>
+    PREFIX schema: <http://schema.org/>
+    SELECT ?recipeNameRaw ?baseUal
+    WHERE {
+        ?recipe a schema:Recipe ;
+        GRAPH ?ual {
+            ?recipe     schema:name ?recipeNameRaw ;
         }
+        FILTER (STRSTARTS(STR(?ual), "did:dkg:base:84532/0x4e8ebfce9a0f4be374709f1ef2791e8ca6371ecb/"))
+        BIND (REPLACE(STR(?ual), "(did:dkg:base:[^/]+/[^/]+/[^/]+)(/.*)?", "$1") AS ?baseUal)
+    }
     """
 )
 print("======================== ASSET QUERY")
