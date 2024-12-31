@@ -9,7 +9,7 @@ run-demo:
 
 ruff:
 	ruff format
-	ruff check --fix
+	ruff check
 
 help:
 	@echo "Available commands:"
