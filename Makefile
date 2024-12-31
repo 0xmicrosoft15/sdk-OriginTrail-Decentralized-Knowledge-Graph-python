@@ -14,5 +14,5 @@ ruff:
 help:
 	@echo "Available commands:"
 	@echo "  install   - Install dependencies and set up pre-commit hooks"
-	@echo "  ruff    - Format code and fix linting issues using ruff"
+	@echo "  ruff      - Format code and fix linting issues using ruff"
 	@echo "  run-demo  - Run /examples/demo.py file"
