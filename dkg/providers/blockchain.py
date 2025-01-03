@@ -260,10 +260,13 @@ class BlockchainProvider:
         ):
             self.contracts[contract] = self.w3.eth.contract(
                 address=(
-                    self.contracts["Hub"].functions.getContractAddress(contract).call()
-                    if not contract.endswith("AssetStorage")
-                    else self.contracts["Hub"]
+                    self.contracts["Hub"]
                     .functions.getAssetStorageAddress(contract)
+                    .call()
+                    if contract.endswith("AssetStorage")
+                    or contract.endswith("CollectionStorage")
+                    else self.contracts["Hub"]
+                    .functions.getContractAddress(contract)
                     .call()
                 ),
                 abi=self.abi[contract],

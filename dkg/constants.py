@@ -1,3 +1,4 @@
+from enum import Enum
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
 # distributed with this work for additional information
@@ -15,9 +16,28 @@
 # specific language governing permissions and limitations
 # under the License.
 
+DEFAULT_CANON_ALGORITHM = "URDNA2015"
+DEFAULT_RDF_FORMAT = "application/n-quads"
+
 PRIVATE_ASSERTION_PREDICATE = (
-    "https://ontology.origintrail.io/dkg/1.0#privateAssertionID"
+    "https://ontology.origintrail.io/dkg/1.0#privateMerkleRoot"
 )
+
+PRIVATE_HASH_SUBJECT_PREFIX = "https://ontology.origintrail.io/dkg/1.0#metadata-hash:"
+
+PRIVATE_RESOURCE_PREDICATE = (
+    "https://ontology.origintrail.io/dkg/1.0#representsPrivateResource"
+)
+
+CHUNK_BYTE_SIZE = 32
+
+MAX_FILE_SIZE = 10000000
+
+
+class DefaultParameters(Enum):
+    MAX_NUMBER_OF_RETRIES: int = 5
+    FREQUENCY: int = 5
+
 
 BLOCKCHAINS = {
     "development": {
@@ -67,3 +87,12 @@ DEFAULT_PROXIMITY_SCORE_FUNCTIONS_PAIR_IDS = {
 
 PRIVATE_HISTORICAL_REPOSITORY = "privateHistory"
 PRIVATE_CURRENT_REPOSITORY = "privateCurrent"
+
+
+class Operations(Enum):
+    PUBLISH = "publish"
+    GET = "get"
+    LOCAL_STORE = "local-store"
+    QUERY = "query"
+    PUBLISH_PARANET = "publishParanet"
+    FINALITY = "finality"

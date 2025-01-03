@@ -61,12 +61,11 @@ class NodeRequest:
         method=HTTPRequestMethod.POST,
         path="publish",
         data={
-            "assertionId": str,
-            "assertion": NQuads,
+            "datasetRoot": str,
+            "dataset": dict[str, list[str]],
             "blockchain": str,
-            "contract": Address,
-            "tokenId": int,
             "hashFunctionId": int,
+            "minimumNumberOfNodeReplications": int,
         },
     )
     get = NodeCall(
@@ -77,7 +76,12 @@ class NodeRequest:
     query = NodeCall(
         method=HTTPRequestMethod.POST,
         path="query",
-        data={"query": str, "type": str, "repository": str | None, "paranet_ual": str | None},
+        data={
+            "query": str,
+            "type": str,
+            "repository": str | None,
+            "paranet_ual": str | None,
+        },
     )
 
 

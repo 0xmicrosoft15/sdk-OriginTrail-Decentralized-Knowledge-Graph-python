@@ -67,6 +67,12 @@ class BlockchainRequest:
         args={"assetStorageName": str},
     )
 
+    key_is_operational_wallet = ContractCall(
+        contract="IdentityStorage",
+        function="keyHasPurpose",
+        args={"identityId": int, "_key": Address, "_purpose": int},
+    )
+
     allowance = ContractCall(
         contract="Token",
         function="allowance",

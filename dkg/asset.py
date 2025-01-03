@@ -18,13 +18,18 @@
 import json
 import math
 import re
+import hashlib
 from typing import Literal, Type
 
 from pyld import jsonld
 from web3 import Web3
-from web3.constants import ADDRESS_ZERO, HASH_ZERO
+from web3.constants import ADDRESS_ZERO
 from web3.exceptions import ContractLogicError
 from web3.types import TxReceipt
+from itertools import chain
+from eth_abi.packed import encode_packed
+from eth_account.messages import encode_defunct
+from eth_account import Account
 
 from dkg.constants import (
     DEFAULT_HASH_FUNCTION_ID,
@@ -32,6 +37,12 @@ from dkg.constants import (
     PRIVATE_ASSERTION_PREDICATE,
     PRIVATE_CURRENT_REPOSITORY,
     PRIVATE_HISTORICAL_REPOSITORY,
+    PRIVATE_RESOURCE_PREDICATE,
+    PRIVATE_HASH_SUBJECT_PREFIX,
+    CHUNK_BYTE_SIZE,
+    MAX_FILE_SIZE,
+    Operations,
+    DefaultParameters,
 )
 from dkg.dataclasses import (
     BidSuggestionRange,
@@ -65,7 +76,16 @@ from dkg.utils.node_request import (
     StoreTypes,
     validate_operation_status,
 )
-from dkg.utils.rdf import format_content, normalize_dataset
+from dkg.utils.rdf import (
+    format_content,
+    normalize_dataset,
+    format_dataset,
+    generate_missing_ids_for_blank_nodes,
+    group_nquads_by_subject,
+    generate_named_node,
+    calculate_merkle_root,
+    calculate_number_of_chunks,
+)
 from dkg.utils.ual import format_ual, parse_ual
 
 
@@ -197,170 +217,260 @@ class KnowledgeAsset(Module):
     _get_asset_storage_address = Method(BlockchainRequest.get_asset_storage_address)
     _create = Method(BlockchainRequest.create_asset)
     _mint_paranet_knowledge_asset = Method(BlockchainRequest.mint_knowledge_asset)
+    _key_is_operational_wallet = Method(BlockchainRequest.key_is_operational_wallet)
 
     _get_bid_suggestion = Method(NodeRequest.bid_suggestion)
     _local_store = Method(NodeRequest.local_store)
     _publish = Method(NodeRequest.publish)
 
+    def process_content(self, content: str) -> list:
+        return [line.strip() for line in content.split("\n") if line.strip() != ""]
+
+    def solidity_packed_sha256(self, types: list[str], values: list) -> str:
+        # Encode the values using eth_abi's encode_packed
+        packed_data = encode_packed(types, values)
+
+        # Calculate SHA256
+        sha256_hash = hashlib.sha256(packed_data).hexdigest()
+
+        return f"0x{sha256_hash}"
+
+    def insert_triple_sorted(self, triples_list: list, new_triple: str) -> int:
+        # Assuming triples_list is already sorted
+        left = 0
+        right = len(triples_list)
+
+        while left < right:
+            mid = (left + right) // 2
+            if triples_list[mid] < new_triple:
+                left = mid + 1
+            else:
+                right = mid
+
+        # Insert the new triple at the correct position
+        triples_list.insert(left, new_triple)
+        return left
+
+    def get_operation_status_dict(self, operation_result, operation_id):
+        # Check if data exists and has errorType
+        operation_data = (
+            {"status": operation_result.get("status"), **operation_result.get("data")}
+            if operation_result.get("data")
+            and operation_result.get("data", {}).get("errorType")
+            else {"status": operation_result.get("status")}
+        )
+
+        return {"operationId": operation_id, **operation_data}
+
+    def get_message_signer_address(self, dataset_root: str, signature: dict):
+        message = encode_defunct(Web3.to_bytes(dataset_root))
+        r, s, v = signature.get("r"), signature.get("s"), signature.get("v")
+        r = r[2:] if r.startswith("0x") else r
+        s = s[2:] if s.startswith("0x") else s
+
+        sig = "0x" + r + s + hex(v)[2:].zfill(2)
+
+        return Account.recover_message(message, signature=sig)
+
     def create(
         self,
         content: dict[Literal["public", "private"], JSONLD],
         epochs_number: int,
+        minimum_number_of_finalization_confirmations: int,
+        minimum_number_of_node_replications: int,
         token_amount: Wei | None = None,
-        immutable: bool = False,
-        content_type: Literal["JSON-LD", "N-Quads"] = "JSON-LD",
-        paranet_ual: UAL | None = None,
+        # immutable: bool = False,
+        # content_type: Literal["JSON-LD", "N-Quads"] = "JSON-LD",
+        # paranet_ual: UAL | None = None,
     ) -> dict[str, UAL | HexStr | dict[str, dict[str, str] | TxReceipt]]:
         blockchain_id = self.manager.blockchain_provider.blockchain_id
-        assertions = format_content(content, content_type)
 
-        public_assertion_id = MerkleTree(
-            hash_assertion_with_indexes(assertions["public"]),
-            sort_pairs=True,
-        ).root
-        public_assertion_metadata = generate_assertion_metadata(assertions["public"])
-
-        content_asset_storage_address = self._get_asset_storage_address(
-            "ContentAssetStorage"
-        )
-
-        if token_amount is None:
-            token_amount = int(
-                self._get_bid_suggestion(
-                    blockchain_id,
-                    epochs_number,
-                    public_assertion_metadata["size"],
-                    content_asset_storage_address,
-                    public_assertion_id,
-                    DEFAULT_HASH_FUNCTION_ID,
-                    token_amount or BidSuggestionRange.LOW,
-                )["bidSuggestion"]
-            )
-
-        current_allowance = self.get_current_allowance()
-        if is_allowance_increased := current_allowance < token_amount:
-            self.increase_allowance(token_amount)
-
-        result = {"publicAssertionId": public_assertion_id, "operation": {}}
-
-        try:
-            if paranet_ual is None:
-                receipt: TxReceipt = self._create(
-                    {
-                        "assertionId": Web3.to_bytes(hexstr=public_assertion_id),
-                        "size": public_assertion_metadata["size"],
-                        "triplesNumber": public_assertion_metadata["triples_number"],
-                        "chunksNumber": public_assertion_metadata["chunks_number"],
-                        "tokenAmount": token_amount,
-                        "epochsNumber": epochs_number,
-                        "scoreFunctionId": DEFAULT_PROXIMITY_SCORE_FUNCTIONS_PAIR_IDS[
-                            self.manager.blockchain_provider.environment
-                        ][blockchain_id],
-                        "immutable_": immutable,
-                    }
-                )
+        dataset = {}
+        public_content = dataset.get("public")
+        private_content = dataset.get("private")
+        if isinstance(content, str):
+            dataset["public"] = self.process_content(content)
+        elif isinstance(public_content, str) or (
+            not public_content and private_content and isinstance(private_content, str)
+        ):
+            if public_content:
+                dataset["public"] = self.process_content(public_content)
             else:
-                parsed_paranet_ual = parse_ual(paranet_ual)
-                paranet_knowledge_asset_storage, paranet_knowledge_asset_token_id = (
-                    parsed_paranet_ual["contract_address"],
-                    parsed_paranet_ual["token_id"],
-                )
+                dataset["public"] = []
 
-                receipt: TxReceipt = self._mint_paranet_knowledge_asset(
-                    paranet_knowledge_asset_storage,
-                    paranet_knowledge_asset_token_id,
-                    {
-                        "assertionId": Web3.to_bytes(hexstr=public_assertion_id),
-                        "size": public_assertion_metadata["size"],
-                        "triplesNumber": public_assertion_metadata["triples_number"],
-                        "chunksNumber": public_assertion_metadata["chunks_number"],
-                        "tokenAmount": token_amount,
-                        "epochsNumber": epochs_number,
-                        "scoreFunctionId": DEFAULT_PROXIMITY_SCORE_FUNCTIONS_PAIR_IDS[
-                            self.manager.blockchain_provider.environment
-                        ][blockchain_id],
-                        "immutable_": immutable,
-                    },
-                )
+            if private_content and isinstance(private_content, str):
+                dataset["private"] = self.process_content(private_content)
+        else:
+            dataset = format_dataset(content)
 
-                result["paranetId"] = Web3.to_hex(
-                    Web3.solidity_keccak(
-                        ["address", "uint256"],
-                        [
-                            paranet_knowledge_asset_storage,
-                            paranet_knowledge_asset_token_id,
-                        ],
-                    )
-                )
-        except ContractLogicError as err:
-            if is_allowance_increased:
-                self.decrease_allowance(token_amount)
-            raise err
+        public_triples_grouped = []
 
-        events = self.manager.blockchain_provider.decode_logs_event(
-            receipt,
-            "ContentAsset",
-            "AssetMinted",
-        )
-        token_id = events[0].args["tokenId"]
+        # TODO: Uncomment and test this
+        # dataset["public"] = generate_missing_ids_for_blank_nodes(dataset.get("public"))
 
-        result["UAL"] = format_ual(
-            blockchain_id, content_asset_storage_address, token_id
-        )
-        result["operation"]["mintKnowledgeAsset"] = json.loads(Web3.to_json(receipt))
+        if dataset.get("private") and len(dataset.get("private")):
+            # TODO: Uncomment and test this
+            # dataset["private"] = generate_missing_ids_for_blank_nodes(
+            #     dataset.get("private")
+            # )
 
-        assertions_list = [
-            {
-                "blockchain": blockchain_id,
-                "contract": content_asset_storage_address,
-                "tokenId": token_id,
-                "assertionId": public_assertion_id,
-                "assertion": assertions["public"],
-                "storeType": StoreTypes.TRIPLE,
-            }
-        ]
-
-        if content.get("private", None):
-            assertions_list.append(
-                {
-                    "blockchain": blockchain_id,
-                    "contract": content_asset_storage_address,
-                    "tokenId": token_id,
-                    "assertionId": MerkleTree(
-                        hash_assertion_with_indexes(assertions["private"]),
-                        sort_pairs=True,
-                    ).root,
-                    "assertion": assertions["private"],
-                    "storeType": StoreTypes.TRIPLE,
-                }
+            # Group private triples by subject and flatten
+            private_triples_grouped = group_nquads_by_subject(
+                dataset.get("private"), True
             )
 
-        operation_id = self._publish(
-            public_assertion_id,
-            assertions["public"],
+            dataset["private"] = list(chain.from_iterable(private_triples_grouped))
+
+            # Compute private root and add to public
+            private_root = calculate_merkle_root(dataset.get("private"))
+            dataset["public"].append(
+                f'<{generate_named_node()}> <${PRIVATE_ASSERTION_PREDICATE}> "{private_root}" .'
+            )
+
+            # Compute private root and add to public
+            public_triples_grouped = group_nquads_by_subject(
+                dataset.get("public"), True
+            )
+
+            # Create a dictionary for public subject -> index for quick lookup
+            public_subject_dict = {}
+            for i in range(len(public_triples_grouped)):
+                public_subject = public_triples_grouped[i][0].split(" ")[0]
+                public_subject_dict[public_subject] = i
+
+            private_triple_subject_hashes_grouped_without_public_pair = []
+
+            # Integrate private subjects into public or store separately if no match to be appended later
+            for private_triples in private_triples_grouped:
+                private_subject = private_triples[0].split(" ")[
+                    0
+                ]  # Extract the private subject
+
+                private_subject_hash = self.solidity_packed_sha256(
+                    types=["string"],
+                    values=[private_subject[1:-1]],
+                )
+
+                if (
+                    private_subject in public_subject_dict
+                ):  # Check if there's a public pair
+                    # If there's a public pair, insert a representation in that group
+                    # TODO: Test this
+                    public_index = public_subject_dict.get(private_subject)
+                    self.insert_triple_sorted(
+                        public_triples_grouped.get(public_index),
+                        f"{private_subject} <{PRIVATE_RESOURCE_PREDICATE}> <{generate_named_node()}> .",
+                    )
+                else:
+                    # If no public pair, maintain separate list, inserting sorted by hash
+                    self.insert_triple_sorted(
+                        private_triple_subject_hashes_grouped_without_public_pair,
+                        f"<{PRIVATE_HASH_SUBJECT_PREFIX}{private_subject_hash}> <{PRIVATE_RESOURCE_PREDICATE}> <{generate_named_node()}> .",
+                    )
+
+            for triple in private_triple_subject_hashes_grouped_without_public_pair:
+                public_triples_grouped.append([triple])
+
+            dataset["public"] = list(chain.from_iterable(public_triples_grouped))
+        else:
+            # TODO: Test this
+            # No private triples, just group and flatten public
+            public_triples_grouped = group_nquads_by_subject(
+                dataset.get("public"), True
+            )
+            dataset["public"] = list(chain.from_iterable(public_triples_grouped))
+
+        # Calculate the number of chunks
+        number_of_chunks = calculate_number_of_chunks(
+            dataset.get("public"), CHUNK_BYTE_SIZE
+        )
+        dataset_size = number_of_chunks * CHUNK_BYTE_SIZE
+
+        # Validate the assertion size in bytes
+        # TODO: Move into validation service once developed
+        if dataset_size > MAX_FILE_SIZE:
+            raise ValueError(f"File size limit is {MAX_FILE_SIZE / (1024 * 1024)}MB.")
+
+        # Calculate the Merkle root
+        dataset_root = calculate_merkle_root(dataset.get("public"))
+
+        # Get the contract address for KnowledgeCollectionStorage
+        content_asset_storage_address = self._get_asset_storage_address(
+            "KnowledgeCollectionStorage"
+        )
+
+        publish_operation_id = self._publish(
+            dataset_root,
+            dataset,
             blockchain_id,
-            content_asset_storage_address,
-            token_id,
             DEFAULT_HASH_FUNCTION_ID,
+            minimum_number_of_node_replications,
         )["operationId"]
-        operation_result = self.get_operation_result(operation_id, "publish")
+        publish_operation_result = self.get_operation_result(
+            Operations.PUBLISH.value,
+            publish_operation_id,
+        )
 
-        result["operation"]["publish"] = {
-            "operationId": operation_id,
-            "status": operation_result["status"],
-        }
-
-        if operation_result["status"] == OperationStatus.COMPLETED:
-            operation_id = self._local_store(assertions_list)["operationId"]
-            operation_result = self.get_operation_result(operation_id, "local-store")
-
-            result["operation"]["localStore"] = {
-                "operationId": operation_id,
-                "status": operation_result["status"],
+        if publish_operation_result.get(
+            "status"
+        ) != OperationStatus.COMPLETED and not publish_operation_result.get(
+            "data", {}
+        ).get("minAcksReached"):
+            return {
+                "datasetRoot": dataset_root,
+                "operation": {
+                    "publish": self.get_operation_status_dict(
+                        publish_operation_result, publish_operation_id
+                    )
+                },
             }
 
-        return result
-    
+        data = publish_operation_result.get("data", {})
+        signatures = data.get("signatures")
+
+        publisher_node_signature = data.get("publisherNodeSignature", {})
+        publisher_node_identity_id = publisher_node_signature.get("identityId")
+        publisher_node_r = publisher_node_signature.get("r")
+        publisher_node_vs = publisher_node_signature.get("vs")
+
+        identity_ids, r, vs = [], [], []
+
+        for signature in signatures:
+            try:
+                signer_address = self.get_message_signer_address(
+                    dataset_root, signature
+                )
+
+                key_is_operational_wallet = self._key_is_operational_wallet(
+                    signature.get("identityId"),
+                    Web3.solidity_keccak(["address"], [signer_address]),
+                    2,  # IdentityLib.OPERATIONAL_KEY
+                )
+
+                # If valid, append the signature components
+                if key_is_operational_wallet:
+                    identity_ids.append(signature.get("identityId"))
+                    r.append(signature.get("r"))
+                    vs.append(signature.get("vs"))
+
+            except Exception:
+                continue
+
+        # result["operation"]["publish"] = {
+        #     "operationId": operation_id,
+        #     "status": operation_result["status"],
+        # }
+
+        # if operation_result["status"] == OperationStatus.COMPLETED:
+        #     operation_id = self._local_store(assertions_list)["operationId"]
+        #     operation_result = self.get_operation_result(operation_id, "local-store")
+
+        #     result["operation"]["localStore"] = {
+        #         "operationId": operation_id,
+        #         "status": operation_result["status"],
+        #     }
+
+        # return result
 
     def local_store(
         self,
@@ -489,7 +599,6 @@ class KnowledgeAsset(Module):
 
         return result
 
-
     _submit_knowledge_asset = Method(BlockchainRequest.submit_knowledge_asset)
 
     def submit_to_paranet(
@@ -587,7 +696,10 @@ class KnowledgeAsset(Module):
         is_state_finalized = False
 
         match state:
-            case KnowledgeAssetEnumStates.LATEST | KnowledgeAssetEnumStates.LATEST_FINALIZED:
+            case (
+                KnowledgeAssetEnumStates.LATEST
+                | KnowledgeAssetEnumStates.LATEST_FINALIZED
+            ):
                 public_assertion_id, is_state_finalized = handle_latest_finalized_state(
                     token_id
                 )
@@ -898,13 +1010,18 @@ class KnowledgeAsset(Module):
 
     _get_operation_result = Method(NodeRequest.get_operation_result)
 
-    @retry(catch=OperationNotFinished, max_retries=5, base_delay=1, backoff=2)
+    @retry(
+        catch=OperationNotFinished,
+        max_retries=DefaultParameters.MAX_NUMBER_OF_RETRIES.value,
+        base_delay=DefaultParameters.FREQUENCY.value,
+        backoff=2,
+    )
     def get_operation_result(
-        self, operation_id: str, operation: str
+        self, operation: str, operation_id: str
     ) -> NodeResponseDict:
         operation_result = self._get_operation_result(
-            operation_id=operation_id,
             operation=operation,
+            operation_id=operation_id,
         )
 
         validate_operation_status(operation_result)

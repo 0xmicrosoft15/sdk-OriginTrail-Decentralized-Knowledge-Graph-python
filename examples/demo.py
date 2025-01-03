@@ -23,7 +23,7 @@ from dkg.providers import BlockchainProvider, NodeHTTPProvider
 node_provider = NodeHTTPProvider(endpoint_uri="http://localhost:8900", api_version="v1")
 blockchain_provider = BlockchainProvider(
     "development",
-    "hardhat2:31337",
+    "hardhat1:31337",
     private_key="0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80",
 )
 
@@ -41,18 +41,17 @@ def print_json(json_dict: dict):
 
 
 content = {
-    "public": {
-        "@context": ["http://schema.org"],
-        "@id": "uuid:1",
-        "company": "OT",
-        "user": {"@id": "uuid:user:1"},
-        "city": {"@id": "uuid:belgrade"},
-    },
     "private": {
-        "@context": ["http://schema.org"],
-        "@graph": [
-            {"@id": "uuid:user:1", "name": "Adam", "lastname": "Smith"},
-            {"@id": "uuid:belgrade", "title": "Belgrade", "postCode": "11000"},
+        "@context": "https://www.schema.org",
+        "@id": "urn:eu-pp:safety-test:3oRIwPtUOJapwNSAGZTzCOWR9bEo",
+        "@type": "ProductSafetyTest",
+        "testType": "Functional Safety Test",
+        "testResults": "Fail",
+        "relatedProduct": [
+            {
+                "@id": "urn:epc:id:sgtin:59G1yu8uivSRKLLu",
+                "name": "59G1yu8uivSRKLLu",
+            },
         ],
     },
 }
@@ -129,12 +128,12 @@ divider()
 # print("======================== SET ALLOWANCE")
 # print(allowance_set)
 
-# divider()
+divider()
 
-# create_asset_result = dkg.asset.create(content, 2)
-# print("======================== ASSET CREATED")
-# print_json(create_asset_result)
-# divider()
+create_asset_result = dkg.asset.create(content, 2, 3, 1, "100")
+print("======================== ASSET CREATED")
+print_json(create_asset_result)
+divider()
 
 # validate_ual = dkg.asset.is_valid_ual(create_asset_result["UAL"])
 # print("======================== VALIDATE UAL")
