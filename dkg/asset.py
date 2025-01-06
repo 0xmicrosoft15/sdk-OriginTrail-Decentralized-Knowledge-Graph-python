@@ -32,6 +32,7 @@ from dkg.constants import (
     PRIVATE_ASSERTION_PREDICATE,
     PRIVATE_CURRENT_REPOSITORY,
     PRIVATE_HISTORICAL_REPOSITORY,
+    DEFAULT_PARAMETERS,
 )
 from dkg.dataclasses import (
     BidSuggestionRange,
@@ -360,7 +361,6 @@ class KnowledgeAsset(Module):
             }
 
         return result
-    
 
     def local_store(
         self,
@@ -489,7 +489,6 @@ class KnowledgeAsset(Module):
 
         return result
 
-
     _submit_knowledge_asset = Method(BlockchainRequest.submit_knowledge_asset)
 
     def submit_to_paranet(
@@ -563,6 +562,122 @@ class KnowledgeAsset(Module):
     _get = Method(NodeRequest.get)
     _query = Method(NodeRequest.query)
 
+    def get_v8(self, ual: UAL) -> dict:
+        get_public_operation_id: NodeResponseDict = self._get(
+            ual,
+            DEFAULT_PARAMETERS["CONTENT_TYPE"],
+            DEFAULT_PARAMETERS["INCLUDE_METADATA"],
+            DEFAULT_PARAMETERS["HASH_FUNCTION_ID"],
+            DEFAULT_PARAMETERS["PARANET_UAL"],
+            DEFAULT_PARAMETERS["GET_SUBJECT_UAL"],
+        )["operationId"]
+
+        get_public_operation_result = self.get_operation_result(
+            get_public_operation_id,
+            "get",
+            DEFAULT_PARAMETERS["MAX_NUMBER_OF_RETRIES"],
+        )
+
+        def get_operation_status_object(self, operation_result, operation_id):
+
+            if "errorType" in operation_result.get("data", {}):
+
+                operation_data = {
+                    "status": operation_result["status"],
+                    **operation_result["data"],
+                }
+            else:
+
+                operation_data = {"status": operation_result["status"]}
+
+            return {"operationId": operation_id, **operation_data}
+
+        if DEFAULT_PARAMETERS["GET_SUBJECT_UAL"]:
+            if get_public_operation_result["data"]:
+                return {
+                    "operation": {
+                        "get": self.get_operation_status_object(
+                            get_public_operation_result, get_public_operation_id
+                        ),
+                    },
+                    "subjectUALPairs": get_public_operation_result["data"],
+                }
+            if get_public_operation_result["status"] != "FAILED":
+                get_public_operation_result["data"] = {
+                    "errorType": "DKG_CLIENT_ERROR",
+                    "errorMessage": "Unable to find assertion on the network!",
+                }
+                get_public_operation_result["status"] = "FAILED"
+
+            return {
+                "operation": {
+                    "get": self.get_operation_status_object(
+                        get_public_operation_result, get_public_operation_id
+                    ),
+                },
+            }
+        metadata = get_public_operation_result["data"]
+        assertion = get_public_operation_result["data"].get("assertion", None)
+
+        if not assertion:
+            if get_public_operation_result["status"] != "FAILED":
+                get_public_operation_result["data"] = {
+                    "errorType": "DKG_CLIENT_ERROR",
+                    "errorMessage": "Unable to find assertion on the network!",
+                }
+                get_public_operation_result["status"] = "FAILED"
+
+            return {
+                "operation": {
+                    "get": self.get_operation_status_object(
+                        get_public_operation_result, get_public_operation_id
+                    ),
+                },
+            }
+
+        if DEFAULT_PARAMETERS["GET_SUBJECT_UAL"]:
+            is_valid = True  # #TODO: Implement assertion validation logic
+            if not is_valid:
+                get_public_operation_result["data"] = {
+                    "errorType": "DKG_CLIENT_ERROR",
+                    "errorMessage": "Calculated root hashes don't match!",
+                }
+
+        formatted_assertion = "\n".join(
+            assertion.get("public", []) + assertion.get("private", [])
+        )
+
+        formatted_metadata = None
+        if DEFAULT_PARAMETERS["OUTPUT_FORMAT"] == "JSON-LD":
+            formatted_assertion = self.to_jsonld(formatted_assertion)
+
+            if DEFAULT_PARAMETERS["INCLUDE_METADATA"]:
+                print("USAO")
+                formatted_metadata = self.to_jsonld("\n".join(metadata))
+
+        if DEFAULT_PARAMETERS["OUTPUT_FORMAT"] == "N-QUADS":
+            formatted_assertion = self.to_nquads(
+                formatted_assertion, "application/n-quads"
+            )
+            if DEFAULT_PARAMETERS["INCLUDE_METADATA"]:
+                formatted_metadata = self.to_nquads(
+                    "\n".join(metadata), "application/n-quads"
+                )
+
+        result = {
+            "assertion": formatted_assertion,
+            "operation": {
+                "get": self.get_operation_status_object(
+                    get_public_operation_result, get_public_operation_id
+                ),
+            },
+        }
+
+        if DEFAULT_PARAMETERS["INCLUDE_METADATA"] and metadata:
+            result["metadata"] = formatted_metadata
+
+        return result
+
     def get(
         self,
         ual: UAL,
@@ -587,7 +702,10 @@ class KnowledgeAsset(Module):
         is_state_finalized = False
 
         match state:
-            case KnowledgeAssetEnumStates.LATEST | KnowledgeAssetEnumStates.LATEST_FINALIZED:
+            case (
+                KnowledgeAssetEnumStates.LATEST
+                | KnowledgeAssetEnumStates.LATEST_FINALIZED
+            ):
                 public_assertion_id, is_state_finalized = handle_latest_finalized_state(
                     token_id
                 )
@@ -716,9 +834,11 @@ class KnowledgeAsset(Module):
                     query_private_operation_id = self._query(
                         query,
                         "CONSTRUCT",
-                        PRIVATE_CURRENT_REPOSITORY
-                        if is_state_finalized
-                        else PRIVATE_HISTORICAL_REPOSITORY,
+                        (
+                            PRIVATE_CURRENT_REPOSITORY
+                            if is_state_finalized
+                            else PRIVATE_HISTORICAL_REPOSITORY
+                        ),
                     )["operationId"]
 
                     query_private_operation_result = self.get_operation_result(
@@ -898,15 +1018,62 @@ class KnowledgeAsset(Module):
 
     _get_operation_result = Method(NodeRequest.get_operation_result)
 
-    @retry(catch=OperationNotFinished, max_retries=5, base_delay=1, backoff=2)
     def get_operation_result(
-        self, operation_id: str, operation: str
-    ) -> NodeResponseDict:
-        operation_result = self._get_operation_result(
-            operation_id=operation_id,
-            operation=operation,
+        self, operation_id: str, operation: str, max_retries: int = 5
+    ):
+        @retry(
+            catch=OperationNotFinished, max_retries=max_retries, base_delay=1, backoff=2
         )
+        def _get_opeation_results_():
+            operation_result = self._get_operation_result(
+                operation_id=operation_id,
+                operation=operation,
+            )
+            print(operation_result)
+            validate_operation_status(operation_result)
 
-        validate_operation_status(operation_result)
+            return operation_result
 
-        return operation_result
+        return _get_opeation_results_()
+
+    def to_jsonld(self, nquads: str):
+        options = {
+            "algorithm": "URDNA2015",
+            "format": "application/n-quads",
+        }
+
+        return jsonld.from_rdf(nquads, options)
+
+    def to_nquads(self, content, input_format):
+        options = {
+            "algorithm": "URDNA2015",
+            "format": "application/n-quads",
+        }
+
+        if input_format:
+            options["inputFormat"] = input_format
+        try:
+
+            jsonld_data = jsonld.from_rdf(content, options)
+            canonized = jsonld.to_rdf(jsonld_data, options)
+
+            if isinstance(canonized, str):
+                return [line for line in canonized.split("\n") if line.strip()]
+
+        except Exception as e:
+            raise ValueError(f"Error processing content: {e}")
+
+    def get_operation_status_object(self, operation_result, operation_id):
+
+        if operation_result.get("data", {}).get("errorType"):
+            operation_data = {
+                "status": operation_result["status"],
+                **operation_result["data"],
+            }
+        else:
+            operation_data = {"status": operation_result["status"]}
+
+        return {
+            "operationId": operation_id,
+            **operation_data,
+        }
