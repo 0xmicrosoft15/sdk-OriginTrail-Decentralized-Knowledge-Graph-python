@@ -24,7 +24,7 @@ node_provider = NodeHTTPProvider("https://v6-pegasus-node-04.origin-trail.networ
 blockchain_provider = BlockchainProvider(
     "testnet",
     "base:84532",
-    private_key="db20be6415f83a8a9f0c129bf20ab99ba15bfb90ac5e34f1848f59c20ea9c068",
+    private_key="",
 )
 
 dkg = DKG(node_provider, blockchain_provider)
