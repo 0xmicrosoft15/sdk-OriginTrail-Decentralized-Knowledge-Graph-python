@@ -1,3 +1,5 @@
+from enum import Enum
+
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
 # distributed with this work for additional information
@@ -19,6 +21,30 @@ PRIVATE_ASSERTION_PREDICATE = (
     "https://ontology.origintrail.io/dkg/1.0#privateAssertionID"
 )
 
+
+class DefaultParameters(Enum):
+    ENVIRONMENT: str = "mainnet"
+    PORT: int = 8900
+    FREQUENCY: int = 5
+    MAX_NUMBER_OF_RETRIES: int = 5
+    HASH_FUNCTION_ID: int = 1
+    IMMUTABLE: bool = False
+    VALIDATE: bool = True
+    OUTPUT_FORMAT: str = "JSON-LD"
+    STATE: None = None
+    INCLUDE_METADATA: bool = False
+    CONTENT_TYPE: str = "all"
+    GRAPH_LOCATION: str = "LOCAL_KG"
+    GRAPH_STATE: str = "CURRENT"
+    HANDLE_NOT_MINED_ERROR: bool = False
+    SIMULATE_TXS: bool = False
+    FORCE_REPLACE_TXS: bool = False
+    GAS_LIMIT_MULTIPLIER: int = 1
+    PARANET_UAL: None = None
+    GET_SUBJECT_UAL: bool = False
+
+
+ZERO_ADDRESS = "0x0000000000000000000000000000000000000000"
 BLOCKCHAINS = {
     "development": {
         "hardhat1:31337": {
@@ -67,25 +93,3 @@ DEFAULT_PROXIMITY_SCORE_FUNCTIONS_PAIR_IDS = {
 
 PRIVATE_HISTORICAL_REPOSITORY = "privateHistory"
 PRIVATE_CURRENT_REPOSITORY = "privateCurrent"
-
-DEFAULT_PARAMETERS = {
-    "ENVIRONMENT": "mainnet",
-    "PORT": 8900,
-    "FREQUENCY": 5,
-    "MAX_NUMBER_OF_RETRIES": 5,
-    "HASH_FUNCTION_ID": 1,
-    "IMMUTABLE": False,
-    "VALIDATE": True,
-    "OUTPUT_FORMAT": "JSON-LD",
-    "STATE": None,
-    "INCLUDE_METADATA": False,
-    "CONTENT_TYPE": "all",
-    "GRAPH_LOCATION": "LOCAL_KG",
-    "GRAPH_STATE": "CURRENT",
-    "HANDLE_NOT_MINED_ERROR": False,
-    "SIMULATE_TXS": False,
-    "FORCE_REPLACE_TXS": False,
-    "GAS_LIMIT_MULTIPLIER": 1,
-    "PARANET_UAL": None,
-    "GET_SUBJECT_UAL": False,
-}
