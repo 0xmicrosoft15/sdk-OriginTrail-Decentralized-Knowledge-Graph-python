@@ -68,6 +68,13 @@ class NodeRequest:
             "minimumNumberOfNodeReplications": int,
         },
     )
+
+    finality_status = NodeCall(
+        method=HTTPRequestMethod.GET,
+        path="finality",
+        params={"ual": str},
+    )
+
     get = NodeCall(
         method=HTTPRequestMethod.POST,
         path="get",

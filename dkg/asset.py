@@ -16,11 +16,11 @@
 # under the License.
 
 import json
+import time
 import math
 import re
 import hashlib
-from typing import Literal, Type
-
+from typing import Literal, Type, Dict, Optional, Any
 from pyld import jsonld
 from web3 import Web3
 from web3.constants import ADDRESS_ZERO
@@ -30,6 +30,7 @@ from itertools import chain
 from eth_abi.packed import encode_packed
 from eth_account.messages import encode_defunct
 from eth_account import Account
+from hexbytes import HexBytes
 
 from dkg.constants import (
     DEFAULT_HASH_FUNCTION_ID,
@@ -62,7 +63,11 @@ from dkg.manager import DefaultRequestManager
 from dkg.method import Method
 from dkg.module import Module
 from dkg.types import JSONLD, UAL, Address, AgreementData, HexStr, Wei
-from dkg.utils.blockchain_request import BlockchainRequest
+from dkg.utils.blockchain_request import (
+    BlockchainRequest,
+    KnowledgeCollectionResult,
+    AllowanceResult,
+)
 from dkg.utils.decorators import retry
 from dkg.utils.merkle import MerkleTree, hash_assertion_with_indexes
 from dkg.utils.metadata import (
@@ -79,14 +84,10 @@ from dkg.utils.node_request import (
 from dkg.utils.rdf import (
     format_content,
     normalize_dataset,
-    format_dataset,
-    generate_missing_ids_for_blank_nodes,
-    group_nquads_by_subject,
-    generate_named_node,
-    calculate_merkle_root,
-    calculate_number_of_chunks,
 )
 from dkg.utils.ual import format_ual, parse_ual
+import dkg.utils.knowledge_collection_tools as kc_tools
+import dkg.utils.knowledge_asset_tools as ka_tools
 
 
 class KnowledgeAsset(Module):
@@ -218,10 +219,181 @@ class KnowledgeAsset(Module):
     _create = Method(BlockchainRequest.create_asset)
     _mint_paranet_knowledge_asset = Method(BlockchainRequest.mint_knowledge_asset)
     _key_is_operational_wallet = Method(BlockchainRequest.key_is_operational_wallet)
-
+    _time_until_next_epoch = Method(BlockchainRequest.time_until_next_epoch)
+    _epoch_length = Method(BlockchainRequest.epoch_length)
+    _get_stake_weighted_average_ask = Method(
+        BlockchainRequest.get_stake_weighted_average_ask
+    )
     _get_bid_suggestion = Method(NodeRequest.bid_suggestion)
     _local_store = Method(NodeRequest.local_store)
     _publish = Method(NodeRequest.publish)
+    _finality_status = Method(NodeRequest.finality_status)
+
+    _create_knowledge_collection = Method(BlockchainRequest.create_knowledge_collection)
+    _mint_knowledge_asset = Method(BlockchainRequest.mint_knowledge_asset)
+    _decrease_allowance = Method(BlockchainRequest.decrease_allowance)
+
+    def get_operation_status_object(
+        self, operation_result: Dict[str, Any], operation_id: str
+    ) -> Dict[str, Any]:
+        """
+        Creates an operation status object from operation result and ID.
+
+        Args:
+            operation_result: Dictionary containing operation result data
+            operation_id: The ID of the operation
+
+        Returns:
+            Dictionary containing operation status information
+        """
+        # Check if error_type exists in operation_result.data
+        operation_data = (
+            {"status": operation_result.get("status"), **operation_result.get("data")}
+            if operation_result.get("data", {}).get("errorType")
+            else {"status": operation_result.get("status")}
+        )
+
+        return {"operationId": operation_id, **operation_data}
+
+    def finality_status(
+        self,
+        ual: str,
+        required_confirmations: int,
+        max_number_of_retries: int,
+        frequency: int,
+    ):
+        retries = 0
+        finality = 0
+
+        while finality < required_confirmations and retries <= max_number_of_retries:
+            if retries > max_number_of_retries:
+                raise Exception(
+                    f"Unable to achieve required confirmations. "
+                    f"Max number of retries ({max_number_of_retries}) reached."
+                )
+
+            retries += 1
+
+            # Sleep between attempts (except for first try)
+            if retries > 1:
+                time.sleep(frequency)
+
+            try:
+                response = self._finality_status(ual)
+                finality = response.get("finality", 0)
+            except Exception:
+                finality = 0
+
+        return finality
+
+    def increase_knowledge_collection_allowance(
+        self, sender: str, token_amount: str
+    ) -> AllowanceResult:
+        """
+        Increases the allowance for knowledge collection if necessary.
+
+        Args:
+            sender: The address of the sender
+            token_amount: The amount of tokens to check/increase allowance for
+
+        Returns:
+            AllowanceResult containing whether allowance was increased and the gap
+        """
+        knowledge_collection_address = self._get_contract_address("KnowledgeCollection")
+
+        allowance = self._get_current_allowance(sender, knowledge_collection_address)
+        allowance_gap = int(token_amount) - int(allowance)
+
+        if allowance_gap > 0:
+            self._increase_allowance(knowledge_collection_address, allowance_gap)
+
+            return AllowanceResult(
+                allowance_increased=True, allowance_gap=allowance_gap
+            )
+
+        return AllowanceResult(allowance_increased=False, allowance_gap=allowance_gap)
+
+    def create_knowledge_collection(
+        self,
+        request: dict,
+        paranet_ka_contract: Optional[Address] = None,
+        paranet_token_id: Optional[int] = None,
+    ) -> KnowledgeCollectionResult:
+        """
+        Creates a knowledge collection on the blockchain.
+
+        Args:
+            request: dict containing all collection parameters
+            paranet_ka_contract: Optional paranet contract address
+            paranet_token_id: Optional paranet token ID
+            blockchain: Blockchain configuration
+
+        Returns:
+            KnowledgeCollectionResult containing collection ID and transaction receipt
+
+        Raises:
+            BlockchainError: If the collection creation fails
+        """
+        sender = self.manager.blockchain_provider.account.address
+        service_agreement_v1_address = None
+        allowance_increased = False
+        allowance_gap = 0
+
+        try:
+            # Handle allowance
+            if request.get("payer"):
+                pass
+            else:
+                allowance_result = self.increase_knowledge_collection_allowance(
+                    sender=sender,
+                    token_amount=request.get("tokenAmount"),
+                )
+                allowance_increased = allowance_result.allowance_increased
+                allowance_gap = allowance_result.allowance_gap
+
+            if not paranet_ka_contract and not paranet_token_id:
+                receipt = self._create_knowledge_collection(
+                    request.get("publishOperationId"),
+                    Web3.to_bytes(hexstr=request.get("merkleRoot")),
+                    request.get("knowledgeAssetsAmount"),
+                    request.get("byteSize"),
+                    request.get("epochs"),
+                    int(request.get("tokenAmount")),
+                    request.get("isImmutable"),
+                    request.get("paymaster"),
+                    request.get("publisherNodeIdentityId"),
+                    Web3.to_bytes(hexstr=request.get("publisherNodeR")),
+                    Web3.to_bytes(hexstr=request.get("publisherNodeVS")),
+                    request.get("identityIds"),
+                    [Web3.to_bytes(hexstr=x) for x in request.get("r")],
+                    [Web3.to_bytes(hexstr=x) for x in request.get("vs")],
+                )
+            else:
+                receipt = self._mint_knowledge_asset(
+                    paranet_ka_contract,
+                    paranet_token_id,
+                    list(request.values()),
+                )
+
+            event_data = self.manager.blockchain_provider.decode_logs_event(
+                receipt=receipt,
+                contract_name="KnowledgeCollectionStorage",
+                event_name="KnowledgeCollectionCreated",
+            )
+            collection_id = (
+                int(getattr(event_data[0].get("args", {}), "id", None))
+                if event_data
+                else None
+            )
+
+            return KnowledgeCollectionResult(
+                knowledge_collection_id=collection_id, receipt=receipt
+            )
+
+        except Exception as e:
+            if allowance_increased:
+                self._decrease_allowance(service_agreement_v1_address, allowance_gap)
+            raise e
 
     def process_content(self, content: str) -> list:
         return [line.strip() for line in content.split("\n") if line.strip() != ""]
@@ -263,7 +435,7 @@ class KnowledgeAsset(Module):
         return {"operationId": operation_id, **operation_data}
 
     def get_message_signer_address(self, dataset_root: str, signature: dict):
-        message = encode_defunct(Web3.to_bytes(dataset_root))
+        message = encode_defunct(HexBytes(dataset_root))
         r, s, v = signature.get("r"), signature.get("s"), signature.get("v")
         r = r[2:] if r.startswith("0x") else r
         s = s[2:] if s.startswith("0x") else s
@@ -275,7 +447,7 @@ class KnowledgeAsset(Module):
     def create(
         self,
         content: dict[Literal["public", "private"], JSONLD],
-        epochs_number: int,
+        epochs_num: int,
         minimum_number_of_finalization_confirmations: int,
         minimum_number_of_node_replications: int,
         token_amount: Wei | None = None,
@@ -301,34 +473,34 @@ class KnowledgeAsset(Module):
             if private_content and isinstance(private_content, str):
                 dataset["private"] = self.process_content(private_content)
         else:
-            dataset = format_dataset(content)
+            dataset = kc_tools.format_dataset(content)
 
         public_triples_grouped = []
 
-        # TODO: Uncomment and test this
-        # dataset["public"] = generate_missing_ids_for_blank_nodes(dataset.get("public"))
+        dataset["public"] = kc_tools.generate_missing_ids_for_blank_nodes(
+            dataset.get("public")
+        )
 
         if dataset.get("private") and len(dataset.get("private")):
-            # TODO: Uncomment and test this
-            # dataset["private"] = generate_missing_ids_for_blank_nodes(
-            #     dataset.get("private")
-            # )
+            dataset["private"] = kc_tools.generate_missing_ids_for_blank_nodes(
+                dataset.get("private")
+            )
 
             # Group private triples by subject and flatten
-            private_triples_grouped = group_nquads_by_subject(
+            private_triples_grouped = kc_tools.group_nquads_by_subject(
                 dataset.get("private"), True
             )
 
             dataset["private"] = list(chain.from_iterable(private_triples_grouped))
 
             # Compute private root and add to public
-            private_root = calculate_merkle_root(dataset.get("private"))
+            private_root = kc_tools.calculate_merkle_root(dataset.get("private"))
             dataset["public"].append(
-                f'<{generate_named_node()}> <${PRIVATE_ASSERTION_PREDICATE}> "{private_root}" .'
+                f'<{ka_tools.generate_named_node()}> <{PRIVATE_ASSERTION_PREDICATE}> "{private_root}" .'
             )
 
             # Compute private root and add to public
-            public_triples_grouped = group_nquads_by_subject(
+            public_triples_grouped = kc_tools.group_nquads_by_subject(
                 dataset.get("public"), True
             )
 
@@ -355,17 +527,16 @@ class KnowledgeAsset(Module):
                     private_subject in public_subject_dict
                 ):  # Check if there's a public pair
                     # If there's a public pair, insert a representation in that group
-                    # TODO: Test this
                     public_index = public_subject_dict.get(private_subject)
                     self.insert_triple_sorted(
-                        public_triples_grouped.get(public_index),
-                        f"{private_subject} <{PRIVATE_RESOURCE_PREDICATE}> <{generate_named_node()}> .",
+                        public_triples_grouped[public_index],
+                        f"{private_subject} <{PRIVATE_RESOURCE_PREDICATE}> <{ka_tools.generate_named_node()}> .",
                     )
                 else:
                     # If no public pair, maintain separate list, inserting sorted by hash
                     self.insert_triple_sorted(
                         private_triple_subject_hashes_grouped_without_public_pair,
-                        f"<{PRIVATE_HASH_SUBJECT_PREFIX}{private_subject_hash}> <{PRIVATE_RESOURCE_PREDICATE}> <{generate_named_node()}> .",
+                        f"<{PRIVATE_HASH_SUBJECT_PREFIX}{private_subject_hash}> <{PRIVATE_RESOURCE_PREDICATE}> <{ka_tools.generate_named_node()}> .",
                     )
 
             for triple in private_triple_subject_hashes_grouped_without_public_pair:
@@ -373,26 +544,24 @@ class KnowledgeAsset(Module):
 
             dataset["public"] = list(chain.from_iterable(public_triples_grouped))
         else:
-            # TODO: Test this
             # No private triples, just group and flatten public
-            public_triples_grouped = group_nquads_by_subject(
+            public_triples_grouped = kc_tools.group_nquads_by_subject(
                 dataset.get("public"), True
             )
             dataset["public"] = list(chain.from_iterable(public_triples_grouped))
 
         # Calculate the number of chunks
-        number_of_chunks = calculate_number_of_chunks(
+        number_of_chunks = kc_tools.calculate_number_of_chunks(
             dataset.get("public"), CHUNK_BYTE_SIZE
         )
         dataset_size = number_of_chunks * CHUNK_BYTE_SIZE
 
         # Validate the assertion size in bytes
-        # TODO: Move into validation service once developed
         if dataset_size > MAX_FILE_SIZE:
             raise ValueError(f"File size limit is {MAX_FILE_SIZE / (1024 * 1024)}MB.")
 
         # Calculate the Merkle root
-        dataset_root = calculate_merkle_root(dataset.get("public"))
+        dataset_root = kc_tools.calculate_merkle_root(dataset.get("public"))
 
         # Get the contract address for KnowledgeCollectionStorage
         content_asset_storage_address = self._get_asset_storage_address(
@@ -456,21 +625,94 @@ class KnowledgeAsset(Module):
             except Exception:
                 continue
 
-        # result["operation"]["publish"] = {
-        #     "operationId": operation_id,
-        #     "status": operation_result["status"],
-        # }
+        if token_amount:
+            estimated_publishing_cost = token_amount
+        else:
+            time_until_next_epoch = self._time_until_next_epoch()
+            epoch_length = self._epoch_length()
+            stake_weighted_average_ask = self._get_stake_weighted_average_ask()
 
-        # if operation_result["status"] == OperationStatus.COMPLETED:
-        #     operation_id = self._local_store(assertions_list)["operationId"]
-        #     operation_result = self.get_operation_result(operation_id, "local-store")
+            # Convert to integers and perform calculation
+            # Note: In Python we use regular int as it handles arbitrary precision automatically
+            estimated_publishing_cost = (
+                (
+                    int(stake_weighted_average_ask)
+                    * (
+                        int(epochs_num) * int(1e18)
+                        + (int(time_until_next_epoch) * int(1e18)) / int(epoch_length)
+                    )
+                    * int(dataset_size)
+                )
+                / 1024
+                / int(1e18)
+            )
 
-        #     result["operation"]["localStore"] = {
-        #         "operationId": operation_id,
-        #         "status": operation_result["status"],
-        #     }
+        knowledge_collection_id = None
+        mint_knowledge_asset_receipt = None
 
-        # return result
+        knowledge_collection_result = self.create_knowledge_collection(
+            {
+                "publishOperationId": publish_operation_id,
+                "merkleRoot": dataset_root,
+                "knowledgeAssetsAmount": kc_tools.count_distinct_subjects(
+                    dataset.get("public")
+                ),
+                "byteSize": dataset_size,
+                "epochs": epochs_num,
+                "tokenAmount": str(estimated_publishing_cost),
+                "isImmutable": DefaultParameters.IMMUTABLE.value,
+                "paymaster": DefaultParameters.ZERO_ADDRESS.value,
+                "publisherNodeIdentityId": publisher_node_identity_id,
+                "publisherNodeR": publisher_node_r,
+                "publisherNodeVS": publisher_node_vs,
+                "identityIds": identity_ids,
+                "r": r,
+                "vs": vs,
+            },
+            None,
+            None,
+        )
+        knowledge_collection_id = knowledge_collection_result.knowledge_collection_id
+        mint_knowledge_asset_receipt = knowledge_collection_result.receipt
+
+        ual = format_ual(
+            blockchain_id, content_asset_storage_address, knowledge_collection_id
+        )
+
+        finality_status_result = 0
+        if minimum_number_of_finalization_confirmations > 0:
+            finality_status_result = self.finality_status(
+                ual,
+                minimum_number_of_finalization_confirmations,
+                300,
+                2,
+            )
+
+        return json.loads(
+            Web3.to_json(
+                {
+                    "UAL": ual,
+                    "datasetRoot": dataset_root,
+                    "signatures": publish_operation_result.get("data", {}).get(
+                        "signatures"
+                    ),
+                    "operation": {
+                        "mintKnowledgeAsset": mint_knowledge_asset_receipt,
+                        "publish": self.get_operation_status_object(
+                            publish_operation_result, publish_operation_id
+                        ),
+                        "finality": {
+                            "status": "FINALIZED"
+                            if finality_status_result
+                            >= minimum_number_of_finalization_confirmations
+                            else "NOT FINALIZED"
+                        },
+                        "numberOfConfirmations": finality_status_result,
+                        "requiredConfirmations": minimum_number_of_finalization_confirmations,
+                    },
+                }
+            )
+        )
 
     def local_store(
         self,

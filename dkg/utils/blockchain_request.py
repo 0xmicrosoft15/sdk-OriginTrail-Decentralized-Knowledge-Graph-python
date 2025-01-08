@@ -16,7 +16,7 @@
 # under the License.
 
 from dataclasses import dataclass, field
-from typing import Type
+from typing import Type, Dict, Any
 
 from dkg.dataclasses import ParanetIncentivizationType
 from dkg.types import Address, HexStr, Wei
@@ -52,6 +52,18 @@ class ContractCall(ContractInteraction):
     pass
 
 
+@dataclass
+class KnowledgeCollectionResult:
+    knowledge_collection_id: int
+    receipt: Dict[str, Any]
+
+
+@dataclass
+class AllowanceResult:
+    allowance_increased: bool
+    allowance_gap: int
+
+
 class BlockchainRequest:
     chain_id = JSONRPCRequest("chain_id")
     get_block = JSONRPCRequest("get_block", args={"block_identifier": str | int})
@@ -71,6 +83,24 @@ class BlockchainRequest:
         contract="IdentityStorage",
         function="keyHasPurpose",
         args={"identityId": int, "_key": Address, "_purpose": int},
+    )
+
+    time_until_next_epoch = ContractCall(
+        contract="Chronos",
+        function="timeUntilNextEpoch",
+        args={},
+    )
+
+    epoch_length = ContractCall(
+        contract="Chronos",
+        function="epochLength",
+        args={},
+    )
+
+    get_stake_weighted_average_ask = ContractCall(
+        contract="AskStorage",
+        function="getStakeWeightedAverageAsk",
+        args={},
     )
 
     allowance = ContractCall(
@@ -400,4 +430,41 @@ class BlockchainRequest:
     claim_incentivization_proposal_voter_reward = ContractTransaction(
         function="claimIncentivizationProposalVoterReward",
         args={},
+    )
+
+    create_knowledge_collection = ContractTransaction(
+        contract="KnowledgeCollection",
+        function="createKnowledgeCollection",
+        args={
+            "publishOperationId": str,
+            "merkleRoot": bytes,
+            "knowledgeAssetsAmount": int,
+            "byteSize": int,
+            "epochs": int,
+            "tokenAmount": int,
+            "isImmutable": bool,
+            "paymaster": Address,
+            "publisherNodeIdentityId": int,
+            "publisherNodeR": bytes,
+            "publisherNodeVS": bytes,
+            "identityIds": list[int],
+            "r": list[bytes],
+            "vs": list[bytes],
+        },
+    )
+
+    mint_knowledge_asset = ContractTransaction(
+        contract="Paranet",
+        function="mintKnowledgeAsset",
+        args={
+            "paranetKAStorageContract": Address,
+            "paranetKATokenId": int,
+            "knowledgeAssetArgs": dict,
+        },
+    )
+
+    decrease_allowance = ContractTransaction(
+        contract="Token",
+        function="decreaseAllowance",
+        args={"spender": Address, "subtractedValue": int},
     )

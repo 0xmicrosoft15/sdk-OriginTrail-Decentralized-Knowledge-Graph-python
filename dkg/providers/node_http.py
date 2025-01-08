@@ -26,7 +26,7 @@ from requests.exceptions import HTTPError, ConnectionError, Timeout, RequestExce
 
 class NodeHTTPProvider:
     def __init__(
-        self, 
+        self,
         endpoint_uri: URI | str,
         api_version: str = "v1",
         auth_token: str | None = None,
