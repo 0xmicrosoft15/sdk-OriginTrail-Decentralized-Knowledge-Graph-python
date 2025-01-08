@@ -16,6 +16,7 @@
 # under the License.
 
 import json
+import time
 
 from dkg import DKG
 from dkg.providers import BlockchainProvider, NodeHTTPProvider
@@ -130,8 +131,9 @@ divider()
 
 divider()
 
+start_time = time.time()
 create_asset_result = dkg.asset.create(content, 2, 3, 1, "100")
-print("======================== ASSET CREATED")
+print(f"======================== ASSET CREATED in {time.time() - start_time} seconds")
 print_json(create_asset_result)
 divider()
 
