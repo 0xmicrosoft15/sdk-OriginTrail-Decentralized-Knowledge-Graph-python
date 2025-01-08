@@ -72,7 +72,7 @@ class NodeRequest:
     finality_status = NodeCall(
         method=HTTPRequestMethod.GET,
         path="finality",
-        params={"ual": str},
+        params={"ual": UAL},
     )
 
     get = NodeCall(

@@ -451,9 +451,6 @@ class KnowledgeAsset(Module):
         minimum_number_of_finalization_confirmations: int,
         minimum_number_of_node_replications: int,
         token_amount: Wei | None = None,
-        # immutable: bool = False,
-        # content_type: Literal["JSON-LD", "N-Quads"] = "JSON-LD",
-        # paranet_ual: UAL | None = None,
     ) -> dict[str, UAL | HexStr | dict[str, dict[str, str] | TxReceipt]]:
         blockchain_id = self.manager.blockchain_provider.blockchain_id
 

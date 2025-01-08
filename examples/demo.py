@@ -132,7 +132,13 @@ divider()
 divider()
 
 start_time = time.time()
-create_asset_result = dkg.asset.create(content, 2, 3, 1, "100")
+create_asset_result = dkg.asset.create(
+    content=content,
+    epochs_num=2,
+    minimum_number_of_finalization_confirmations=3,
+    minimum_number_of_node_replications=1,
+    token_amount=100,
+)
 print(f"======================== ASSET CREATED in {time.time() - start_time} seconds")
 print_json(create_asset_result)
 divider()
