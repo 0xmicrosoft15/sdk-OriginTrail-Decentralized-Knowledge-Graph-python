@@ -594,31 +594,17 @@ class KnowledgeAsset(Module):
             get_public_operation_id, "get", max_number_of_retries, frequency
         )
 
-        def get_operation_status_object(self, operation_result, operation_id):
-
-            if "errorType" in operation_result.get("data", {}):
-
-                operation_data = {
-                    "status": operation_result["status"],
-                    **operation_result["data"],
-                }
-            else:
-
-                operation_data = {"status": operation_result["status"]}
-
-            return {"operationId": operation_id, **operation_data}
-
         if subject_ual:
-            if get_public_operation_result["data"]:
+            if get_public_operation_result.get("data"):
                 return {
                     "operation": {
                         "get": self.get_operation_status_object(
                             get_public_operation_result, get_public_operation_id
                         ),
                     },
-                    "subjectUALPairs": get_public_operation_result["data"],
+                    "subjectUALPairs": get_public_operation_result.get("data"),
                 }
-            if get_public_operation_result["status"] != "FAILED":
+            if get_public_operation_result.get("status") != "FAILED":
                 get_public_operation_result["data"] = {
                     "errorType": "DKG_CLIENT_ERROR",
                     "errorMessage": "Unable to find assertion on the network!",
@@ -632,11 +618,11 @@ class KnowledgeAsset(Module):
                     ),
                 },
             }
-        metadata = get_public_operation_result["data"]
-        assertion = get_public_operation_result["data"].get("assertion", None)
+        metadata = get_public_operation_result.get("data")
+        assertion = get_public_operation_result.get("data").get("assertion", None)
 
         if not assertion:
-            if get_public_operation_result["status"] != "FAILED":
+            if get_public_operation_result.get("status") != "FAILED":
                 get_public_operation_result["data"] = {
                     "errorType": "DKG_CLIENT_ERROR",
                     "errorMessage": "Unable to find assertion on the network!",
