@@ -266,23 +266,25 @@ class KnowledgeAsset(Module):
         finality = 0
 
         while finality < required_confirmations and retries <= max_number_of_retries:
+            try:
+                response = self._finality_status(ual)
+                finality = response.get("finality", 0)
+                if finality >= required_confirmations:
+                    break
+            except Exception:
+                finality = 0
+
+            retries += 1
+
             if retries > max_number_of_retries:
                 raise Exception(
                     f"Unable to achieve required confirmations. "
                     f"Max number of retries ({max_number_of_retries}) reached."
                 )
 
-            retries += 1
-
             # Sleep between attempts (except for first try)
             if retries > 1:
                 time.sleep(frequency)
-
-            try:
-                response = self._finality_status(ual)
-                finality = response.get("finality", 0)
-            except Exception:
-                finality = 0
 
         return finality
 
@@ -630,18 +632,17 @@ class KnowledgeAsset(Module):
             stake_weighted_average_ask = self._get_stake_weighted_average_ask()
 
             # Convert to integers and perform calculation
-            # Note: In Python we use regular int as it handles arbitrary precision automatically
             estimated_publishing_cost = (
                 (
                     int(stake_weighted_average_ask)
                     * (
                         int(epochs_num) * int(1e18)
-                        + (int(time_until_next_epoch) * int(1e18)) / int(epoch_length)
+                        + (int(time_until_next_epoch) * int(1e18)) // int(epoch_length)
                     )
                     * int(dataset_size)
                 )
-                / 1024
-                / int(1e18)
+                // 1024
+                // int(1e18)
             )
 
         knowledge_collection_id = None
