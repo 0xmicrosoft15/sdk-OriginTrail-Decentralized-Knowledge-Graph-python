@@ -60,6 +60,24 @@ class OutputTypes(Enum):
     JSONLD: str = "JSON-LD"
 
 
+class Environments(Enum):
+    DEVELOPMENT: str = "development"
+    DEVNET: str = "devnet"
+    TESTNET: str = "testnet"
+    MAINNET: str = "mainnet"
+
+
+class Blockchains(Enum):
+    HARDHAT_1: str = "hardhat1:31337"
+    HARDHAT_2: str = "hardhat2:31337"
+    BASE_DEVNET: str = "base:84532"
+    GNOSIS_DEVNET: str = "gnosis:10200"
+    NEUROWEB_DEVNET: str = "otp:20430"
+    BASE_TESTNET: str = "base:84532"
+    GNOSIS_TESTNET: str = "gnosis:10200"
+    NEUROWEB_TESTNET: str = "otp:20430"
+
+
 ZERO_ADDRESS = "0x0000000000000000000000000000000000000000"
 BLOCKCHAINS = {
     "development": {

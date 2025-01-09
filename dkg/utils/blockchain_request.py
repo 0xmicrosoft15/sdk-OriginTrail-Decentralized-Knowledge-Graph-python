@@ -462,9 +462,3 @@ class BlockchainRequest:
             "knowledgeAssetArgs": dict,
         },
     )
-
-    decrease_allowance = ContractTransaction(
-        contract="Token",
-        function="decreaseAllowance",
-        args={"spender": Address, "subtractedValue": int},
-    )

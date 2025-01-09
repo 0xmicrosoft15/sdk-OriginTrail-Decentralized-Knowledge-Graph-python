@@ -32,7 +32,6 @@ from eth_account import Account
 from hexbytes import HexBytes
 
 from dkg.constants import (
-    DEFAULT_HASH_FUNCTION_ID,
     DEFAULT_PROXIMITY_SCORE_FUNCTIONS_PAIR_IDS,
     PRIVATE_ASSERTION_PREDICATE,
     PRIVATE_RESOURCE_PREDICATE,
@@ -42,6 +41,7 @@ from dkg.constants import (
     DEFAULT_RDF_FORMAT,
     Operations,
     OutputTypes,
+    DefaultParameters,
 )
 from dkg.dataclasses import (
     BidSuggestionRange,
@@ -746,7 +746,7 @@ class KnowledgeAsset(Module):
                     public_assertion_metadata["size"],
                     content_asset_storage_address,
                     public_assertion_id,
-                    DEFAULT_HASH_FUNCTION_ID,
+                    DefaultParameters.HASH_FUNCTION_ID.value,
                     token_amount or BidSuggestionRange.LOW,
                 )["bidSuggestion"]
             )
@@ -1065,7 +1065,7 @@ class KnowledgeAsset(Module):
                     latest_finalized_state_size,
                     content_asset_storage_address,
                     latest_finalized_state,
-                    DEFAULT_HASH_FUNCTION_ID,
+                    DefaultParameters.HASH_FUNCTION_ID.value,
                     token_amount or BidSuggestionRange.LOW,
                 )["bidSuggestion"]
             )
@@ -1124,7 +1124,7 @@ class KnowledgeAsset(Module):
                     latest_finalized_state_size,
                     content_asset_storage_address,
                     latest_finalized_state,
-                    DEFAULT_HASH_FUNCTION_ID,
+                    DefaultParameters.HASH_FUNCTION_ID.value,
                     token_amount or BidSuggestionRange.LOW,
                 )["bidSuggestion"]
             ) - sum(agreement_data.tokensInfo)
