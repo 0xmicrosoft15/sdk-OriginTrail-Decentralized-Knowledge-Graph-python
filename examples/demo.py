@@ -79,6 +79,12 @@ print_json(create_asset_result)
 
 divider()
 
+get_v8_test = dkg.asset.get(
+    "did:dkg:otp:20430/0xb4c24fc54bc811c2659c477b65da8648e499fd39/2353"
+)
+
+divider()
+
 query_operation_result = dkg.graph.query(
     """
     PREFIX gs1: <https://gs1.org/voc/>
