@@ -32,6 +32,7 @@ from dkg.constants import (
     PRIVATE_ASSERTION_PREDICATE,
     PRIVATE_CURRENT_REPOSITORY,
     PRIVATE_HISTORICAL_REPOSITORY,
+    OutputTypes,
 )
 from dkg.dataclasses import (
     BidSuggestionRange,
@@ -580,9 +581,9 @@ class KnowledgeAsset(Module):
         paranet_ual = arguments["paranet_ual"]
         subject_ual = arguments["subject_ual"]
 
-        id_field = f"{ual}:{state}" if state else ual
+        ual_with_state = f"{ual}:{state}" if state else ual
         get_public_operation_id: NodeResponseDict = self._get(
-            id_field,
+            ual_with_state,
             content_type,
             include_metadata,
             hash_function_id,
@@ -602,7 +603,7 @@ class KnowledgeAsset(Module):
                             get_public_operation_result, get_public_operation_id
                         ),
                     },
-                    "subjectUALPairs": get_public_operation_result.get("data"),
+                    "subject_ual_pairs": get_public_operation_result.get("data"),
                 }
             if get_public_operation_result.get("status") != "FAILED":
                 get_public_operation_result["data"] = {
@@ -650,13 +651,13 @@ class KnowledgeAsset(Module):
         )
 
         formatted_metadata = None
-        if output_format == "JSON-LD":
+        if output_format == OutputTypes.JSONLD.value:
             formatted_assertion = self.to_jsonld(formatted_assertion)
 
             if include_metadata:
                 formatted_metadata = self.to_jsonld("\n".join(metadata))
 
-        if output_format == "N-QUADS":
+        if output_format == OutputTypes.NQUADS.value:
             formatted_assertion = self.to_nquads(
                 formatted_assertion, "application/n-quads"
             )
@@ -808,7 +809,7 @@ class KnowledgeAsset(Module):
             base_delay=frequency,
             backoff=2,
         )
-        def _get_opeation_results_():
+        def _get_operation_results_():
             operation_result = self._get_operation_result(
                 operation_id=operation_id,
                 operation=operation,
@@ -817,7 +818,7 @@ class KnowledgeAsset(Module):
 
             return operation_result
 
-        return _get_opeation_results_()
+        return _get_operation_results_()
 
     def to_jsonld(self, nquads: str):
         options = {

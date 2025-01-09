@@ -7,7 +7,6 @@ class InputService:
 
     def get_asset_get_arguments(self, options):
         return {
-            # "blockchain": self.get_blockchain(options),
             "endpoint": self.get_endpoint(options),
             "port": self.get_port(options),
             "max_number_of_retries": self.get_max_number_of_retries(options),
@@ -25,7 +24,6 @@ class InputService:
 
     def get_asset_create_arguments(self, options):
         return {
-            # "blockchain": self.get_blockchain(options),
             "endpoint": self.get_endpoint(options),
             "port": self.get_port(options),
             "max_number_of_retries": self.get_max_number_of_retries(options),
@@ -63,13 +61,6 @@ class InputService:
         return (
             options.get("endpoint") or self.manager.node_provider.endpoint_uri or None
         )
-
-    # def get_blockchain(self, options):
-    #     return (
-    #         options.get("blockchain")
-    #         or self.manager.blockchain_provider.blockchain
-    #         or None
-    #     )
 
     def get_port(self, options):
         return options.get("port") or DefaultParameters.PORT.value
@@ -159,4 +150,4 @@ class InputService:
         return options.get("graph_state") or DefaultParameters.GRAPH_STATE.value
 
     def get_repository(self, options):
-        return options.get("repository") or None
+        return options.get("repository") or "dkg"

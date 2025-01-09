@@ -23,7 +23,7 @@ PRIVATE_ASSERTION_PREDICATE = (
 
 
 class DefaultParameters(Enum):
-    ENVIRONMENT: str = "mainnet"
+    ENVIRONMENT: str = "testnet"
     PORT: int = 8900
     FREQUENCY: int = 5
     MAX_NUMBER_OF_RETRIES: int = 5
@@ -42,6 +42,11 @@ class DefaultParameters(Enum):
     GAS_LIMIT_MULTIPLIER: int = 1
     PARANET_UAL: None = None
     GET_SUBJECT_UAL: bool = False
+
+
+class OutputTypes(Enum):
+    NQUADS: str = "N-QUADS"
+    JSONLD: str = "JSON-LD"
 
 
 ZERO_ADDRESS = "0x0000000000000000000000000000000000000000"
@@ -64,9 +69,17 @@ BLOCKCHAINS = {
     },
     "testnet": {
         "base:84532": {
-            "hub": "0xCca0eA14540588A09c85cD6A6Fc53eA3A7010692",
+            "hub": "0xf21CE8f8b01548D97DCFb36869f1ccB0814a4e05",
             "rpc": "https://sepolia.base.org",
-        }
+        },
+        "gnosis:10200": {
+            "hub": "0x2c08AC4B630c009F709521e56Ac385A6af70650f",
+            "rpc": "https://rpc.chiadochain.net",
+        },
+        "otp:20430": {
+            "hub": "0xd7d073b560412c6A7F33dD670d323D01061E5DEb",
+            "rpc": "https://lofar-testnet.origin-trail.network",
+        },
     },
     "mainnet": {},
 }
