@@ -54,13 +54,13 @@ BLOCKCHAINS = {
     },
     "devnet": {
         "base:84532": {
-            "hub": "0xaA849CAC4FA86f6b7484503f3c7a314772AED6d4",
+            "hub": "0xE043daF4cC8ae2c720ef95fc82574a37a429c40A",
             "rpc": "https://sepolia.base.org",
         }
     },
     "testnet": {
         "base:84532": {
-            "hub": "0xCca0eA14540588A09c85cD6A6Fc53eA3A7010692",
+            "hub": "0xf21CE8f8b01548D97DCFb36869f1ccB0814a4e05",
             "rpc": "https://sepolia.base.org",
         }
     },
