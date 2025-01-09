@@ -25,11 +25,13 @@ from dkg.module import Module
 from dkg.types import NQuads
 from dkg.utils.decorators import retry
 from dkg.utils.node_request import NodeRequest, validate_operation_status
+from dkg.constants import Operations
 
 
 class Graph(Module):
-    def __init__(self, manager: DefaultRequestManager):
+    def __init__(self, manager: DefaultRequestManager, input_service):
         self.manager = manager
+        self.input_service = input_service
 
     _query = Method(NodeRequest.query)
     _get_operation_result = Method(NodeRequest.get_operation_result)
@@ -37,28 +39,43 @@ class Graph(Module):
     def query(
         self,
         query: str,
-        repository: str | None = None,
-        paranet_ual: str | None = None,
+        options: dict = {},
     ) -> NQuads:
+        arguments = self.input_service.get_query_arguments(options)
+
+        max_number_of_retries = arguments.get("max_number_of_retries")
+        frequency = arguments.get("frequency")
+        paranet_ual = arguments.get("paranet_ual")
+        repository = arguments.get("repository")
+
         parsed_query = parseQuery(query)
         query_type = parsed_query[1].name.replace("Query", "").upper()
 
-        operation_id: NodeResponseDict = self._query(query, query_type, repository, paranet_ual)[
-            "operationId"
-        ]
-        operation_result = self.get_operation_result(operation_id, "query")
+        operation_id: NodeResponseDict = self._query(
+            query, query_type, repository, paranet_ual
+        )["operationId"]
+        operation_result = self.get_operation_result(
+            operation_id, Operations.QUERY.value, max_number_of_retries, frequency
+        )
 
         return operation_result["data"]
 
-    @retry(catch=OperationNotFinished, max_retries=5, base_delay=1, backoff=2)
     def get_operation_result(
-        self, operation_id: str, operation: str
-    ) -> NodeResponseDict:
-        operation_result = self._get_operation_result(
-            operation_id=operation_id,
-            operation=operation,
+        self, operation_id: str, operation: str, max_retries: int, frequency: int
+    ):
+        @retry(
+            catch=OperationNotFinished,
+            max_retries=max_retries,
+            base_delay=frequency,
+            backoff=2,
         )
+        def retry_get_operation_result():
+            operation_result = self._get_operation_result(
+                operation_id=operation_id,
+                operation=operation,
+            )
+            validate_operation_status(operation_result)
 
-        validate_operation_status(operation_result)
+            return operation_result
 
-        return operation_result
+        return retry_get_operation_result()

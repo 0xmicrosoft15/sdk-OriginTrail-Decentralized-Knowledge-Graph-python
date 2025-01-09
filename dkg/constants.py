@@ -23,6 +23,16 @@ PRIVATE_ASSERTION_PREDICATE = (
     "https://ontology.origintrail.io/dkg/1.0#privateMerkleRoot"
 )
 
+PRIVATE_HASH_SUBJECT_PREFIX = "https://ontology.origintrail.io/dkg/1.0#metadata-hash:"
+
+PRIVATE_RESOURCE_PREDICATE = (
+    "https://ontology.origintrail.io/dkg/1.0#representsPrivateResource"
+)
+
+CHUNK_BYTE_SIZE = 32
+
+MAX_FILE_SIZE = 10000000
+
 
 class DefaultParameters(Enum):
     ENVIRONMENT: str = "testnet"
@@ -36,14 +46,13 @@ class DefaultParameters(Enum):
     STATE: None = None
     INCLUDE_METADATA: bool = False
     CONTENT_TYPE: str = "all"
-    GRAPH_LOCATION: str = "LOCAL_KG"
-    GRAPH_STATE: str = "CURRENT"
     HANDLE_NOT_MINED_ERROR: bool = False
     SIMULATE_TXS: bool = False
     FORCE_REPLACE_TXS: bool = False
     GAS_LIMIT_MULTIPLIER: int = 1
     PARANET_UAL: None = None
     GET_SUBJECT_UAL: bool = False
+    REPOSITORY: str = "dkg"
 
 
 class OutputTypes(Enum):
@@ -86,7 +95,6 @@ BLOCKCHAINS = {
     "mainnet": {},
 }
 
-DEFAULT_HASH_FUNCTION_ID = 1
 DEFAULT_PROXIMITY_SCORE_FUNCTIONS_PAIR_IDS = {
     "development": {"hardhat1:31337": 2, "hardhat2:31337": 2, "otp:2043": 2},
     "devnet": {

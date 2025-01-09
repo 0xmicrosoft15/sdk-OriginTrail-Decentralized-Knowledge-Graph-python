@@ -69,19 +69,22 @@ divider()
 start_time = time.time()
 create_asset_result = dkg.asset.create(
     content=content,
-    epochs_num=2,
-    minimum_number_of_finalization_confirmations=3,
-    minimum_number_of_node_replications=1,
-    token_amount=100,
+    options={
+        "epochs_num": 2,
+        "minimum_number_of_finalization_confirmations": 3,
+        "minimum_number_of_node_replications": 1,
+        "token_amount": 100,
+    },
 )
 print(f"======================== ASSET CREATED in {time.time() - start_time} seconds")
 print_json(create_asset_result)
 
 divider()
 
-get_v8_test = dkg.asset.get(
-    "did:dkg:otp:20430/0xb4c24fc54bc811c2659c477b65da8648e499fd39/2353"
-)
+start_time = time.time()
+get_v8_test = dkg.asset.get(create_asset_result.get("UAL"))
+print(f"======================== ASSET GET in {time.time() - start_time} seconds")
+print_json(get_v8_test)
 
 divider()
 

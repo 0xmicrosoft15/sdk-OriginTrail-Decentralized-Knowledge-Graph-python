@@ -18,7 +18,6 @@
 import json
 import time
 import math
-import re
 import hashlib
 from typing import Literal, Type, Dict, Optional, Any
 from pyld import jsonld
@@ -36,28 +35,20 @@ from dkg.constants import (
     DEFAULT_HASH_FUNCTION_ID,
     DEFAULT_PROXIMITY_SCORE_FUNCTIONS_PAIR_IDS,
     PRIVATE_ASSERTION_PREDICATE,
-    PRIVATE_CURRENT_REPOSITORY,
-    PRIVATE_HISTORICAL_REPOSITORY,
     PRIVATE_RESOURCE_PREDICATE,
     PRIVATE_HASH_SUBJECT_PREFIX,
     CHUNK_BYTE_SIZE,
     MAX_FILE_SIZE,
+    DEFAULT_RDF_FORMAT,
     Operations,
-    DefaultParameters,
     OutputTypes,
 )
 from dkg.dataclasses import (
     BidSuggestionRange,
-    KnowledgeAssetContentVisibility,
-    KnowledgeAssetEnumStates,
     NodeResponseDict,
 )
 from dkg.exceptions import (
-    DatasetOutputFormatNotSupported,
-    InvalidKnowledgeAsset,
-    InvalidStateOption,
     InvalidTokenAmount,
-    MissingKnowledgeAssetState,
     OperationNotFinished,
 )
 from dkg.manager import DefaultRequestManager
@@ -82,10 +73,7 @@ from dkg.utils.node_request import (
     StoreTypes,
     validate_operation_status,
 )
-from dkg.utils.rdf import (
-    format_content,
-    normalize_dataset,
-)
+from dkg.utils.rdf import format_content
 from dkg.utils.ual import format_ual, parse_ual
 import dkg.utils.knowledge_collection_tools as kc_tools
 import dkg.utils.knowledge_asset_tools as ka_tools
@@ -451,11 +439,23 @@ class KnowledgeAsset(Module):
     def create(
         self,
         content: dict[Literal["public", "private"], JSONLD],
-        epochs_num: int,
-        minimum_number_of_finalization_confirmations: int,
-        minimum_number_of_node_replications: int,
-        token_amount: Wei | None = None,
+        options: dict = {},
     ) -> dict[str, UAL | HexStr | dict[str, dict[str, str] | TxReceipt]]:
+        arguments = self.input_service.get_asset_create_arguments(options)
+
+        max_number_of_retries = arguments.get("max_number_of_retries")
+        frequency = arguments.get("frequency")
+        epochs_num = arguments.get("epochs_num")
+        hash_function_id = arguments.get("hash_function_id")
+        immutable = arguments.get("immutable")
+        token_amount = arguments.get("token_amount")
+        payer = arguments.get("payer")
+        minimum_number_of_finalization_confirmations = arguments.get(
+            "minimum_number_of_finalization_confirmations"
+        )
+        minimum_number_of_node_replications = arguments.get(
+            "minimum_number_of_node_replications"
+        )
         blockchain_id = self.manager.blockchain_provider.blockchain_id
 
         dataset = {}
@@ -573,12 +573,14 @@ class KnowledgeAsset(Module):
             dataset_root,
             dataset,
             blockchain_id,
-            DEFAULT_HASH_FUNCTION_ID,
+            hash_function_id,
             minimum_number_of_node_replications,
         )["operationId"]
         publish_operation_result = self.get_operation_result(
-            Operations.PUBLISH.value,
             publish_operation_id,
+            Operations.PUBLISH.value,
+            max_number_of_retries,
+            frequency,
         )
 
         if publish_operation_result.get(
@@ -660,8 +662,8 @@ class KnowledgeAsset(Module):
                 "byteSize": dataset_size,
                 "epochs": epochs_num,
                 "tokenAmount": estimated_publishing_cost,
-                "isImmutable": DefaultParameters.IMMUTABLE.value,
-                "paymaster": DefaultParameters.ZERO_ADDRESS.value,
+                "isImmutable": immutable,
+                "paymaster": payer,
                 "publisherNodeIdentityId": publisher_node_identity_id,
                 "publisherNodeR": publisher_node_r,
                 "publisherNodeVS": publisher_node_vs,
@@ -914,23 +916,19 @@ class KnowledgeAsset(Module):
     _get = Method(NodeRequest.get)
     _query = Method(NodeRequest.query)
 
-    def get(self, ual: UAL, options=None) -> dict:
-        if options is None:
-            options = {}
-
+    def get(self, ual: UAL, options: dict = {}) -> dict:
         arguments = self.input_service.get_asset_get_arguments(options)
 
-        max_number_of_retries = arguments["max_number_of_retries"]
-        frequency = arguments["frequency"]
-        state = arguments["state"]
-        include_metadata = arguments["include_metadata"]
-        content_type = arguments["content_type"]
-        validate = arguments["validate"]
-        output_format = arguments["output_format"]
-        auth_token = arguments["auth_token"]
-        hash_function_id = arguments["hash_function_id"]
-        paranet_ual = arguments["paranet_ual"]
-        subject_ual = arguments["subject_ual"]
+        max_number_of_retries = arguments.get("max_number_of_retries")
+        frequency = arguments.get("frequency")
+        state = arguments.get("state")
+        include_metadata = arguments.get("include_metadata")
+        content_type = arguments.get("content_type")
+        validate = arguments.get("validate")
+        output_format = arguments.get("output_format")
+        hash_function_id = arguments.get("hash_function_id")
+        paranet_ual = arguments.get("paranet_ual")
+        subject_ual = arguments.get("subject_ual")
 
         ual_with_state = f"{ual}:{state}" if state else ual
         get_public_operation_id: NodeResponseDict = self._get(
@@ -943,7 +941,10 @@ class KnowledgeAsset(Module):
         )["operationId"]
 
         get_public_operation_result = self.get_operation_result(
-            get_public_operation_id, "get", max_number_of_retries, frequency
+            get_public_operation_id,
+            Operations.GET.value,
+            max_number_of_retries,
+            frequency,
         )
 
         if subject_ual:
@@ -971,7 +972,7 @@ class KnowledgeAsset(Module):
                 },
             }
         metadata = get_public_operation_result.get("data")
-        assertion = get_public_operation_result.get("data").get("assertion", None)
+        assertion = get_public_operation_result.get("data", {}).get("assertion", None)
 
         if not assertion:
             if get_public_operation_result.get("status") != "FAILED":
@@ -993,15 +994,15 @@ class KnowledgeAsset(Module):
             is_valid = True  # #TODO: Implement assertion validation logic
             if not is_valid:
                 get_public_operation_result["data"] = {
-                    "errorType": "DKG_CLIENT_ERROR",
-                    "errorMessage": "Calculated root hashes don't match!",
+                    "error_type": "DKG_CLIENT_ERROR",
+                    "error_message": "Calculated root hashes don't match!",
                 }
 
         formatted_assertion = "\n".join(
             assertion.get("public", [])
             + (
-                assertion.get("private", [])
-                if isinstance(assertion.get("private", []), list)
+                assertion.get("private")
+                if isinstance(assertion.get("private"), list)
                 else []
             )
         )
@@ -1015,11 +1016,11 @@ class KnowledgeAsset(Module):
 
         if output_format == OutputTypes.NQUADS.value:
             formatted_assertion = self.to_nquads(
-                formatted_assertion, "application/n-quads"
+                formatted_assertion, DEFAULT_RDF_FORMAT
             )
             if include_metadata:
                 formatted_metadata = self.to_nquads(
-                    "\n".join(metadata), "application/n-quads"
+                    "\n".join(metadata), DEFAULT_RDF_FORMAT
                 )
 
         result = {
@@ -1165,7 +1166,7 @@ class KnowledgeAsset(Module):
             base_delay=frequency,
             backoff=2,
         )
-        def _get_operation_results_():
+        def retry_get_operation_result():
             operation_result = self._get_operation_result(
                 operation_id=operation_id,
                 operation=operation,
@@ -1174,7 +1175,7 @@ class KnowledgeAsset(Module):
 
             return operation_result
 
-        return _get_operation_results_()
+        return retry_get_operation_result()
 
     def to_jsonld(self, nquads: str):
         options = {
@@ -1201,17 +1202,3 @@ class KnowledgeAsset(Module):
 
         except Exception as e:
             raise ValueError(f"Error processing content: {e}")
-
-    def get_operation_status_object(self, operation_result, operation_id):
-        if operation_result.get("data", {}).get("errorType"):
-            operation_data = {
-                "status": operation_result["status"],
-                **operation_result["data"],
-            }
-        else:
-            operation_data = {"status": operation_result["status"]}
-
-        return {
-            "operationId": operation_id,
-            **operation_data,
-        }
