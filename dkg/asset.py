@@ -647,7 +647,12 @@ class KnowledgeAsset(Module):
                 }
 
         formatted_assertion = "\n".join(
-            assertion.get("public", []) + assertion.get("private", [])
+            assertion.get("public", [])
+            + (
+                assertion.get("private", [])
+                if isinstance(assertion.get("private", []), list)
+                else []
+            )
         )
 
         formatted_metadata = None
