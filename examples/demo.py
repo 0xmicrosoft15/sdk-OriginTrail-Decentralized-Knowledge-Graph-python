@@ -91,9 +91,9 @@ print_json(create_asset_result)
 divider()
 
 start_time = time.time()
-get_v8_test = dkg.asset.get(create_asset_result.get("UAL"))
+get_result = dkg.asset.get(create_asset_result.get("UAL"))
 print(f"======================== ASSET GET in {time.time() - start_time} seconds")
-print_json(get_v8_test)
+print_json(get_result)
 
 divider()
 
