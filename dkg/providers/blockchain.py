@@ -49,7 +49,6 @@ class BlockchainProvider:
         environment: Environment,
         blockchain_id: str,
         rpc_uri: URI | None = None,
-        private_key: DataHexStr | None = None,
         gas_price: Wei | None = None,
         verify: bool = True,
     ):
@@ -106,11 +105,8 @@ class BlockchainProvider:
         }
         self._init_contracts()
 
-        if (
-            private_key is not None
-            or (private_key_env := os.environ.get("PRIVATE_KEY", None)) is not None
-        ):
-            self.set_account(private_key or private_key_env)
+        if private_key := os.environ.get("PRIVATE_KEY"):
+            self.set_account(private_key)
 
     def make_json_rpc_request(self, endpoint: str, args: dict[str, Any] = {}) -> Any:
         web3_method = getattr(self.w3.eth, endpoint)
@@ -260,10 +256,13 @@ class BlockchainProvider:
         ):
             self.contracts[contract] = self.w3.eth.contract(
                 address=(
-                    self.contracts["Hub"].functions.getContractAddress(contract).call()
-                    if not contract.endswith("AssetStorage")
-                    else self.contracts["Hub"]
+                    self.contracts["Hub"]
                     .functions.getAssetStorageAddress(contract)
+                    .call()
+                    if contract.endswith("AssetStorage")
+                    or contract.endswith("CollectionStorage")
+                    else self.contracts["Hub"]
+                    .functions.getContractAddress(contract)
                     .call()
                 ),
                 abi=self.abi[contract],

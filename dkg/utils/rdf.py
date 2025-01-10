@@ -17,7 +17,11 @@
 
 from typing import Literal
 
-from dkg.constants import PRIVATE_ASSERTION_PREDICATE
+from dkg.constants import (
+    PRIVATE_ASSERTION_PREDICATE,
+    DEFAULT_RDF_FORMAT,
+    DEFAULT_CANON_ALGORITHM,
+)
 from dkg.exceptions import DatasetInputFormatNotSupported, InvalidDataset
 from dkg.types import JSONLD, HexStr, NQuads
 from dkg.utils.merkle import MerkleTree, hash_assertion_with_indexes
@@ -27,10 +31,12 @@ from pyld import jsonld
 def normalize_dataset(
     dataset: JSONLD | NQuads,
     input_format: Literal["JSON-LD", "N-Quads"] = "JSON-LD",
+    output_format=DEFAULT_RDF_FORMAT,
+    algorithm=DEFAULT_CANON_ALGORITHM,
 ) -> NQuads:
     normalization_options = {
-        "algorithm": "URDNA2015",
-        "format": "application/n-quads",
+        "algorithm": algorithm,
+        "format": output_format,
     }
 
     match input_format.lower():

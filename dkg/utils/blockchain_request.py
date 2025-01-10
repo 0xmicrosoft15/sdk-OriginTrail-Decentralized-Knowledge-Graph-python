@@ -16,7 +16,7 @@
 # under the License.
 
 from dataclasses import dataclass, field
-from typing import Type
+from typing import Type, Dict, Any
 
 from dkg.dataclasses import ParanetIncentivizationType
 from dkg.types import Address, HexStr, Wei
@@ -52,6 +52,18 @@ class ContractCall(ContractInteraction):
     pass
 
 
+@dataclass
+class KnowledgeCollectionResult:
+    knowledge_collection_id: int
+    receipt: Dict[str, Any]
+
+
+@dataclass
+class AllowanceResult:
+    allowance_increased: bool
+    allowance_gap: int
+
+
 class BlockchainRequest:
     chain_id = JSONRPCRequest("chain_id")
     get_block = JSONRPCRequest("get_block", args={"block_identifier": str | int})
@@ -65,6 +77,30 @@ class BlockchainRequest:
         contract="Hub",
         function="getAssetStorageAddress",
         args={"assetStorageName": str},
+    )
+
+    key_is_operational_wallet = ContractCall(
+        contract="IdentityStorage",
+        function="keyHasPurpose",
+        args={"identityId": int, "_key": Address, "_purpose": int},
+    )
+
+    time_until_next_epoch = ContractCall(
+        contract="Chronos",
+        function="timeUntilNextEpoch",
+        args={},
+    )
+
+    epoch_length = ContractCall(
+        contract="Chronos",
+        function="epochLength",
+        args={},
+    )
+
+    get_stake_weighted_average_ask = ContractCall(
+        contract="AskStorage",
+        function="getStakeWeightedAverageAsk",
+        args={},
     )
 
     allowance = ContractCall(
@@ -83,11 +119,6 @@ class BlockchainRequest:
         args={"spender": Address, "subtractedValue": Wei},
     )
 
-    create_asset = ContractTransaction(
-        contract="ContentAsset",
-        function="createAsset",
-        args={"args": dict[str, bytes | int | Wei | bool]},
-    )
     burn_asset = ContractTransaction(
         contract="ContentAsset",
         function="burnAsset",
@@ -97,11 +128,6 @@ class BlockchainRequest:
         contract="ContentAsset",
         function="extendAssetStoringPeriod",
         args={"tokenId": int, "epochsNumber": int, "tokenAmount": int},
-    )
-    increase_asset_token_amount = ContractTransaction(
-        contract="ContentAsset",
-        function="increaseAssetTokenAmount",
-        args={"tokenId": int, "tokenAmount": int},
     )
 
     transfer_asset = ContractTransaction(
@@ -113,11 +139,6 @@ class BlockchainRequest:
         contract="ContentAssetStorage",
         function="getAssertionIds",
         args={"tokenId": int},
-    )
-    get_assertion_id_by_index = ContractCall(
-        contract="ContentAssetStorage",
-        function="getAssertionIdByIndex",
-        args={"tokenId": int, "index": int},
     )
     get_latest_assertion_id = ContractCall(
         contract="ContentAssetStorage",
@@ -134,12 +155,6 @@ class BlockchainRequest:
         contract="UnfinalizedStateStorage",
         function="getUnfinalizedState",
         args={"tokenId": int},
-    )
-
-    get_service_agreement_data = ContractCall(
-        contract="ServiceAgreementStorageProxy",
-        function="getAgreementData",
-        args={"agreementId": bytes | HexStr},
     )
 
     get_assertion_size = ContractCall(
@@ -394,4 +409,35 @@ class BlockchainRequest:
     claim_incentivization_proposal_voter_reward = ContractTransaction(
         function="claimIncentivizationProposalVoterReward",
         args={},
+    )
+
+    create_knowledge_collection = ContractTransaction(
+        contract="KnowledgeCollection",
+        function="createKnowledgeCollection",
+        args={
+            "publishOperationId": str,
+            "merkleRoot": bytes,
+            "knowledgeAssetsAmount": int,
+            "byteSize": int,
+            "epochs": int,
+            "tokenAmount": int,
+            "isImmutable": bool,
+            "paymaster": Address,
+            "publisherNodeIdentityId": int,
+            "publisherNodeR": bytes,
+            "publisherNodeVS": bytes,
+            "identityIds": list[int],
+            "r": list[bytes],
+            "vs": list[bytes],
+        },
+    )
+
+    mint_knowledge_asset = ContractTransaction(
+        contract="Paranet",
+        function="mintKnowledgeAsset",
+        args={
+            "paranetKAStorageContract": Address,
+            "paranetKATokenId": int,
+            "knowledgeAssetArgs": dict,
+        },
     )
