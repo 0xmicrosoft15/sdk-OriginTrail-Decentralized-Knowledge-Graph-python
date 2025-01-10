@@ -70,6 +70,10 @@ class DKG(Module):
         }
         self._attach_modules(modules)
 
+        # Backwards compatibility
+        self.graph.get = self.asset.get.__get__(self.asset)
+        self.graph.create = self.asset.create.__get__(self.asset)
+
     def initialize_services(self, manager):
         self.input_service = InputService(manager)
 
