@@ -21,7 +21,7 @@ from typing import Any, Type
 
 from dkg.dataclasses import BidSuggestionRange, HTTPRequestMethod
 from dkg.exceptions import OperationFailed, OperationNotFinished
-from dkg.types import AutoStrEnumUpperCase, UAL, Address, DataHexStr, NQuads
+from dkg.types import AutoStrEnumUpperCase, UAL, Address, DataHexStr
 
 
 @dataclass
@@ -52,11 +52,6 @@ class NodeRequest:
         path="{operation}/{operation_id}",
     )
 
-    local_store = NodeCall(
-        method=HTTPRequestMethod.POST,
-        path="local-store",
-        data=list[dict[str, str | Address | NQuads]],
-    )
     publish = NodeCall(
         method=HTTPRequestMethod.POST,
         path="publish",

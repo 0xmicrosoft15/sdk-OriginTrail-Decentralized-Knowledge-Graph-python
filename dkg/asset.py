@@ -17,13 +17,11 @@
 
 import json
 import time
-import math
 import hashlib
-from typing import Literal, Type, Dict, Optional, Any
+from typing import Literal, Dict, Optional, Any
 from pyld import jsonld
 from web3 import Web3
 from web3.constants import ADDRESS_ZERO
-from web3.exceptions import ContractLogicError
 from web3.types import TxReceipt
 from itertools import chain
 from eth_abi.packed import encode_packed
@@ -32,7 +30,6 @@ from eth_account import Account
 from hexbytes import HexBytes
 
 from dkg.constants import (
-    DEFAULT_PROXIMITY_SCORE_FUNCTIONS_PAIR_IDS,
     PRIVATE_ASSERTION_PREDICATE,
     PRIVATE_RESOURCE_PREDICATE,
     PRIVATE_HASH_SUBJECT_PREFIX,
@@ -49,32 +46,23 @@ from dkg.dataclasses import (
     NodeResponseDict,
 )
 from dkg.exceptions import (
-    InvalidTokenAmount,
     OperationNotFinished,
 )
 from dkg.manager import DefaultRequestManager
 from dkg.method import Method
 from dkg.module import Module
-from dkg.types import JSONLD, UAL, Address, AgreementData, HexStr, Wei
+from dkg.types import JSONLD, UAL, Address, HexStr, Wei
 from dkg.utils.blockchain_request import (
     BlockchainRequest,
     KnowledgeCollectionResult,
     AllowanceResult,
 )
 from dkg.utils.decorators import retry
-from dkg.utils.merkle import MerkleTree, hash_assertion_with_indexes
-from dkg.utils.metadata import (
-    generate_agreement_id,
-    generate_assertion_metadata,
-    generate_keyword,
-)
 from dkg.utils.node_request import (
     NodeRequest,
     OperationStatus,
-    StoreTypes,
     validate_operation_status,
 )
-from dkg.utils.rdf import format_content
 from dkg.utils.ual import format_ual, parse_ual
 import dkg.utils.knowledge_collection_tools as kc_tools
 import dkg.utils.knowledge_asset_tools as ka_tools
@@ -152,62 +140,10 @@ class KnowledgeAsset(Module):
 
     _get_contract_address = Method(BlockchainRequest.get_contract_address)
     _get_current_allowance = Method(BlockchainRequest.allowance)
-
-    def get_current_allowance(self, spender: Address | None = None) -> Wei:
-        if spender is None:
-            spender = self._get_contract_address("ServiceAgreementV1")
-
-        return int(
-            self._get_current_allowance(
-                self.manager.blockchain_provider.account.address, spender
-            )
-        )
-
     _increase_allowance = Method(BlockchainRequest.increase_allowance)
     _decrease_allowance = Method(BlockchainRequest.decrease_allowance)
-
-    def set_allowance(self, token_amount: Wei, spender: Address | None = None) -> Wei:
-        if spender is None:
-            spender = self._get_contract_address("ServiceAgreementV1")
-
-        current_allowance = self.get_current_allowance(spender)
-
-        allowance_difference = token_amount - current_allowance
-
-        if allowance_difference > 0:
-            self._increase_allowance(spender, allowance_difference)
-        elif allowance_difference < 0:
-            self._decrease_allowance(spender, -allowance_difference)
-
-        return allowance_difference
-
-    def increase_allowance(
-        self, token_amount: Wei, spender: Address | None = None
-    ) -> Wei:
-        if spender is None:
-            spender = self._get_contract_address("ServiceAgreementV1")
-
-        self._increase_allowance(spender, token_amount)
-
-        return token_amount
-
-    def decrease_allowance(
-        self, token_amount: Wei, spender: Address | None = None
-    ) -> Wei:
-        if spender is None:
-            spender = self._get_contract_address("ServiceAgreementV1")
-
-        current_allowance = self.get_current_allowance(spender)
-        subtracted_value = min(token_amount, current_allowance)
-
-        self._decrease_allowance(spender, subtracted_value)
-
-        return subtracted_value
-
     _chain_id = Method(BlockchainRequest.chain_id)
-
     _get_asset_storage_address = Method(BlockchainRequest.get_asset_storage_address)
-    _create = Method(BlockchainRequest.create_asset)
     _mint_paranet_knowledge_asset = Method(BlockchainRequest.mint_knowledge_asset)
     _key_is_operational_wallet = Method(BlockchainRequest.key_is_operational_wallet)
     _time_until_next_epoch = Method(BlockchainRequest.time_until_next_epoch)
@@ -216,13 +152,10 @@ class KnowledgeAsset(Module):
         BlockchainRequest.get_stake_weighted_average_ask
     )
     _get_bid_suggestion = Method(NodeRequest.bid_suggestion)
-    _local_store = Method(NodeRequest.local_store)
     _publish = Method(NodeRequest.publish)
     _finality_status = Method(NodeRequest.finality_status)
-
     _create_knowledge_collection = Method(BlockchainRequest.create_knowledge_collection)
     _mint_knowledge_asset = Method(BlockchainRequest.mint_knowledge_asset)
-    _decrease_allowance = Method(BlockchainRequest.decrease_allowance)
 
     def get_operation_status_object(
         self, operation_result: Dict[str, Any], operation_id: str
@@ -716,133 +649,6 @@ class KnowledgeAsset(Module):
             )
         )
 
-    def local_store(
-        self,
-        content: dict[Literal["public", "private"], JSONLD],
-        epochs_number: int,
-        token_amount: Wei | None = None,
-        immutable: bool = False,
-        content_type: Literal["JSON-LD", "N-Quads"] = "JSON-LD",
-        paranet_ual: UAL | None = None,
-    ) -> dict[str, UAL | HexStr | dict[str, dict[str, str] | TxReceipt]]:
-        blockchain_id = self.manager.blockchain_provider.blockchain_id
-        assertions = format_content(content, content_type)
-
-        public_assertion_id = MerkleTree(
-            hash_assertion_with_indexes(assertions["public"]),
-            sort_pairs=True,
-        ).root
-        public_assertion_metadata = generate_assertion_metadata(assertions["public"])
-
-        content_asset_storage_address = self._get_asset_storage_address(
-            "ContentAssetStorage"
-        )
-
-        if token_amount is None:
-            token_amount = int(
-                self._get_bid_suggestion(
-                    blockchain_id,
-                    epochs_number,
-                    public_assertion_metadata["size"],
-                    content_asset_storage_address,
-                    public_assertion_id,
-                    DefaultParameters.HASH_FUNCTION_ID.value,
-                    token_amount or BidSuggestionRange.LOW,
-                )["bidSuggestion"]
-            )
-
-        current_allowance = self.get_current_allowance()
-        if is_allowance_increased := current_allowance < token_amount:
-            self.increase_allowance(token_amount)
-
-        result = {"publicAssertionId": public_assertion_id, "operation": {}}
-
-        try:
-            receipt: TxReceipt = self._create(
-                {
-                    "assertionId": Web3.to_bytes(hexstr=public_assertion_id),
-                    "size": public_assertion_metadata["size"],
-                    "triplesNumber": public_assertion_metadata["triples_number"],
-                    "chunksNumber": public_assertion_metadata["chunks_number"],
-                    "tokenAmount": token_amount,
-                    "epochsNumber": epochs_number,
-                    "scoreFunctionId": DEFAULT_PROXIMITY_SCORE_FUNCTIONS_PAIR_IDS[
-                        self.manager.blockchain_provider.environment
-                    ][blockchain_id],
-                    "immutable_": immutable,
-                }
-            )
-        except ContractLogicError as err:
-            if is_allowance_increased:
-                self.decrease_allowance(token_amount)
-            raise err
-
-        events = self.manager.blockchain_provider.decode_logs_event(
-            receipt,
-            "ContentAsset",
-            "AssetMinted",
-        )
-        token_id = events[0].args["tokenId"]
-
-        result["UAL"] = format_ual(
-            blockchain_id, content_asset_storage_address, token_id
-        )
-        result["operation"]["mintKnowledgeAsset"] = json.loads(Web3.to_json(receipt))
-
-        assertions_list = [
-            {
-                "blockchain": blockchain_id,
-                "contract": content_asset_storage_address,
-                "tokenId": token_id,
-                "assertionId": public_assertion_id,
-                "assertion": assertions["public"],
-                "storeType": StoreTypes.TRIPLE_PARANET,
-                "paranetUAL": paranet_ual,
-            }
-        ]
-
-        if content.get("private", None):
-            assertions_list.append(
-                {
-                    "blockchain": blockchain_id,
-                    "contract": content_asset_storage_address,
-                    "tokenId": token_id,
-                    "assertionId": MerkleTree(
-                        hash_assertion_with_indexes(assertions["private"]),
-                        sort_pairs=True,
-                    ).root,
-                    "assertion": assertions["private"],
-                    "storeType": StoreTypes.TRIPLE_PARANET,
-                    "paranetUAL": paranet_ual,
-                }
-            )
-
-        operation_id = self._local_store(assertions_list)["operationId"]
-        operation_result = self.get_operation_result(operation_id, "local-store")
-
-        result["operation"]["localStore"] = {
-            "operationId": operation_id,
-            "status": operation_result["status"],
-        }
-
-        if operation_result["status"] == OperationStatus.COMPLETED:
-            parsed_paranet_ual = parse_ual(paranet_ual)
-            paranet_knowledge_asset_storage, paranet_knowledge_asset_token_id = (
-                parsed_paranet_ual["contract_address"],
-                parsed_paranet_ual["token_id"],
-            )
-
-            receipt: TxReceipt = self._submit_knowledge_asset(
-                paranet_knowledge_asset_storage,
-                paranet_knowledge_asset_token_id,
-                content_asset_storage_address,
-                token_id,
-            )
-
-            result["operation"]["submitToParanet"] = json.loads(Web3.to_json(receipt))
-
-        return result
-
     _submit_knowledge_asset = Method(BlockchainRequest.submit_knowledge_asset)
 
     def submit_to_paranet(
@@ -1081,79 +887,12 @@ class KnowledgeAsset(Module):
 
     _get_block = Method(BlockchainRequest.get_block)
 
-    _get_service_agreement_data = Method(BlockchainRequest.get_service_agreement_data)
     _get_assertion_size = Method(BlockchainRequest.get_assertion_size)
-    _add_tokens = Method(BlockchainRequest.increase_asset_token_amount)
-
-    def add_tokens(
-        self,
-        ual: UAL,
-        token_amount: Wei | None = None,
-    ) -> dict[str, UAL | TxReceipt]:
-        parsed_ual = parse_ual(ual)
-        blockchain_id, content_asset_storage_address, token_id = (
-            parsed_ual["blockchain"],
-            parsed_ual["contract_address"],
-            parsed_ual["token_id"],
-        )
-
-        if token_amount is None:
-            agreement_id = self.get_agreement_id(
-                content_asset_storage_address, token_id
-            )
-            # TODO: Dynamic types for namedtuples?
-            agreement_data: Type[AgreementData] = self._get_service_agreement_data(
-                agreement_id
-            )
-
-            timestamp_now = self._get_block("latest")["timestamp"]
-            current_epoch = math.floor(
-                (timestamp_now - agreement_data.startTime) / agreement_data.epochLength
-            )
-            epochs_left = agreement_data.epochsNumber - current_epoch
-
-            latest_finalized_state = self._get_latest_assertion_id(token_id)
-            latest_finalized_state_size = self._get_assertion_size(
-                latest_finalized_state
-            )
-
-            token_amount = int(
-                self._get_bid_suggestion(
-                    blockchain_id,
-                    epochs_left,
-                    latest_finalized_state_size,
-                    content_asset_storage_address,
-                    latest_finalized_state,
-                    DefaultParameters.HASH_FUNCTION_ID.value,
-                    token_amount or BidSuggestionRange.LOW,
-                )["bidSuggestion"]
-            ) - sum(agreement_data.tokensInfo)
-
-            if token_amount <= 0:
-                raise InvalidTokenAmount(
-                    "Token amount is bigger than default suggested amount, "
-                    "please specify exact token_amount if you still want to add "
-                    "more tokens!"
-                )
-
-        receipt: TxReceipt = self._add_tokens(token_id, token_amount)
-
-        return {
-            "UAL": ual,
-            "operation": json.loads(Web3.to_json(receipt)),
-        }
 
     def get_owner(self, ual: UAL) -> Address:
         token_id = parse_ual(ual)["token_id"]
 
         return self._owner(token_id)
-
-    _get_assertion_id_by_index = Method(BlockchainRequest.get_assertion_id_by_index)
-
-    def get_agreement_id(self, contract_address: Address, token_id: int) -> HexStr:
-        first_assertion_id = self._get_assertion_id_by_index(token_id, 0)
-        keyword = generate_keyword(contract_address, first_assertion_id)
-        return generate_agreement_id(contract_address, token_id, keyword)
 
     _get_operation_result = Method(NodeRequest.get_operation_result)
 

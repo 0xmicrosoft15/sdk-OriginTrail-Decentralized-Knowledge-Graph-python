@@ -119,11 +119,6 @@ class BlockchainRequest:
         args={"spender": Address, "subtractedValue": Wei},
     )
 
-    create_asset = ContractTransaction(
-        contract="ContentAsset",
-        function="createAsset",
-        args={"args": dict[str, bytes | int | Wei | bool]},
-    )
     burn_asset = ContractTransaction(
         contract="ContentAsset",
         function="burnAsset",
@@ -133,11 +128,6 @@ class BlockchainRequest:
         contract="ContentAsset",
         function="extendAssetStoringPeriod",
         args={"tokenId": int, "epochsNumber": int, "tokenAmount": int},
-    )
-    increase_asset_token_amount = ContractTransaction(
-        contract="ContentAsset",
-        function="increaseAssetTokenAmount",
-        args={"tokenId": int, "tokenAmount": int},
     )
 
     transfer_asset = ContractTransaction(
@@ -149,11 +139,6 @@ class BlockchainRequest:
         contract="ContentAssetStorage",
         function="getAssertionIds",
         args={"tokenId": int},
-    )
-    get_assertion_id_by_index = ContractCall(
-        contract="ContentAssetStorage",
-        function="getAssertionIdByIndex",
-        args={"tokenId": int, "index": int},
     )
     get_latest_assertion_id = ContractCall(
         contract="ContentAssetStorage",
@@ -170,12 +155,6 @@ class BlockchainRequest:
         contract="UnfinalizedStateStorage",
         function="getUnfinalizedState",
         args={"tokenId": int},
-    )
-
-    get_service_agreement_data = ContractCall(
-        contract="ServiceAgreementStorageProxy",
-        function="getAgreementData",
-        args={"agreementId": bytes | HexStr},
     )
 
     get_assertion_size = ContractCall(
