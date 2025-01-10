@@ -76,6 +76,9 @@ class Blockchains(Enum):
     BASE_TESTNET: str = "base:84532"
     GNOSIS_TESTNET: str = "gnosis:10200"
     NEUROWEB_TESTNET: str = "otp:20430"
+    BASE_MAINNET: str = "base:8453"
+    GNOSIS_MAINNET: str = "gnosis:100"
+    NEUROWEB_MAINNET: str = "otp:2043"
 
 
 ZERO_ADDRESS = "0x0000000000000000000000000000000000000000"
@@ -110,7 +113,20 @@ BLOCKCHAINS = {
             "rpc": "https://lofar-testnet.origin-trail.network",
         },
     },
-    "mainnet": {},
+    "mainnet": {
+        "base:8453": {
+            "hub": "0x99Aa571fD5e681c2D27ee08A7b7989DB02541d13",
+            "rpc": "https://mainnet.base.org",
+        },
+        "gnosis:100": {
+            "hub": "0x882D0BF07F956b1b94BBfe9E77F47c6fc7D4EC8f",
+            "rpc": "https://rpc.gnosischain.com/",
+        },
+        "otp:2043": {
+            "hub": "0x0957e25BD33034948abc28204ddA54b6E1142D6F",
+            "rpc": "https://astrosat-parachain-rpc.origin-trail.network",
+        },
+    },
 }
 
 DEFAULT_PROXIMITY_SCORE_FUNCTIONS_PAIR_IDS = {
