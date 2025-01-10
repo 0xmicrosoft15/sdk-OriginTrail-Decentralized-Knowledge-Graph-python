@@ -42,21 +42,29 @@ def print_json(json_dict: dict):
 
 
 content = {
-    "private": {
-        "@context": "https://www.schema.org",
-        "@id": "urn:eu-pp:safety-test:3oRIwPtUOJapwNSAGZTzCOWR9bEo",
-        "@type": "ProductSafetyTest",
-        "testType": "Functional Safety Test",
-        "testResults": "Fail",
-        "relatedProduct": [
-            {
-                "@id": "urn:epc:id:sgtin:59G1yu8uivSRKLLu",
-                "name": "59G1yu8uivSRKLLu",
+    "public": {
+        "@context": "https://schema.org",
+        "@id": "https://ford.mustang/2024",
+        "@type": "Car",
+        "name": "Ford Mustang",
+        "brand": {"@type": "Brand", "name": "Ford"},
+        "model": "Mustang",
+        "manufacturer": {"@type": "Organization", "name": "Ford Motor Company"},
+        "fuelType": "Gasoline",
+        "numberOfDoors": 2,
+        "vehicleEngine": {
+            "@type": "EngineSpecification",
+            "engineType": "V8",
+            "enginePower": {
+                "@type": "QuantitativeValue",
+                "value": "450",
+                "unitCode": "BHP",
             },
-        ],
-    },
+        },
+        "driveWheelConfiguration": "RWD",
+        "speed": {"@type": "QuantitativeValue", "value": "240", "unitCode": "KMH"},
+    }
 }
-
 
 divider()
 
@@ -91,54 +99,12 @@ divider()
 
 query_operation_result = dkg.graph.query(
     """
-    PREFIX gs1: <https://gs1.org/voc/>
-    PREFIX schema: <http://schema.org/>
-    SELECT ?recipeNameRaw ?baseUal
+    PREFIX SCHEMA: <http://schema.org/>
+    SELECT ?s ?modelName
     WHERE {
-        ?recipe a schema:Recipe ;
-        GRAPH ?ual {
-            ?recipe     schema:name ?recipeNameRaw ;
-        }
-        FILTER (STRSTARTS(STR(?ual), "did:dkg:base:84532/0x4e8ebfce9a0f4be374709f1ef2791e8ca6371ecb/"))
-        BIND (REPLACE(STR(?ual), "(did:dkg:base:[^/]+/[^/]+/[^/]+)(/.*)?", "$1") AS ?baseUal)
+        ?s schema:model ?modelName .
     }
     """
 )
 print("======================== ASSET QUERY")
-print(query_operation_result)
-
-divider()
-
-query_operation_result = dkg.graph.query(
-    """
-    CONSTRUCT { ?s ?p ?o .}
-    WHERE {
-        GRAPH ?g { ?s ?p ?o . } 
-        VALUES ?g {
-            <did:dkg:gnosis:10200/0xcdd5ce31fe2181490348ef6fd9f782d575776e5b/4/1/public>
-            <did:dkg:gnosis:10200/0xcdd5ce31fe2181490348ef6fd9f782d575776e5b/4/2/public>
-        }
-    }
-    """
-)
-print("======================== ASSET QUERY")
-print(query_operation_result)
-
-divider()
-
-query_operation_result = dkg.graph.query(
-    """
-    CONSTRUCT { ?s ?p ?o . }
-    WHERE {
-        {
-            GRAPH <did:dkg:gnosis:10200/0xcdd5ce31fe2181490348ef6fd9f782d575776e5b/4/1/public> { ?s ?p ?o . }  
-        }
-        UNION
-        {
-            GRAPH <did:dkg:gnosis:10200/0xcdd5ce31fe2181490348ef6fd9f782d575776e5b/4/2/public> { ?s ?p ?o . }
-        }
-    }
-    """
-)
-print("======================== ASSET QUERY")
-print(query_operation_result)
+print_json(query_operation_result)
