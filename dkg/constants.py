@@ -139,7 +139,6 @@ PRIVATE_CURRENT_REPOSITORY = "privateCurrent"
 class Operations(Enum):
     PUBLISH = "publish"
     GET = "get"
-    LOCAL_STORE = "local-store"
     QUERY = "query"
     PUBLISH_PARANET = "publishParanet"
     FINALITY = "finality"
