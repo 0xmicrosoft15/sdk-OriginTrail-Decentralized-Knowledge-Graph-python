@@ -35,7 +35,7 @@ MAX_FILE_SIZE = 10000000
 
 
 class DefaultParameters(Enum):
-    ENVIRONMENT: str = "testnet"
+    ENVIRONMENT: str = "mainnet"
     PORT: int = 8900
     FREQUENCY: int = 5
     MAX_NUMBER_OF_RETRIES: int = 5
