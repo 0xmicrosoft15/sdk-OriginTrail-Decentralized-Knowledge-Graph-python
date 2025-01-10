@@ -42,6 +42,7 @@ from dkg.constants import (
     Operations,
     OutputTypes,
     DefaultParameters,
+    ZERO_ADDRESS,
 )
 from dkg.dataclasses import (
     BidSuggestionRange,
@@ -279,7 +280,7 @@ class KnowledgeAsset(Module):
         return finality
 
     def increase_knowledge_collection_allowance(
-        self, sender: str, token_amount: str
+        self, sender: str, token_amount: str, knowledge_collection_address: str
     ) -> AllowanceResult:
         """
         Increases the allowance for knowledge collection if necessary.
@@ -291,8 +292,6 @@ class KnowledgeAsset(Module):
         Returns:
             AllowanceResult containing whether allowance was increased and the gap
         """
-        knowledge_collection_address = self._get_contract_address("KnowledgeCollection")
-
         allowance = self._get_current_allowance(sender, knowledge_collection_address)
         allowance_gap = int(token_amount) - int(allowance)
 
@@ -327,18 +326,19 @@ class KnowledgeAsset(Module):
             BlockchainError: If the collection creation fails
         """
         sender = self.manager.blockchain_provider.account.address
-        service_agreement_v1_address = None
+        knowledge_collection_address = self._get_contract_address("KnowledgeCollection")
         allowance_increased = False
         allowance_gap = 0
 
         try:
             # Handle allowance
-            if request.get("payer"):
+            if request.get("paymaster") and request.get("paymaster") != ZERO_ADDRESS:
                 pass
             else:
                 allowance_result = self.increase_knowledge_collection_allowance(
                     sender=sender,
                     token_amount=request.get("tokenAmount"),
+                    knowledge_collection_address=knowledge_collection_address,
                 )
                 allowance_increased = allowance_result.allowance_increased
                 allowance_gap = allowance_result.allowance_gap
@@ -384,7 +384,7 @@ class KnowledgeAsset(Module):
 
         except Exception as e:
             if allowance_increased:
-                self._decrease_allowance(service_agreement_v1_address, allowance_gap)
+                self._decrease_allowance(knowledge_collection_address, allowance_gap)
             raise e
 
     def process_content(self, content: str) -> list:
