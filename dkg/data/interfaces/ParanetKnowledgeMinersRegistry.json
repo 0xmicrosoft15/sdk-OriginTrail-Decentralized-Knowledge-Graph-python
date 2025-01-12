@@ -13,6 +13,22 @@
   {
     "inputs": [
       {
+        "internalType": "string",
+        "name": "msg",
+        "type": "string"
+      }
+    ],
+    "name": "UnauthorizedAccess",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "ZeroAddressHub",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "address",
         "name": "miner",
         "type": "address"
@@ -288,7 +304,7 @@
             "type": "uint256"
           }
         ],
-        "internalType": "struct ParanetStructs.KnowledgeMinerMetadata",
+        "internalType": "struct ParanetLib.KnowledgeMinerMetadata",
         "name": "",
         "type": "tuple"
       }
@@ -464,7 +480,7 @@
             "type": "uint96"
           }
         ],
-        "internalType": "struct ParanetStructs.UpdatingKnowledgeAssetState[]",
+        "internalType": "struct ParanetLib.UpdatingKnowledgeAssetState[]",
         "name": "",
         "type": "tuple[]"
       }
@@ -510,7 +526,7 @@
             "type": "uint96"
           }
         ],
-        "internalType": "struct ParanetStructs.UpdatingKnowledgeAssetState[]",
+        "internalType": "struct ParanetLib.UpdatingKnowledgeAssetState[]",
         "name": "",
         "type": "tuple[]"
       }
@@ -523,7 +539,7 @@
     "name": "hub",
     "outputs": [
       {
-        "internalType": "contract HubV2",
+        "internalType": "contract Hub",
         "name": "",
         "type": "address"
       }

@@ -15,7 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 
-from dkg.constants import DEFAULT_HASH_FUNCTION_ID
+from dkg.constants import DefaultParameters
 from dkg.dataclasses import BidSuggestionRange
 from dkg.manager import DefaultRequestManager
 from dkg.method import Method
@@ -50,7 +50,7 @@ class Network(Module):
             size_in_bytes,
             content_asset_storage_address,
             public_assertion_id,
-            DEFAULT_HASH_FUNCTION_ID,
+            DefaultParameters.HASH_FUNCTION_ID.value,
             range,
         )
 

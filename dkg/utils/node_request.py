@@ -21,7 +21,7 @@ from typing import Any, Type
 
 from dkg.dataclasses import BidSuggestionRange, HTTPRequestMethod
 from dkg.exceptions import OperationFailed, OperationNotFinished
-from dkg.types import AutoStrEnumUpperCase, UAL, Address, DataHexStr, NQuads
+from dkg.types import AutoStrEnumUpperCase, UAL, Address, DataHexStr
 
 
 @dataclass
@@ -52,32 +52,45 @@ class NodeRequest:
         path="{operation}/{operation_id}",
     )
 
-    local_store = NodeCall(
-        method=HTTPRequestMethod.POST,
-        path="local-store",
-        data=list[dict[str, str | Address | NQuads]],
-    )
     publish = NodeCall(
         method=HTTPRequestMethod.POST,
         path="publish",
         data={
-            "assertionId": str,
-            "assertion": NQuads,
+            "datasetRoot": str,
+            "dataset": dict[str, list[str]],
             "blockchain": str,
-            "contract": Address,
-            "tokenId": int,
             "hashFunctionId": int,
+            "minimumNumberOfNodeReplications": int,
         },
     )
+
+    finality_status = NodeCall(
+        method=HTTPRequestMethod.GET,
+        path="finality",
+        params={"ual": UAL},
+    )
+
     get = NodeCall(
         method=HTTPRequestMethod.POST,
         path="get",
-        data={"id": UAL, "state": str, "hashFunctionId": int},
+        data={
+            "id": UAL,
+            "contentType": str,
+            "includeMetadata": bool,
+            "hashFunctionId": int,
+            "paranetUAL": UAL,
+            "subjectUAL": UAL,
+        },
     )
     query = NodeCall(
         method=HTTPRequestMethod.POST,
         path="query",
-        data={"query": str, "type": str, "repository": str},
+        data={
+            "query": str,
+            "type": str,
+            "repository": str | None,
+            "paranet_ual": str | None,
+        },
     )
 
 
