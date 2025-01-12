@@ -186,7 +186,7 @@ Inside of previously generated folder you will find activate script in bin folde
 source /path/to/folder/bin/activate
 ```
 
-Install dependencies:
+Install dependencies and configure pre-commit hooks:
 
 ```bash
 make install
