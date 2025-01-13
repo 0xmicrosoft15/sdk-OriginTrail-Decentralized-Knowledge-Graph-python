@@ -20,12 +20,12 @@ import time
 
 from dkg import DKG
 from dkg.providers import BlockchainProvider, NodeHTTPProvider
-from dkg.constants import Environments, Blockchains
+from dkg.constants import Environments, BlockchainIds
 
 node_provider = NodeHTTPProvider(endpoint_uri="http://localhost:8900", api_version="v1")
 blockchain_provider = BlockchainProvider(
     Environments.DEVELOPMENT.value,
-    Blockchains.HARDHAT_1.value,
+    BlockchainIds.HARDHAT_1.value,
 )
 
 dkg = DKG(node_provider, blockchain_provider)

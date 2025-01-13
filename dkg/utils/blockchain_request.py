@@ -314,15 +314,6 @@ class BlockchainRequest:
             "paranetServiceAddresses": list[Address],
         },
     )
-    mint_knowledge_asset = ContractTransaction(
-        contract="Paranet",
-        function="mintKnowledgeAsset",
-        args={
-            "paranetKAStorageContract": Address,
-            "paranetKATokenId": int,
-            "knowledgeAssetArgs": dict[str, bytes | int | Wei | bool],
-        },
-    )
     submit_knowledge_asset = ContractTransaction(
         contract="Paranet",
         function="submitKnowledgeAsset",
