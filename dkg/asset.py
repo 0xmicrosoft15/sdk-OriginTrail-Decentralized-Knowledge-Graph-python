@@ -212,6 +212,13 @@ class KnowledgeAsset(Module):
 
         return finality
 
+    def decrease_knowledge_collection_allowance(
+        self,
+        allowance_gap: int,
+    ):
+        knowledge_collection_address = self._get_contract_address("KnowledgeCollection")
+        self._decrease_allowance(knowledge_collection_address, allowance_gap)
+
     def increase_knowledge_collection_allowance(
         self, sender: str, token_amount: str, knowledge_collection_address: str
     ) -> AllowanceResult:
@@ -225,6 +232,8 @@ class KnowledgeAsset(Module):
         Returns:
             AllowanceResult containing whether allowance was increased and the gap
         """
+        knowledge_collection_address = self._get_contract_address("KnowledgeCollection")
+
         allowance = self._get_current_allowance(sender, knowledge_collection_address)
         allowance_gap = int(token_amount) - int(allowance)
 
@@ -259,7 +268,6 @@ class KnowledgeAsset(Module):
             BlockchainError: If the collection creation fails
         """
         sender = self.manager.blockchain_provider.account.address
-        knowledge_collection_address = self._get_contract_address("KnowledgeCollection")
         allowance_increased = False
         allowance_gap = 0
 
@@ -271,7 +279,6 @@ class KnowledgeAsset(Module):
                 allowance_result = self.increase_knowledge_collection_allowance(
                     sender=sender,
                     token_amount=request.get("tokenAmount"),
-                    knowledge_collection_address=knowledge_collection_address,
                 )
                 allowance_increased = allowance_result.allowance_increased
                 allowance_gap = allowance_result.allowance_gap
@@ -317,7 +324,7 @@ class KnowledgeAsset(Module):
 
         except Exception as e:
             if allowance_increased:
-                self._decrease_allowance(knowledge_collection_address, allowance_gap)
+                self.decrease_knowledge_collection_allowance(allowance_gap)
             raise e
 
     def process_content(self, content: str) -> list:

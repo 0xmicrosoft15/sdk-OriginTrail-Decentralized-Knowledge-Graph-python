@@ -67,12 +67,12 @@ class Environments(Enum):
     MAINNET: str = "mainnet"
 
 
-class Blockchains(Enum):
+class BlockchainIds(Enum):
     HARDHAT_1: str = "hardhat1:31337"
     HARDHAT_2: str = "hardhat2:31337"
     BASE_DEVNET: str = "base:84532"
     GNOSIS_DEVNET: str = "gnosis:10200"
-    NEUROWEB_DEVNET: str = "otp:20430"
+    NEUROWEB_DEVNET: str = "otp:2160"
     BASE_TESTNET: str = "base:84532"
     GNOSIS_TESTNET: str = "gnosis:10200"
     NEUROWEB_TESTNET: str = "otp:20430"
