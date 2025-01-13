@@ -32,6 +32,7 @@ blockchain_provider = BlockchainProvider(
 
 dkg = DKG(node_provider, blockchain_provider)
 
+
 def divider():
     print("==================================================")
     print("==================================================")
@@ -77,7 +78,7 @@ create_paranet_result = dkg.paranet.create(
     "TestParanet",
     "TestParanetDescription",
     ParanetNodesAccessPolicy.OPEN,
-    ParanetMinersAccessPolicy.OPEN
+    ParanetMinersAccessPolicy.OPEN,
 )
 
 print("======================== PARANET CREATED")

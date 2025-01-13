@@ -16,13 +16,11 @@
 # under the License.
 
 import json
-import time
 
 from hexbytes import HexBytes
 
 from dkg import DKG
 from dkg.providers import BlockchainProvider, NodeHTTPProvider
-from dkg.dataclasses import ParanetNodesAccessPolicy, ParanetMinersAccessPolicy
 
 node_provider = NodeHTTPProvider("http://localhost:8900")
 blockchain_provider = BlockchainProvider(
@@ -61,6 +59,7 @@ node1_identity_id = dkg.node.get_identity_id(dkg.blockchain_provider.account.add
 node2_identity_id = dkg.node.get_identity_id(dkg2.blockchain_provider.account.address)
 node3_identity_id = dkg.node.get_identity_id(dkg3.blockchain_provider.account.address)
 
+
 def divider():
     print("==================================================")
     print("==================================================")
@@ -73,7 +72,7 @@ def print_json(json_dict: dict):
             return {k: convert_hexbytes(v) for k, v in data.items()}
         elif isinstance(data, list):
             return [convert_hexbytes(i) for i in data]
-        elif isinstance(data, tuple) and hasattr(data, '_asdict'):
+        elif isinstance(data, tuple) and hasattr(data, "_asdict"):
             return convert_hexbytes(data._asdict())
         elif isinstance(data, bytes):
             return data.decode("utf-8")
@@ -211,7 +210,7 @@ paranet_data = {
 
 # divider()
 
-paranet_ual = 'did:dkg:hardhat2:31337/0x8aafc28174bb6c3bdc7be92f18c2f134e876c05e/1'
+paranet_ual = "did:dkg:hardhat2:31337/0x8aafc28174bb6c3bdc7be92f18c2f134e876c05e/1"
 
 local_store_first_asset_result = dkg3.asset.local_store(
     paranet_data,
