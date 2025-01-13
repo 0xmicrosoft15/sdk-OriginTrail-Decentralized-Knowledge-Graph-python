@@ -220,7 +220,9 @@ class KnowledgeAsset(Module):
         self._decrease_allowance(knowledge_collection_address, allowance_gap)
 
     def increase_knowledge_collection_allowance(
-        self, sender: str, token_amount: str, knowledge_collection_address: str
+        self,
+        sender: str,
+        token_amount: str,
     ) -> AllowanceResult:
         """
         Increases the allowance for knowledge collection if necessary.
