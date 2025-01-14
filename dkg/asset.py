@@ -190,16 +190,6 @@ class KnowledgeAsset(Module):
         finality = 0
 
         while finality < required_confirmations and retries <= max_number_of_retries:
-            try:
-                response = self._finality_status(ual)
-                finality = response.get("finality", 0)
-                if finality >= required_confirmations:
-                    break
-            except Exception:
-                finality = 0
-
-            retries += 1
-
             if retries > max_number_of_retries:
                 raise Exception(
                     f"Unable to achieve required confirmations. "
@@ -207,8 +197,16 @@ class KnowledgeAsset(Module):
                 )
 
             # Sleep between attempts (except for first try)
-            if retries > 1:
+            if retries > 0:
                 time.sleep(frequency)
+
+            retries += 1
+
+            try:
+                response = self._finality_status(ual)
+                finality = response.get("finality", 0)
+            except Exception:
+                finality = 0
 
         return finality
 
@@ -628,8 +626,8 @@ class KnowledgeAsset(Module):
             finality_status_result = self.finality_status(
                 ual,
                 minimum_number_of_finalization_confirmations,
-                300,
-                2,
+                max_number_of_retries,
+                frequency,
             )
 
         return json.loads(
@@ -912,7 +910,7 @@ class KnowledgeAsset(Module):
             catch=OperationNotFinished,
             max_retries=max_retries,
             base_delay=frequency,
-            backoff=2,
+            backoff=1,
         )
         def retry_get_operation_result():
             operation_result = self._get_operation_result(
