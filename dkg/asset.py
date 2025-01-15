@@ -18,6 +18,7 @@
 import json
 import time
 import hashlib
+import asyncio
 from typing import Literal, Dict, Optional, Any
 from pyld import jsonld
 from web3 import Web3
@@ -43,7 +44,6 @@ from dkg.constants import (
 )
 from dkg.dataclasses import (
     BidSuggestionRange,
-    NodeResponseDict,
 )
 from dkg.exceptions import (
     OperationNotFinished,
@@ -57,7 +57,6 @@ from dkg.utils.blockchain_request import (
     KnowledgeCollectionResult,
     AllowanceResult,
 )
-from dkg.utils.decorators import retry
 from dkg.utils.node_request import (
     NodeRequest,
     OperationStatus,
@@ -644,10 +643,12 @@ class KnowledgeAsset(Module):
                             publish_operation_result, publish_operation_id
                         ),
                         "finality": {
-                            "status": "FINALIZED"
-                            if finality_status_result
-                            >= minimum_number_of_finalization_confirmations
-                            else "NOT FINALIZED"
+                            "status": (
+                                "FINALIZED"
+                                if finality_status_result
+                                >= minimum_number_of_finalization_confirmations
+                                else "NOT FINALIZED"
+                            )
                         },
                         "numberOfConfirmations": finality_status_result,
                         "requiredConfirmations": minimum_number_of_finalization_confirmations,
@@ -729,7 +730,7 @@ class KnowledgeAsset(Module):
     _get = Method(NodeRequest.get)
     _query = Method(NodeRequest.query)
 
-    def get(self, ual: UAL, options: dict = {}) -> dict:
+    async def get(self, ual: UAL, options: dict = {}) -> dict:
         arguments = self.input_service.get_asset_get_arguments(options)
 
         max_number_of_retries = arguments.get("max_number_of_retries")
@@ -744,16 +745,16 @@ class KnowledgeAsset(Module):
         subject_ual = arguments.get("subject_ual")
 
         ual_with_state = f"{ual}:{state}" if state else ual
-        get_public_operation_id: NodeResponseDict = self._get(
+        result = await self._get(
             ual_with_state,
             content_type,
             include_metadata,
             hash_function_id,
             paranet_ual,
             subject_ual,
-        )["operationId"]
-
-        get_public_operation_result = self.get_operation_result(
+        )
+        get_public_operation_id = result.get("operationId")
+        get_public_operation_result = await self.get_operation_result(
             get_public_operation_id,
             Operations.GET.value,
             max_number_of_retries,
@@ -822,17 +823,17 @@ class KnowledgeAsset(Module):
 
         formatted_metadata = None
         if output_format == OutputTypes.JSONLD.value:
-            formatted_assertion = self.to_jsonld(formatted_assertion)
+            formatted_assertion = await self.to_jsonld(formatted_assertion)
 
             if include_metadata:
-                formatted_metadata = self.to_jsonld("\n".join(metadata))
+                formatted_metadata = await self.to_jsonld("\n".join(metadata))
 
         if output_format == OutputTypes.NQUADS.value:
-            formatted_assertion = self.to_nquads(
+            formatted_assertion = await self.to_nquads(
                 formatted_assertion, DEFAULT_RDF_FORMAT
             )
             if include_metadata:
-                formatted_metadata = self.to_nquads(
+                formatted_metadata = await self.to_nquads(
                     "\n".join(metadata), DEFAULT_RDF_FORMAT
                 )
 
@@ -903,27 +904,26 @@ class KnowledgeAsset(Module):
 
     _get_operation_result = Method(NodeRequest.get_operation_result)
 
-    def get_operation_result(
+    async def get_operation_result(
         self, operation_id: str, operation: str, max_retries: int, frequency: int
     ):
-        @retry(
-            catch=OperationNotFinished,
-            max_retries=max_retries,
-            base_delay=frequency,
-            backoff=1,
-        )
-        def retry_get_operation_result():
-            operation_result = self._get_operation_result(
-                operation_id=operation_id,
-                operation=operation,
-            )
-            validate_operation_status(operation_result)
+        retries = 0
+        while retries <= max_retries:
+            try:
+                # Await the operation result
+                result = await self._get_operation_result(
+                    operation_id=operation_id,
+                    operation=operation,
+                )
+                validate_operation_status(result)
+                return result
+            except OperationNotFinished:
+                await asyncio.sleep(frequency)
+                retries += 1
 
-            return operation_result
+        raise Exception(f"Operation not finished after {max_retries} retries")
 
-        return retry_get_operation_result()
-
-    def to_jsonld(self, nquads: str):
+    async def to_jsonld(self, nquads: str):
         options = {
             "algorithm": "URDNA2015",
             "format": "application/n-quads",
@@ -931,7 +931,7 @@ class KnowledgeAsset(Module):
 
         return jsonld.from_rdf(nquads, options)
 
-    def to_nquads(self, content, input_format):
+    async def to_nquads(self, content, input_format):
         options = {
             "algorithm": "URDNA2015",
             "format": "application/n-quads",
