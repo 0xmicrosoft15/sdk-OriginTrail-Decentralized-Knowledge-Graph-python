@@ -41,11 +41,8 @@ class Method(Generic[TFunc]):
         self, obj: "Module | None" = None, _: Type["Module"] | None = None
     ) -> TFunc:
         if obj is None:
-            raise TypeError(
-                "Direct calls to methods are not supported. "
-                "Methods must be called from a module instance, "
-                "usually attached to a dkg instance."
-            )
+            return self
+
         return obj.retrieve_caller_fn(self)
 
     def process_args(self, *args: Any, **kwargs: Any):

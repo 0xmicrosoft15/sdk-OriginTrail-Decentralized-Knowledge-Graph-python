@@ -15,9 +15,9 @@
 # specific language governing permissions and limitations
 # under the License.
 
-from typing import Any
+from typing import Any, Optional
 
-import requests
+import aiohttp
 from dkg.dataclasses import HTTPRequestMethod, NodeResponseDict
 from dkg.exceptions import HTTPRequestMethodNotSupported, NodeRequestError
 from dkg.types import URI
@@ -33,8 +33,9 @@ class NodeHTTPProvider:
     ):
         self.url = f"{URI(endpoint_uri)}/{api_version}"
         self.headers = {"Authorization": f"Bearer {auth_token}"} if auth_token else {}
+        self.http_session: Optional[aiohttp.ClientSession] = None
 
-    def make_request(
+    async def make_request(
         self,
         method: HTTPRequestMethod,
         path: str,
@@ -45,20 +46,31 @@ class NodeHTTPProvider:
 
         try:
             if method == HTTPRequestMethod.GET:
-                response = requests.get(url, params=params, headers=self.headers)
+                async with self.http_session.get(
+                    url, params=params, headers=self.headers
+                ) as response:
+                    response.raise_for_status()
+                    response = await response.json()
             elif method == HTTPRequestMethod.POST:
-                response = requests.post(url, json=data, headers=self.headers)
+                async with self.http_session.post(
+                    url, json=data, headers=self.headers
+                ) as response:
+                    response.raise_for_status()
+                    response = await response.json()
             else:
                 raise HTTPRequestMethodNotSupported(
                     f"{method.name} method isn't supported"
                 )
-
-            response.raise_for_status()
+            # TODO:  change to async
+            # response.raise_for_status()
 
             try:
-                return NodeResponseDict(response.json())
+                return NodeResponseDict(response)
             except ValueError as err:
                 raise NodeRequestError(f"JSON decoding failed: {err}")
 
         except (HTTPError, ConnectionError, Timeout, RequestException) as err:
             raise NodeRequestError(f"Request failed: {err}")
+
+    def set_http_session(self, http_session: aiohttp.ClientSession):
+        self.http_session = http_session

@@ -14,8 +14,11 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
+import aiohttp
 
 from functools import wraps
+from typing import Optional
+
 
 from dkg.assertion import Assertion
 from dkg.asset import KnowledgeAsset
@@ -55,7 +58,14 @@ class DKG(Module):
         self,
         node_provider: NodeHTTPProvider,
         blockchain_provider: BlockchainProvider,
+        http_session: Optional[aiohttp.ClientSession] = None,
     ):
+        if http_session:
+            self.http_session = http_session
+        else:
+            self.http_session = aiohttp.ClientSession()
+            node_provider.set_http_session(self.http_session)
+
         self.manager = DefaultRequestManager(node_provider, blockchain_provider)
 
         self.initialize_services(self.manager)
@@ -76,6 +86,13 @@ class DKG(Module):
 
     def initialize_services(self, manager):
         self.input_service = InputService(manager)
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        if self.http_session:
+            await self.http_session.close()
 
     @property
     def node_provider(self) -> NodeHTTPProvider:

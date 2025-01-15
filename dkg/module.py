@@ -30,12 +30,14 @@ class Module:
     def retrieve_caller_fn(
         self, method: Method[Callable[..., TReturn]]
     ) -> Callable[..., TReturn]:
-        def caller(*args: Any, **kwargs: Any) -> TReturn:
+        async def caller(*args: Any, **kwargs: Any) -> TReturn:
             processed_args = method.process_args(*args, **kwargs)
             request_params = asdict(method.action)
             request_params.update(processed_args)
 
-            return self.manager.blocking_request(type(method.action), request_params)
+            return await self.manager.blocking_request(
+                type(method.action), request_params
+            )
 
         return caller
 

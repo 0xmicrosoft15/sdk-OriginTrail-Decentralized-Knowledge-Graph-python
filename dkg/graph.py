@@ -15,15 +15,15 @@
 # specific language governing permissions and limitations
 # under the License.
 
+import asyncio
+
 from rdflib.plugins.sparql.parser import parseQuery
 
-from dkg.dataclasses import NodeResponseDict
 from dkg.exceptions import OperationNotFinished
 from dkg.manager import DefaultRequestManager
 from dkg.method import Method
 from dkg.module import Module
 from dkg.types import NQuads
-from dkg.utils.decorators import retry
 from dkg.utils.node_request import NodeRequest, validate_operation_status
 from dkg.constants import Operations
 
@@ -36,7 +36,7 @@ class Graph(Module):
     _query = Method(NodeRequest.query)
     _get_operation_result = Method(NodeRequest.get_operation_result)
 
-    def query(
+    async def query(
         self,
         query: str,
         options: dict = {},
@@ -51,31 +51,29 @@ class Graph(Module):
         parsed_query = parseQuery(query)
         query_type = parsed_query[1].name.replace("Query", "").upper()
 
-        operation_id: NodeResponseDict = self._query(
-            query, query_type, repository, paranet_ual
-        )["operationId"]
-        operation_result = self.get_operation_result(
+        result = await self._query(query, query_type, repository, paranet_ual)
+        operation_id = result.get("operationId")
+        operation_result = await self.get_operation_result(
             operation_id, Operations.QUERY.value, max_number_of_retries, frequency
         )
 
         return operation_result["data"]
 
-    def get_operation_result(
+    async def get_operation_result(
         self, operation_id: str, operation: str, max_retries: int, frequency: int
     ):
-        @retry(
-            catch=OperationNotFinished,
-            max_retries=max_retries,
-            base_delay=frequency,
-            backoff=2,
-        )
-        def retry_get_operation_result():
-            operation_result = self._get_operation_result(
-                operation_id=operation_id,
-                operation=operation,
-            )
-            validate_operation_status(operation_result)
+        retries = 0
+        while retries <= max_retries:
+            try:
+                # Await the operation result
+                result = await self._get_operation_result(
+                    operation_id=operation_id,
+                    operation=operation,
+                )
+                validate_operation_status(result)
+                return result
+            except OperationNotFinished:
+                await asyncio.sleep(frequency)
+                retries += 1
 
-            return operation_result
-
-        return retry_get_operation_result()
+        raise Exception(f"Operation not finished after {max_retries} retries")

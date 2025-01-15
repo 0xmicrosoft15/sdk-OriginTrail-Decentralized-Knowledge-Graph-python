@@ -47,7 +47,7 @@ class DefaultRequestManager:
     def blockchain_provider(self, blockchain_provider: BlockchainProvider) -> None:
         self._blockchain_provider = blockchain_provider
 
-    def blocking_request(
+    async def blocking_request(
         self,
         request_type: Type[JSONRPCRequest | ContractInteraction | NodeCall],
         request_params: dict[str, Any],
@@ -57,7 +57,7 @@ class DefaultRequestManager:
         elif issubclass(request_type, ContractInteraction):
             return self.blockchain_provider.call_function(**request_params)
         elif issubclass(request_type, NodeCall):
-            return self.node_provider.make_request(**request_params)
+            return await self.node_provider.make_request(**request_params)
         else:
             raise InvalidRequest(
                 "Invalid Request. Manager can only process Blockchain/Node requests."

@@ -33,12 +33,13 @@ from dkg.exceptions import (
 from dkg.types import URI, Address, DataHexStr, Environment, Wei
 from eth_account.signers.local import LocalAccount
 from eth_typing import ABI, ABIFunction
-from web3 import Web3
 from web3.contract import Contract
 from web3.contract.contract import ContractFunction
 from web3.logs import DISCARD
 from web3.middleware import SignAndSendRawMiddlewareBuilder
 from web3.types import TxReceipt
+from web3.providers import AsyncHTTPProvider
+from web3 import AsyncWeb3
 
 
 class BlockchainProvider:
@@ -75,8 +76,8 @@ class BlockchainProvider:
                 f"blockchain ID {self.blockchain_id}"
             )
 
-        self.w3 = Web3(
-            Web3.HTTPProvider(self.rpc_uri, request_kwargs={"verify": verify})
+        self.w3 = AsyncWeb3(
+            AsyncHTTPProvider(self.rpc_uri, request_kwargs={"verify": verify})
         )
 
         if self.blockchain_id is None:
@@ -108,22 +109,24 @@ class BlockchainProvider:
         if private_key := os.environ.get("PRIVATE_KEY"):
             self.set_account(private_key)
 
-    def make_json_rpc_request(self, endpoint: str, args: dict[str, Any] = {}) -> Any:
+    async def make_json_rpc_request(
+        self, endpoint: str, args: dict[str, Any] = {}
+    ) -> Any:
         web3_method = getattr(self.w3.eth, endpoint)
 
         if callable(web3_method):
-            return web3_method(**args)
+            return await web3_method(**args)
         else:
             return web3_method
 
     @staticmethod
     def handle_updated_contract(func):
         @wraps(func)
-        def wrapper(self, *args, **kwargs):
+        async def wrapper(self, *args, **kwargs):
             contract_name = kwargs.get("contract") or (args[0] if args else None)
 
             try:
-                return func(self, *args, **kwargs)
+                return await func(self, *args, **kwargs)
             except Exception as err:
                 if (
                     contract_name
@@ -131,15 +134,15 @@ class BlockchainProvider:
                     and any(msg in str(err) for msg in ["revert", "VM Exception"])
                     and not self._check_contract_status(contract_name)
                 ):
-                    is_updated = self._update_contract_instance(contract_name)
+                    is_updated = await self._update_contract_instance(contract_name)
                     if is_updated:
-                        return func(self, *args, **kwargs)
+                        return await func(self, *args, **kwargs)
                 raise err
 
         return wrapper
 
     @handle_updated_contract
-    def call_function(
+    async def call_function(
         self,
         contract: str | dict[str, str],
         function: str,
@@ -165,7 +168,7 @@ class BlockchainProvider:
         )
 
         if not state_changing:
-            result = contract_function(**args).call()
+            result = await contract_function(**args).call()
             if function in (
                 output_named_tuples := self.output_named_tuples[contract_name]
             ):
@@ -179,16 +182,18 @@ class BlockchainProvider:
                 )
 
             options = {
-                "gas": gas_limit or contract_function(**args).estimate_gas(),
+                "gas": gas_limit or await contract_function(**args).estimate_gas(),
             }
 
-            gas_price = self.gas_price or gas_price or self._get_network_gas_price()
+            gas_price = (
+                self.gas_price or gas_price or await self._get_network_gas_price()
+            )
 
             if gas_price is not None:
                 options["gasPrice"] = gas_price
 
-            tx_hash = contract_function(**args).transact(options)
-            tx_receipt = self.w3.eth.wait_for_transaction_receipt(tx_hash)
+            tx_hash = await contract_function(**args).transact(options)
+            tx_receipt = await self.w3.eth.wait_for_transaction_receipt(tx_hash)
 
             return tx_receipt
 
@@ -247,21 +252,23 @@ class BlockchainProvider:
 
             self._update_contract_instance(contract)
 
-    def _update_contract_instance(self, contract: str) -> bool:
+    async def _update_contract_instance(self, contract: str) -> bool:
         if (
-            self.contracts["Hub"].functions.isContract(contractName=contract).call()
-            or self.contracts["Hub"]
+            await self.contracts["Hub"]
+            .functions.isContract(contractName=contract)
+            .call()
+            or await self.contracts["Hub"]
             .functions.isAssetStorage(assetStorageName=contract)
             .call()
         ):
             self.contracts[contract] = self.w3.eth.contract(
                 address=(
-                    self.contracts["Hub"]
+                    await self.contracts["Hub"]
                     .functions.getAssetStorageAddress(contract)
                     .call()
                     if contract.endswith("AssetStorage")
                     or contract.endswith("CollectionStorage")
-                    else self.contracts["Hub"]
+                    else await self.contracts["Hub"]
                     .functions.getContractAddress(contract)
                     .call()
                 ),
