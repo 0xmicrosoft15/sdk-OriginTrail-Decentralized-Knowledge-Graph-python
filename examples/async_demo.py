@@ -11,6 +11,8 @@ async def main():
         endpoint_uri="http://localhost:8900",
         api_version="v1",
     )
+
+    # make sure that you have PRIVATE_KEY in .env so the blockchain provider can load it
     blockchain_provider = BlockchainProvider(
         Environments.DEVELOPMENT.value,
         BlockchainIds.HARDHAT_1.value,
@@ -77,7 +79,7 @@ async def main():
     divider()
 
     start_time = time.time()
-    get_result = dkg.asset.get(create_asset_result.get("UAL"))
+    get_result = await dkg.asset.get(create_asset_result.get("UAL"))
     print(f"======================== ASSET GET in {time.time() - start_time} seconds")
     print_json(get_result)
 
