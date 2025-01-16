@@ -84,6 +84,9 @@ create_asset_result = dkg.asset.create(
         "minimum_number_of_finalization_confirmations": 3,
         "minimum_number_of_node_replications": 1,
         "token_amount": 100,
+        "max_number_of_retries": 300,
+        "frequency": 2,
+        "content_type": "all",
     },
 )
 print(f"======================== ASSET CREATED in {time.time() - start_time} seconds")
