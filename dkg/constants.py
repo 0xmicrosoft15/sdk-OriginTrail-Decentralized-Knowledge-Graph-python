@@ -53,6 +53,7 @@ class DefaultParameters(Enum):
     PARANET_UAL: None = None
     GET_SUBJECT_UAL: bool = False
     REPOSITORY: str = "dkg"
+    MIN_NUMBER_OF_FINALIZATION_CONF: int = 3
 
 
 class OutputTypes(Enum):

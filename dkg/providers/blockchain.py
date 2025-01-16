@@ -17,6 +17,8 @@
 
 import json
 import os
+import asyncio
+from dotenv import load_dotenv
 from collections import namedtuple
 from functools import wraps
 from pathlib import Path
@@ -108,6 +110,7 @@ class BlockchainProvider:
 
         self.contracts_initialized = False
 
+        load_dotenv()
         if private_key := os.environ.get("PRIVATE_KEY"):
             self.set_account(private_key)
 
@@ -255,21 +258,21 @@ class BlockchainProvider:
         return None
 
     async def _init_contracts(self):
+        init_tasks = []
         for contract in self.abi.keys():
             if contract == "Hub":
                 continue
-
-            await self._update_contract_instance(contract)
+            init_tasks.append(self._update_contract_instance(contract))
+        await asyncio.gather(*init_tasks)
 
     async def _update_contract_instance(self, contract: str) -> bool:
-        if (
-            await self.contracts["Hub"]
-            .functions.isContract(contractName=contract)
-            .call()
-            or await self.contracts["Hub"]
+        [is_contract, is_storage] = await asyncio.gather(
+            self.contracts["Hub"].functions.isContract(contractName=contract).call(),
+            self.contracts["Hub"]
             .functions.isAssetStorage(assetStorageName=contract)
-            .call()
-        ):
+            .call(),
+        )
+        if is_contract or is_storage:
             self.contracts[contract] = self.w3.eth.contract(
                 address=(
                     await self.contracts["Hub"]

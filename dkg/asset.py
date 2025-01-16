@@ -16,7 +16,6 @@
 # under the License.
 
 import json
-import time
 import hashlib
 import asyncio
 from typing import Literal, Dict, Optional, Any
@@ -156,7 +155,6 @@ class KnowledgeAsset(Module):
     )
     _get_bid_suggestion = Method(NodeRequest.bid_suggestion)
     _publish = Method(NodeRequest.publish)
-    _finality_status = Method(NodeRequest.finality_status)
     _create_knowledge_collection = Method(BlockchainRequest.create_knowledge_collection)
     _mint_knowledge_asset = Method(BlockchainRequest.mint_knowledge_asset)
 
@@ -181,37 +179,6 @@ class KnowledgeAsset(Module):
         )
 
         return {"operationId": operation_id, **operation_data}
-
-    async def finality_status(
-        self,
-        ual: str,
-        required_confirmations: int,
-        max_number_of_retries: int,
-        frequency: int,
-    ):
-        retries = 0
-        finality = 0
-
-        while finality < required_confirmations and retries <= max_number_of_retries:
-            if retries > max_number_of_retries:
-                raise Exception(
-                    f"Unable to achieve required confirmations. "
-                    f"Max number of retries ({max_number_of_retries}) reached."
-                )
-
-            # Sleep between attempts (except for first try)
-            if retries > 0:
-                time.sleep(frequency)
-
-            retries += 1
-
-            try:
-                response = await self._finality_status(ual)
-                finality = response.get("finality", 0)
-            except Exception:
-                finality = 0
-
-        return finality
 
     async def decrease_knowledge_collection_allowance(
         self,
@@ -593,30 +560,6 @@ class KnowledgeAsset(Module):
         publisher_node_r = publisher_node_signature.get("r")
         publisher_node_vs = publisher_node_signature.get("vs")
 
-        # identity_ids, r, vs = [], [], []
-
-        # # TODO: Use gather.all like in dkg.js
-        # for signature in signatures:
-        #     try:
-        #         signer_address = self.get_message_signer_address(
-        #             dataset_root, signature
-        #         )
-
-        #         key_is_operational_wallet = await self._key_is_operational_wallet(
-        #             signature.get("identityId"),
-        #             Web3.solidity_keccak(["address"], [signer_address]),
-        #             2,  # IdentityLib.OPERATIONAL_KEY
-        #         )
-
-        #         # If valid, append the signature components
-        #         if key_is_operational_wallet:
-        #             identity_ids.append(signature.get("identityId"))
-        #             r.append(signature.get("r"))
-        #             vs.append(signature.get("vs"))
-
-        #     except Exception:
-        #         continue
-
         results = await self.process_signatures(signatures, dataset_root)
         identity_ids = results["identity_ids"]
         r = results["r"]
@@ -677,7 +620,7 @@ class KnowledgeAsset(Module):
 
         finality_status_result = 0
         if minimum_number_of_finalization_confirmations > 0:
-            finality_status_result = await self.finality_status(
+            finality_status_result = await self.node_service.finality_status(
                 ual,
                 minimum_number_of_finalization_confirmations,
                 max_number_of_retries,

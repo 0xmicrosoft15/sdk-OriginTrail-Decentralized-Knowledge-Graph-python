@@ -18,6 +18,12 @@ async def main():
         BlockchainIds.HARDHAT_1.value,
     )
 
+    dkg = DKG(
+        node_provider,
+        blockchain_provider,
+        config={"max_number_of_retries": 300, "frequency": 2},
+    )
+
     def divider():
         print("==================================================")
         print("==================================================")
@@ -50,8 +56,6 @@ async def main():
             "speed": {"@type": "QuantitativeValue", "value": "240", "unitCode": "KMH"},
         }
     }
-
-    dkg = DKG(node_provider, blockchain_provider)
 
     divider()
 

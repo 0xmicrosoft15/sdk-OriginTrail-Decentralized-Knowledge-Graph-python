@@ -12,6 +12,7 @@ class NodeService(Module):
         self.manager = manager
 
     _get_operation_result = Method(NodeRequest.get_operation_result)
+    _finality_status = Method(NodeRequest.finality_status)
 
     async def get_operation_result(
         self,
@@ -32,8 +33,10 @@ class NodeService(Module):
                 }
                 break
 
+            if retries > 0:
+                await asyncio.sleep(frequency)
+
             retries += 1
-            await asyncio.sleep(frequency)
 
             try:
                 result = await self._get_operation_result(
@@ -48,8 +51,38 @@ class NodeService(Module):
             if (
                 response["data"].get("status") == OperationStatuses.COMPLETED.value
                 or response["data"].get("status") == OperationStatuses.FAILED.value
-                or response["data"].get("data", {}).get("minAcksReached")
             ):
                 break
 
         return response["data"]
+
+    async def finality_status(
+        self,
+        ual: str,
+        required_confirmations: int,
+        max_number_of_retries: int,
+        frequency: int,
+    ):
+        retries = 0
+        finality = 0
+
+        while finality < required_confirmations and retries <= max_number_of_retries:
+            if retries > max_number_of_retries:
+                raise Exception(
+                    f"Unable to achieve required confirmations. "
+                    f"Max number of retries ({max_number_of_retries}) reached."
+                )
+
+            # Sleep between attempts (except for first try)
+            if retries > 0:
+                await asyncio.sleep(frequency)
+
+            retries += 1
+
+            try:
+                response = await self._finality_status(ual)
+                finality = response.get("finality", 0)
+            except Exception:
+                finality = 0
+
+        return finality
