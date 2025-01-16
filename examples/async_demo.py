@@ -8,12 +8,12 @@ from dkg.providers import BlockchainProvider, NodeHTTPProvider
 
 async def main():
     node_provider = NodeHTTPProvider(
-        endpoint_uri="https://v6-pegasus-node-01.origin-trail.network:8900",
+        endpoint_uri="http://localhost:8900",
         api_version="v1",
     )
     blockchain_provider = BlockchainProvider(
-        Environments.TESTNET.value,
-        BlockchainIds.BASE_TESTNET.value,
+        Environments.DEVELOPMENT.value,
+        BlockchainIds.HARDHAT_1.value,
     )
 
     def divider():
@@ -49,57 +49,53 @@ async def main():
         }
     }
 
-    async with DKG(node_provider, blockchain_provider) as dkg:
-        divider()
+    dkg = DKG(node_provider, blockchain_provider)
 
-        info_result = dkg.node.info
-        print("======================== NODE INFO RECEIVED")
-        print_json(info_result)
+    divider()
 
-        divider()
+    info_result = await dkg.node.info
+    print("======================== NODE INFO RECEIVED")
+    print_json(info_result)
 
-        # Not async yet
-        start_time = time.time()
-        create_asset_result = dkg.asset.create(
-            content=content,
-            options={
-                "epochs_num": 2,
-                "minimum_number_of_finalization_confirmations": 3,
-                "minimum_number_of_node_replications": 1,
-                # "token_amount": 100,
-            },
-        )
-        print(
-            f"======================== ASSET CREATED in {time.time() - start_time} seconds"
-        )
-        print_json(create_asset_result)
+    divider()
 
-        divider()
+    start_time = time.time()
+    create_asset_result = await dkg.asset.create(
+        content=content,
+        options={
+            "epochs_num": 2,
+            "minimum_number_of_finalization_confirmations": 3,
+            "minimum_number_of_node_replications": 1,
+            "token_amount": 100,
+        },
+    )
+    print(
+        f"======================== ASSET CREATED in {time.time() - start_time} seconds"
+    )
+    print_json(create_asset_result)
 
-        # start_time = time.time()
-        # get_result = dkg.asset.get(create_asset_result.get("UAL"))
-        # print(
-        #     f"======================== ASSET GET in {time.time() - start_time} seconds"
-        # )
-        # print_json(get_result)
+    divider()
 
-        # divider()
+    start_time = time.time()
+    get_result = dkg.asset.get(create_asset_result.get("UAL"))
+    print(f"======================== ASSET GET in {time.time() - start_time} seconds")
+    print_json(get_result)
 
-        # This one is async
-        start_time = time.time()
-        query_operation_result = await dkg.graph.query(
-            """
-            PREFIX SCHEMA: <http://schema.org/>
-            SELECT ?s ?modelName
-            WHERE {
-                ?s schema:model ?modelName .
-            }
-            """
-        )
-        print(
-            f"======================== ASSET QUERY in {time.time() - start_time} seconds"
-        )
-        print_json(query_operation_result)
+    divider()
+
+    # This one is async
+    start_time = time.time()
+    query_operation_result = await dkg.graph.query(
+        """
+        PREFIX SCHEMA: <http://schema.org/>
+        SELECT ?s ?modelName
+        WHERE {
+            ?s schema:model ?modelName .
+        }
+        """
+    )
+    print(f"======================== ASSET QUERY in {time.time() - start_time} seconds")
+    print_json(query_operation_result)
 
 
 if __name__ == "__main__":
