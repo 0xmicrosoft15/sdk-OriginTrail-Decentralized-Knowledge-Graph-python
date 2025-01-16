@@ -393,8 +393,11 @@ class KnowledgeAsset(Module):
     async def create(
         self,
         content: dict[Literal["public", "private"], JSONLD],
-        options: dict = {},
+        options: dict = None,
     ) -> dict[str, UAL | HexStr | dict[str, dict[str, str] | TxReceipt]]:
+        if options is None:
+            options = {}
+
         arguments = self.input_service.get_asset_create_arguments(options)
 
         max_number_of_retries = arguments.get("max_number_of_retries")
@@ -726,7 +729,10 @@ class KnowledgeAsset(Module):
     _get = Method(NodeRequest.get)
     _query = Method(NodeRequest.query)
 
-    async def get(self, ual: UAL, options: dict = {}) -> dict:
+    async def get(self, ual: UAL, options: dict = None) -> dict:
+        if options is None:
+            options = {}
+
         arguments = self.input_service.get_asset_get_arguments(options)
 
         max_number_of_retries = arguments.get("max_number_of_retries")

@@ -26,6 +26,7 @@ from dkg.utils.node_request import NodeRequest
 from dkg.constants import Operations
 from dkg.services.input_service import InputService
 from dkg.services.node_service import NodeService
+from dkg.types import UAL
 
 
 class Graph(Module):
@@ -44,8 +45,11 @@ class Graph(Module):
     async def query(
         self,
         query: str,
-        options: dict = {},
+        options: dict = None,
     ) -> NQuads:
+        if options is None:
+            options = {}
+
         arguments = self.input_service.get_query_arguments(options)
 
         max_number_of_retries = arguments.get("max_number_of_retries")
@@ -63,3 +67,54 @@ class Graph(Module):
         )
 
         return operation_result["data"]
+
+    async def publish_finality(self, UAL: UAL, options=None):
+        if options is None:
+            options = {}
+
+        arguments = self.input_service.get_publish_finality_arguments(options)
+        max_number_of_retries = arguments.get("max_number_of_retries")
+        minimum_number_of_finalization_confirmations = arguments.get(
+            "minimum_number_of_finalization_confirmations"
+        )
+        frequency = arguments.get("frequency")
+        try:
+            finality_status_result = await self.node_service.finality_status(
+                UAL,
+                minimum_number_of_finalization_confirmations,
+                max_number_of_retries,
+                frequency,
+            )
+        except Exception as e:
+            return {"status": "ERROR", "error": str(e)}
+
+        if finality_status_result == 0:
+            try:
+                finality_operation_id = await self.node_service.finality(
+                    UAL,
+                    minimum_number_of_finalization_confirmations,
+                    max_number_of_retries,
+                    frequency,
+                )
+            except Exception as e:
+                return {"status": "ERROR", "error": str(e)}
+
+            try:
+                return await self.node_service.get_operation_result(
+                    finality_operation_id, "finality", max_number_of_retries, frequency
+                )
+            except Exception as e:
+                return {"status": "NOT FINALIZED", "error": str(e)}
+
+        elif finality_status_result >= minimum_number_of_finalization_confirmations:
+            return {
+                "status": "FINALIZED",
+                "numberOfConfirmations": finality_status_result,
+                "requiredConfirmations": minimum_number_of_finalization_confirmations,
+            }
+        else:
+            return {
+                "status": "NOT FINALIZED",
+                "numberOfConfirmations": finality_status_result,
+                "requiredConfirmations": minimum_number_of_finalization_confirmations,
+            }

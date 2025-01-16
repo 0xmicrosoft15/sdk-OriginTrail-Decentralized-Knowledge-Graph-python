@@ -4,6 +4,7 @@ from dkg.constants import OperationStatuses
 from dkg.utils.node_request import NodeRequest
 from dkg.module import Module
 from typing import Dict, Any
+from dkg.types import UAL
 import asyncio
 
 
@@ -13,6 +14,7 @@ class NodeService(Module):
 
     _get_operation_result = Method(NodeRequest.get_operation_result)
     _finality_status = Method(NodeRequest.finality_status)
+    _finality = Method(NodeRequest.finality)
 
     async def get_operation_result(
         self,
@@ -58,7 +60,7 @@ class NodeService(Module):
 
     async def finality_status(
         self,
-        ual: str,
+        ual: UAL,
         required_confirmations: int,
         max_number_of_retries: int,
         frequency: int,
@@ -86,3 +88,45 @@ class NodeService(Module):
                 finality = 0
 
         return finality
+
+    async def finality(
+        self,
+        ual: UAL,
+        required_confirmations: int,
+        max_number_of_retries: int,
+        frequency: int,
+    ):
+        finality_id = 0
+        retries = 0
+
+        while finality_id < required_confirmations and retries < max_number_of_retries:
+            if retries > max_number_of_retries:
+                raise Exception(
+                    f"Unable to achieve required confirmations. "
+                    f"Max number of retries ({max_number_of_retries}) reached."
+                )
+
+            if retries > 0:
+                await asyncio.sleep(frequency)
+
+            retries += 1
+
+            try:
+                try:
+                    response = await self._finality(
+                        ual=ual, minimumNumberOfNodeReplications=required_confirmations
+                    )
+                except Exception as e:
+                    response = None
+                    print(f"failed: {e}")
+
+                if response is not None:
+                    operation_id = response.json().get("operationId", 0)
+                    if operation_id >= required_confirmations:
+                        finality_id = operation_id
+
+            except Exception as e:
+                finality_id = 0
+                print(f"Retry {retries + 1}/{max_number_of_retries} failed: {e}")
+
+            return finality_id

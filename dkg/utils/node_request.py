@@ -70,6 +70,15 @@ class NodeRequest:
         params={"ual": UAL},
     )
 
+    finality = NodeCall(
+        method=HTTPRequestMethod.POST,
+        path="ask",
+        params={
+            "ual": UAL,
+            "minimumNumberOfNodeReplications": int,
+        },
+    )
+
     get = NodeCall(
         method=HTTPRequestMethod.POST,
         path="get",

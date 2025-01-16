@@ -65,7 +65,7 @@ async def main():
 
     divider()
 
-    start_time = time.time()
+    start_time = time.perf_counter()
     create_asset_result = await dkg.asset.create(
         content=content,
         options={
@@ -76,21 +76,23 @@ async def main():
         },
     )
     print(
-        f"======================== ASSET CREATED in {time.time() - start_time} seconds"
+        f"======================== ASSET CREATED in {time.perf_counter() - start_time} seconds"
     )
     print_json(create_asset_result)
 
     divider()
 
-    start_time = time.time()
+    start_time = time.perf_counter()
     get_result = await dkg.asset.get(create_asset_result.get("UAL"))
-    print(f"======================== ASSET GET in {time.time() - start_time} seconds")
+    print(
+        f"======================== ASSET GET in {time.perf_counter() - start_time} seconds"
+    )
     print_json(get_result)
 
     divider()
 
     # This one is async
-    start_time = time.time()
+    start_time = time.perf_counter()
     query_operation_result = await dkg.graph.query(
         """
         PREFIX SCHEMA: <http://schema.org/>
@@ -100,8 +102,21 @@ async def main():
         }
         """
     )
-    print(f"======================== ASSET QUERY in {time.time() - start_time} seconds")
+    print(
+        f"======================== ASSET QUERY in {time.perf_counter() - start_time} seconds"
+    )
     print_json(query_operation_result)
+
+    divider()
+
+    start_time = time.perf_counter()
+    publish_finality_result = await dkg.graph.publish_finality(
+        create_asset_result.get("UAL")
+    )
+    print(
+        f"======================== PUBLISH FINALITY in {time.perf_counter() - start_time} seconds"
+    )
+    print_json(publish_finality_result)
 
 
 if __name__ == "__main__":
