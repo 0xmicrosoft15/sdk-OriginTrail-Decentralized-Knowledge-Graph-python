@@ -44,7 +44,6 @@ from dkg.constants import (
 )
 from dkg.dataclasses import (
     BidSuggestionRange,
-    NodeResponseDict,
 )
 from dkg.manager import DefaultRequestManager
 from dkg.method import Method
@@ -799,15 +798,15 @@ class KnowledgeAsset(Module):
         subject_ual = arguments.get("subject_ual")
 
         ual_with_state = f"{ual}:{state}" if state else ual
-        get_public_operation_id: NodeResponseDict = self._get(
+        result = await self._get(
             ual_with_state,
             content_type,
             include_metadata,
             hash_function_id,
             paranet_ual,
             subject_ual,
-        )["operationId"]
-
+        )
+        get_public_operation_id = result.get("operationId")
         get_public_operation_result = await self.node_service.get_operation_result(
             get_public_operation_id,
             Operations.GET.value,
