@@ -22,7 +22,7 @@ from functools import wraps
 from pathlib import Path
 from typing import Any, Type
 
-import requests
+import aiohttp
 from dkg.constants import BLOCKCHAINS
 from dkg.exceptions import (
     AccountMissing,
@@ -76,8 +76,9 @@ class BlockchainProvider:
                 f"blockchain ID {self.blockchain_id}"
             )
 
+        ssl_context = None if verify else False
         self.w3 = AsyncWeb3(
-            AsyncHTTPProvider(self.rpc_uri, request_kwargs={"verify": verify})
+            AsyncHTTPProvider(self.rpc_uri, request_kwargs={"ssl": ssl_context})
         )
 
         if self.blockchain_id is None:
@@ -104,10 +105,16 @@ class BlockchainProvider:
                 decode_tuples=True,
             )
         }
-        self._init_contracts()
+
+        self.contracts_initialized = False
 
         if private_key := os.environ.get("PRIVATE_KEY"):
             self.set_account(private_key)
+
+    async def ensure_contracts_initialized(self):
+        if not self.contracts_initialized:
+            await self._init_contracts()
+            self.contracts_initialized = True
 
     async def make_json_rpc_request(
         self, endpoint: str, args: dict[str, Any] = {}
@@ -151,6 +158,7 @@ class BlockchainProvider:
         gas_price: Wei | None = None,
         gas_limit: Wei | None = None,
     ) -> TxReceipt | Any:
+        await self.ensure_contracts_initialized()
         if isinstance(contract, str):
             contract_name = contract
             contract_instance = self.contracts[contract_name]
@@ -214,22 +222,23 @@ class BlockchainProvider:
         )
         self.w3.eth.default_account = self.account.address
 
-    def _get_network_gas_price(self) -> Wei | None:
+    async def _get_network_gas_price(self) -> Wei | None:
         if self.environment == "development":
             return None
 
-        def fetch_gas_price(oracle_url: str) -> Wei | None:
+        async def fetch_gas_price(oracle_url: str) -> Wei | None:
             try:
-                response = requests.get(oracle_url)
-                response.raise_for_status()
-                data: dict = response.json()
+                async with aiohttp.ClientSession() as session:
+                    async with session.get(oracle_url) as response:
+                        response.raise_for_status()
+                        data: dict = await response.json()
 
-                if "result" in data:
-                    return int(data["result"], 16)
-                elif "average" in data:
-                    return self.w3.to_wei(data["average"], "gwei")
-                else:
-                    return None
+                        if "result" in data:
+                            return int(data["result"], 16)
+                        elif "average" in data:
+                            return self.w3.to_wei(data["average"], "gwei")
+                        else:
+                            return None
             except Exception:
                 return None
 
@@ -239,18 +248,18 @@ class BlockchainProvider:
                 oracles = [oracles]
 
             for oracle_url in oracles:
-                gas_price = fetch_gas_price(oracle_url)
+                gas_price = await fetch_gas_price(oracle_url)
                 if gas_price is not None:
                     return gas_price
 
         return None
 
-    def _init_contracts(self):
+    async def _init_contracts(self):
         for contract in self.abi.keys():
             if contract == "Hub":
                 continue
 
-            self._update_contract_instance(contract)
+            await self._update_contract_instance(contract)
 
     async def _update_contract_instance(self, contract: str) -> bool:
         if (
@@ -278,9 +287,9 @@ class BlockchainProvider:
             return True
         return False
 
-    def _check_contract_status(self, contract: str) -> bool:
+    async def _check_contract_status(self, contract: str) -> bool:
         try:
-            return self.call_function(contract, "status")
+            return await self.call_function(contract, "status")
         except Exception:
             return False
 

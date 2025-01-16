@@ -158,3 +158,9 @@ class Operations(Enum):
     QUERY = "query"
     PUBLISH_PARANET = "publishParanet"
     FINALITY = "finality"
+
+
+class OperationStatuses(str, Enum):
+    PENDING = "PENDING"
+    COMPLETED = "COMPLETED"
+    FAILED = "FAILED"

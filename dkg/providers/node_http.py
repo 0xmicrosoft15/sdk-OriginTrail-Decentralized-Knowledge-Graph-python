@@ -15,13 +15,12 @@
 # specific language governing permissions and limitations
 # under the License.
 
-from typing import Any, Optional
+from typing import Any
 
 import aiohttp
 from dkg.dataclasses import HTTPRequestMethod, NodeResponseDict
 from dkg.exceptions import HTTPRequestMethodNotSupported, NodeRequestError
 from dkg.types import URI
-from requests.exceptions import HTTPError, ConnectionError, Timeout, RequestException
 
 
 class NodeHTTPProvider:
@@ -33,7 +32,6 @@ class NodeHTTPProvider:
     ):
         self.url = f"{URI(endpoint_uri)}/{api_version}"
         self.headers = {"Authorization": f"Bearer {auth_token}"} if auth_token else {}
-        self.http_session: Optional[aiohttp.ClientSession] = None
 
     async def make_request(
         self,
@@ -44,33 +42,31 @@ class NodeHTTPProvider:
     ) -> NodeResponseDict:
         url = f"{self.url}/{path}"
 
-        try:
-            if method == HTTPRequestMethod.GET:
-                async with self.http_session.get(
-                    url, params=params, headers=self.headers
-                ) as response:
-                    response.raise_for_status()
-                    response = await response.json()
-            elif method == HTTPRequestMethod.POST:
-                async with self.http_session.post(
-                    url, json=data, headers=self.headers
-                ) as response:
-                    response.raise_for_status()
-                    response = await response.json()
-            else:
-                raise HTTPRequestMethodNotSupported(
-                    f"{method.name} method isn't supported"
-                )
-            # TODO:  change to async
-            # response.raise_for_status()
-
+        async with aiohttp.ClientSession() as session:
             try:
-                return NodeResponseDict(response)
-            except ValueError as err:
-                raise NodeRequestError(f"JSON decoding failed: {err}")
+                if method == HTTPRequestMethod.GET:
+                    async with session.get(
+                        url, params=params, headers=self.headers
+                    ) as response:
+                        response.raise_for_status()
+                        response = await response.json()
+                elif method == HTTPRequestMethod.POST:
+                    async with session.post(
+                        url, json=data, headers=self.headers
+                    ) as response:
+                        response.raise_for_status()
+                        response = await response.json()
+                else:
+                    raise HTTPRequestMethodNotSupported(
+                        f"{method.name} method isn't supported"
+                    )
 
-        except (HTTPError, ConnectionError, Timeout, RequestException) as err:
-            raise NodeRequestError(f"Request failed: {err}")
+                try:
+                    return NodeResponseDict(response)
+                except ValueError as err:
+                    raise NodeRequestError(f"JSON decoding failed: {err}")
 
-    def set_http_session(self, http_session: aiohttp.ClientSession):
-        self.http_session = http_session
+            except aiohttp.ClientError as err:
+                raise NodeRequestError(f"Network error: {err}")
+            except Exception as err:
+                raise NodeRequestError(f"Unexpected error: {err}")

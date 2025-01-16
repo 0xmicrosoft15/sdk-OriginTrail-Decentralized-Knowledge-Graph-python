@@ -53,9 +53,11 @@ class DefaultRequestManager:
         request_params: dict[str, Any],
     ) -> BlockchainResponseDict | NodeResponseDict:
         if issubclass(request_type, JSONRPCRequest):
-            return self.blockchain_provider.make_json_rpc_request(**request_params)
+            return await self.blockchain_provider.make_json_rpc_request(
+                **request_params
+            )
         elif issubclass(request_type, ContractInteraction):
-            return self.blockchain_provider.call_function(**request_params)
+            return await self.blockchain_provider.call_function(**request_params)
         elif issubclass(request_type, NodeCall):
             return await self.node_provider.make_request(**request_params)
         else:

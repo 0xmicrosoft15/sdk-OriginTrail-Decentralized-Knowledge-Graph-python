@@ -31,10 +31,10 @@ class Node(Module):
     _info = Method(NodeRequest.info)
 
     @property
-    def info(self) -> NodeResponseDict:
-        return self._info()
+    async def info(self) -> NodeResponseDict:
+        return await self._info()
 
     _get_identity_id = Method(BlockchainRequest.get_identity_id)
 
-    def get_identity_id(self, operational: Address) -> int:
-        return self._get_identity_id(operational)
+    async def get_identity_id(self, operational: Address) -> int:
+        return await self._get_identity_id(operational)
