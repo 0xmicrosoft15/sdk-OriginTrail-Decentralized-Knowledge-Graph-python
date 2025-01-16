@@ -35,8 +35,7 @@ class InputService:
             "payer": self.get_payer(options),
             "minimum_number_of_finalization_confirmations": self.get_minimum_number_of_finalization_confirmations(
                 options
-            )
-            or 3,
+            ),
             "minimum_number_of_node_replications": self.get_minimum_number_of_node_replications(
                 options
             ),
@@ -48,6 +47,15 @@ class InputService:
             "frequency": self.get_frequency(options),
             "paranet_ual": self.get_paranet_ual(options),
             "repository": self.get_repository(options),
+        }
+
+    def get_publish_finality_arguments(self, options):
+        return {
+            "max_number_of_retries": self.get_max_number_of_retries(options),
+            "frequency": self.get_frequency(options),
+            "minimum_number_of_finalization_confirmations": self.get_minimum_number_of_finalization_confirmations(
+                options
+            ),
         }
 
     def get_max_number_of_retries(self, options):
@@ -100,7 +108,11 @@ class InputService:
         return options.get("payer") or ZERO_ADDRESS
 
     def get_minimum_number_of_finalization_confirmations(self, options):
-        return options.get("minimum_number_of_finalization_confirmations") or None
+        return (
+            options.get("minimum_number_of_finalization_confirmations")
+            or DefaultParameters.MIN_NUMBER_OF_FINALIZATION_CONF.value
+            or None
+        )
 
     def get_minimum_number_of_node_replications(self, options):
         return options.get("minimum_number_of_node_replications") or None

@@ -17,24 +17,31 @@
 
 from rdflib.plugins.sparql.parser import parseQuery
 
-from dkg.dataclasses import NodeResponseDict
-from dkg.exceptions import OperationNotFinished
+
 from dkg.manager import DefaultRequestManager
 from dkg.method import Method
 from dkg.module import Module
 from dkg.types import NQuads
-from dkg.utils.decorators import retry
-from dkg.utils.node_request import NodeRequest, validate_operation_status
+from dkg.utils.node_request import (
+    NodeRequest,
+)
+from dkg.services.node_service import NodeService
+from dkg.services.input_service import InputService
 from dkg.constants import Operations
 
 
 class Graph(Module):
-    def __init__(self, manager: DefaultRequestManager, input_service):
+    def __init__(
+        self,
+        manager: DefaultRequestManager,
+        input_service: InputService,
+        node_service: NodeService,
+    ):
         self.manager = manager
         self.input_service = input_service
+        self.node_service = node_service
 
     _query = Method(NodeRequest.query)
-    _get_operation_result = Method(NodeRequest.get_operation_result)
 
     def query(
         self,
@@ -51,31 +58,61 @@ class Graph(Module):
         parsed_query = parseQuery(query)
         query_type = parsed_query[1].name.replace("Query", "").upper()
 
-        operation_id: NodeResponseDict = self._query(
-            query, query_type, repository, paranet_ual
-        )["operationId"]
-        operation_result = self.get_operation_result(
+        result = self._query(query, query_type, repository, paranet_ual)
+        operation_id = result.get("operationId")
+        operation_result = self.node_service.get_operation_result(
             operation_id, Operations.QUERY.value, max_number_of_retries, frequency
         )
 
         return operation_result["data"]
 
-    def get_operation_result(
-        self, operation_id: str, operation: str, max_retries: int, frequency: int
-    ):
-        @retry(
-            catch=OperationNotFinished,
-            max_retries=max_retries,
-            base_delay=frequency,
-            backoff=2,
+    def publish_finality(self, UAL, options=None):
+        if options is None:
+            options = {}
+
+        arguments = self.input_service.get_publish_finality_arguments(options)
+        max_number_of_retries = arguments.get("max_number_of_retries")
+        minimum_number_of_finalization_confirmations = arguments.get(
+            "minimum_number_of_finalization_confirmations"
         )
-        def retry_get_operation_result():
-            operation_result = self._get_operation_result(
-                operation_id=operation_id,
-                operation=operation,
+        frequency = arguments.get("frequency")
+        try:
+            finality_status_result = self.node_service.finality_status(
+                UAL,
+                minimum_number_of_finalization_confirmations,
+                max_number_of_retries,
+                frequency,
             )
-            validate_operation_status(operation_result)
+        except Exception as e:
+            return {"status": "ERROR", "error": str(e)}
 
-            return operation_result
+        if finality_status_result == 0:
+            try:
+                finality_operation_id = self.node_service.finality(
+                    UAL,
+                    minimum_number_of_finalization_confirmations,
+                    max_number_of_retries,
+                    frequency,
+                )
+            except Exception as e:
+                return {"status": "ERROR", "error": str(e)}
 
-        return retry_get_operation_result()
+            try:
+                return self.node_service.get_operation_result(
+                    finality_operation_id, "finality", max_number_of_retries, frequency
+                )
+            except Exception as e:
+                return {"status": "NOT FINALIZED", "error": str(e)}
+
+        elif finality_status_result >= minimum_number_of_finalization_confirmations:
+            return {
+                "status": "FINALIZED",
+                "numberOfConfirmations": finality_status_result,
+                "requiredConfirmations": minimum_number_of_finalization_confirmations,
+            }
+        else:
+            return {
+                "status": "NOT FINALIZED",
+                "numberOfConfirmations": finality_status_result,
+                "requiredConfirmations": minimum_number_of_finalization_confirmations,
+            }

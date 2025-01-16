@@ -64,6 +64,15 @@ class NodeRequest:
         },
     )
 
+    finality = NodeCall(
+        method=HTTPRequestMethod.POST,
+        path="ask",
+        params={
+            "ual": UAL,
+            "minimumNumberOfNodeReplications": int,
+        },
+    )
+
     finality_status = NodeCall(
         method=HTTPRequestMethod.GET,
         path="finality",
@@ -82,6 +91,7 @@ class NodeRequest:
             "subjectUAL": UAL,
         },
     )
+
     query = NodeCall(
         method=HTTPRequestMethod.POST,
         path="query",

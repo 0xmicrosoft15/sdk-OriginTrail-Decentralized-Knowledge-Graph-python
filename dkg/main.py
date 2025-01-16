@@ -29,6 +29,7 @@ from dkg.providers import BlockchainProvider, NodeHTTPProvider
 from dkg.types import UAL, Address, ChecksumAddress
 from dkg.utils.ual import format_ual, parse_ual
 from dkg.services.input_service import InputService
+from dkg.services.node_service import NodeService
 
 
 class DKG(Module):
@@ -62,11 +63,13 @@ class DKG(Module):
 
         modules = {
             "assertion": Assertion(self.manager),
-            "asset": KnowledgeAsset(self.manager, self.input_service),
+            "asset": KnowledgeAsset(
+                self.manager, self.input_service, self.node_service
+            ),
             "paranet": Paranet(self.manager),
             "network": Network(self.manager),
             "node": Node(self.manager),
-            "graph": Graph(self.manager, self.input_service),
+            "graph": Graph(self.manager, self.input_service, self.node_service),
         }
         self._attach_modules(modules)
 
@@ -76,6 +79,7 @@ class DKG(Module):
 
     def initialize_services(self, manager):
         self.input_service = InputService(manager)
+        self.node_service = NodeService(manager)
 
     @property
     def node_provider(self) -> NodeHTTPProvider:

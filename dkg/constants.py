@@ -1,4 +1,5 @@
 from enum import Enum
+
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
 # distributed with this work for additional information
@@ -40,6 +41,7 @@ class DefaultParameters(Enum):
     FREQUENCY: int = 5
     MAX_NUMBER_OF_RETRIES: int = 5
     HASH_FUNCTION_ID: int = 1
+    MIN_NUMBER_OF_FINALIZATION_CONF: int = 3
     IMMUTABLE: bool = False
     VALIDATE: bool = True
     OUTPUT_FORMAT: str = "JSON-LD"
@@ -79,6 +81,12 @@ class BlockchainIds(Enum):
     BASE_MAINNET: str = "base:8453"
     GNOSIS_MAINNET: str = "gnosis:100"
     NEUROWEB_MAINNET: str = "otp:2043"
+
+
+class OperationStatuses(str, Enum):
+    PENDING = "PENDING"
+    COMPLETED = "COMPLETED"
+    FAILED = "FAILED"
 
 
 ZERO_ADDRESS = "0x0000000000000000000000000000000000000000"
