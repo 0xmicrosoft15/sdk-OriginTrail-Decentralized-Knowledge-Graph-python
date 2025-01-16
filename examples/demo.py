@@ -28,8 +28,12 @@ blockchain_provider = BlockchainProvider(
     Environments.DEVELOPMENT.value,
     BlockchainIds.HARDHAT_1.value,
 )
-
-dkg = DKG(node_provider, blockchain_provider)
+# here you can create your own custom values that will be applied to all the functions
+config = {
+    "max_number_of_retries": 300,
+    "frequency": 2,
+}
+dkg = DKG(node_provider, blockchain_provider, config)
 
 
 def divider():
@@ -84,8 +88,6 @@ create_asset_result = dkg.asset.create(
         "minimum_number_of_finalization_confirmations": 3,
         "minimum_number_of_node_replications": 1,
         "token_amount": 100,
-        "max_number_of_retries": 300,
-        "frequency": 2,
     },
 )
 print(f"======================== ASSET CREATED in {time.time() - start_time} seconds")

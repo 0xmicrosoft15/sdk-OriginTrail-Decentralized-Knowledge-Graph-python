@@ -56,10 +56,11 @@ class DKG(Module):
         self,
         node_provider: NodeHTTPProvider,
         blockchain_provider: BlockchainProvider,
+        config: dict = {},
     ):
         self.manager = DefaultRequestManager(node_provider, blockchain_provider)
 
-        self.initialize_services(self.manager)
+        self.initialize_services(self.manager, config)
 
         modules = {
             "assertion": Assertion(self.manager),
@@ -77,8 +78,8 @@ class DKG(Module):
         self.graph.get = self.asset.get.__get__(self.asset)
         self.graph.create = self.asset.create.__get__(self.asset)
 
-    def initialize_services(self, manager):
-        self.input_service = InputService(manager)
+    def initialize_services(self, manager, config):
+        self.input_service = InputService(manager, config)
         self.node_service = NodeService(manager)
 
     @property
