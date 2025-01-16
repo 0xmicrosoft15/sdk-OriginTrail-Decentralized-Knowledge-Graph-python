@@ -109,3 +109,10 @@ query_operation_result = dkg.graph.query(
 )
 print("======================== ASSET QUERY")
 print_json(query_operation_result)
+
+start_time = time.time()
+publish_finality_result = dkg.graph.publish_finality(create_asset_result.get("UAL"))
+print(
+    f"======================== PUBLISH FINALITY in {time.time() - start_time} seconds"
+)
+print_json(publish_finality_result)
