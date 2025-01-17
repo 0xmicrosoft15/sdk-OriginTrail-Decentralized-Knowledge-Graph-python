@@ -27,7 +27,7 @@ from dkg.utils.node_request import (
 )
 from dkg.services.node_services.node_service import NodeService
 from dkg.services.input_service import InputService
-from dkg.constants import Operations
+from dkg.constants import Operations, Status
 
 
 class Graph(Module):
@@ -84,7 +84,7 @@ class Graph(Module):
                 frequency,
             )
         except Exception as e:
-            return {"status": "ERROR", "error": str(e)}
+            return {"status": Status.ERROR.value, "error": str(e)}
 
         if finality_status_result == 0:
             try:
@@ -95,24 +95,24 @@ class Graph(Module):
                     frequency,
                 )
             except Exception as e:
-                return {"status": "ERROR", "error": str(e)}
+                return {"status": Status.ERROR.value, "error": str(e)}
 
             try:
                 return self.node_service.get_operation_result(
                     finality_operation_id, "finality", max_number_of_retries, frequency
                 )
             except Exception as e:
-                return {"status": "NOT FINALIZED", "error": str(e)}
+                return {"status": Status.NOT_FINALIZED.value, "error": str(e)}
 
         elif finality_status_result >= minimum_number_of_finalization_confirmations:
             return {
-                "status": "FINALIZED",
+                "status": Status.FINALIZED.value,
                 "numberOfConfirmations": finality_status_result,
                 "requiredConfirmations": minimum_number_of_finalization_confirmations,
             }
         else:
             return {
-                "status": "NOT FINALIZED",
+                "status": Status.NOT_FINALIZED.value,
                 "numberOfConfirmations": finality_status_result,
                 "requiredConfirmations": minimum_number_of_finalization_confirmations,
             }

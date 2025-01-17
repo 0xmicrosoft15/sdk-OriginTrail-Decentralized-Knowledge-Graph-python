@@ -1,6 +1,6 @@
 from dkg.managers.async_manager import AsyncRequestManager
 from dkg.method import Method
-from dkg.constants import OperationStatuses, DefaultParameters
+from dkg.constants import OperationStatuses, DefaultParameters, ErrorType, Status
 from dkg.utils.node_request import NodeRequest
 from dkg.modules.async_module import AsyncModule
 from typing import Dict, Any
@@ -40,7 +40,7 @@ class AsyncNodeService(AsyncModule):
         while True:
             if retries > max_retries:
                 response["data"] = {
-                    "errorType": "DKG_CLIENT_ERROR",
+                    "errorType": ErrorType.DKG_CLIENT_ERROR.value,
                     "errorMessage": "Unable to get results. Max number of retries reached.",
                 }
                 break
@@ -57,7 +57,7 @@ class AsyncNodeService(AsyncModule):
                 )
                 response = {"data": result}
             except Exception:
-                response = {"data": {"status": "NETWORK ERROR"}}
+                response = {"data": {"status": Status.NETWORK_ERROR.value}}
 
             # Check completion conditions
             if (

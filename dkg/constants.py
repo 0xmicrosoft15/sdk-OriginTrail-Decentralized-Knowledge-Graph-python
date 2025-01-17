@@ -1,4 +1,5 @@
-from enum import Enum
+from enum import Enum, auto
+from dkg.types import AutoStrEnumUpperCase
 
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
@@ -166,3 +167,14 @@ class Operations(Enum):
     QUERY = "query"
     PUBLISH_PARANET = "publishParanet"
     FINALITY = "finality"
+
+
+class Status(AutoStrEnumUpperCase):
+    ERROR = auto()
+    NOT_FINALIZED = auto()
+    FINALIZED = auto()
+    NETWORK_ERROR = auto()
+
+
+class ErrorType(AutoStrEnumUpperCase):
+    DKG_CLIENT_ERROR = auto()

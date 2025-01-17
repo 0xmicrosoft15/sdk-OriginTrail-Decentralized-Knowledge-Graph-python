@@ -21,7 +21,7 @@ from rdflib.plugins.sparql.parser import parseQuery
 from dkg.managers.async_manager import AsyncRequestManager
 from dkg.modules.async_module import AsyncModule
 from dkg.types import NQuads
-from dkg.constants import Operations
+from dkg.constants import Operations, Status
 from dkg.services.input_service import InputService
 from dkg.services.node_services.async_node_service import AsyncNodeService
 from dkg.types import UAL
@@ -84,7 +84,7 @@ class AsyncGraph(AsyncModule):
                 frequency,
             )
         except Exception as e:
-            return {"status": "ERROR", "error": str(e)}
+            return {"status": Status.ERROR.value, "error": str(e)}
 
         if finality_status_result == 0:
             try:
@@ -95,24 +95,24 @@ class AsyncGraph(AsyncModule):
                     frequency,
                 )
             except Exception as e:
-                return {"status": "ERROR", "error": str(e)}
+                return {"status": Status.ERROR.value, "error": str(e)}
 
             try:
                 return await self.node_service.get_operation_result(
                     finality_operation_id, "finality", max_number_of_retries, frequency
                 )
             except Exception as e:
-                return {"status": "NOT FINALIZED", "error": str(e)}
+                return {"status": Status.NOT_FINALIZED.value, "error": str(e)}
 
         elif finality_status_result >= minimum_number_of_finalization_confirmations:
             return {
-                "status": "FINALIZED",
+                "status": Status.FINALIZED.value,
                 "numberOfConfirmations": finality_status_result,
                 "requiredConfirmations": minimum_number_of_finalization_confirmations,
             }
         else:
             return {
-                "status": "NOT FINALIZED",
+                "status": Status.NOT_FINALIZED.value,
                 "numberOfConfirmations": finality_status_result,
                 "requiredConfirmations": minimum_number_of_finalization_confirmations,
             }
