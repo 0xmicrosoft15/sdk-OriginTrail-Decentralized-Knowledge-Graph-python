@@ -17,7 +17,7 @@
 
 import json
 import hashlib
-from typing import Literal, Dict, Optional, Any
+from typing import Literal
 from pyld import jsonld
 from web3 import Web3
 from web3.constants import ADDRESS_ZERO
@@ -37,38 +37,42 @@ from dkg.constants import (
     DEFAULT_RDF_FORMAT,
     Operations,
     OutputTypes,
-    DefaultParameters,
-    ZERO_ADDRESS,
 )
 from dkg.dataclasses import (
-    BidSuggestionRange,
     NodeResponseDict,
 )
 from dkg.managers.manager import DefaultRequestManager
 from dkg.method import Method
 from dkg.modules.module import Module
-from dkg.types import JSONLD, UAL, Address, HexStr, Wei
+from dkg.types import JSONLD, UAL, Address, HexStr
 from dkg.utils.blockchain_request import (
     BlockchainRequest,
-    KnowledgeCollectionResult,
-    AllowanceResult,
 )
 from dkg.utils.node_request import (
     NodeRequest,
     OperationStatus,
+    get_operation_status_object,
 )
 from dkg.utils.ual import format_ual, parse_ual
 import dkg.utils.knowledge_collection_tools as kc_tools
 import dkg.utils.knowledge_asset_tools as ka_tools
+from dkg.services.input_service import InputService
+from dkg.services.node_services.node_service import NodeService
+from dkg.services.blockchain_services.blockchain_service import BlockchainService
 
 
 class KnowledgeAsset(Module):
-    def __init__(self, manager: DefaultRequestManager, input_service, node_service):
+    def __init__(
+        self,
+        manager: DefaultRequestManager,
+        input_service: InputService,
+        node_service: NodeService,
+        blockchain_service: BlockchainService,
+    ):
         self.manager = manager
         self.input_service = input_service
         self.node_service = node_service
-
-    _owner = Method(BlockchainRequest.owner_of)
+        self.blockchain_service = blockchain_service
 
     def is_valid_ual(self, ual: UAL) -> bool:
         if not ual or not isinstance(ual, str):
@@ -124,7 +128,7 @@ class KnowledgeAsset(Module):
             )
 
         try:
-            owner = self._owner(int(parts[2]))
+            owner = self.blockchain_service.get_owner(int(parts[2]))
 
             if not owner or owner == ADDRESS_ZERO:
                 raise ValueError("Token does not exist or has no owner.")
@@ -132,161 +136,6 @@ class KnowledgeAsset(Module):
             return True
         except Exception as err:
             raise ValueError(f"Error fetching asset owner: {err}")
-
-    _get_contract_address = Method(BlockchainRequest.get_contract_address)
-    _get_current_allowance = Method(BlockchainRequest.allowance)
-    _increase_allowance = Method(BlockchainRequest.increase_allowance)
-    _decrease_allowance = Method(BlockchainRequest.decrease_allowance)
-    _get_asset_storage_address = Method(BlockchainRequest.get_asset_storage_address)
-    _key_is_operational_wallet = Method(BlockchainRequest.key_is_operational_wallet)
-    _time_until_next_epoch = Method(BlockchainRequest.time_until_next_epoch)
-    _epoch_length = Method(BlockchainRequest.epoch_length)
-    _get_stake_weighted_average_ask = Method(
-        BlockchainRequest.get_stake_weighted_average_ask
-    )
-    _get_bid_suggestion = Method(NodeRequest.bid_suggestion)
-    _publish = Method(NodeRequest.publish)
-    _create_knowledge_collection = Method(BlockchainRequest.create_knowledge_collection)
-    _mint_knowledge_asset = Method(BlockchainRequest.mint_knowledge_asset)
-
-    def get_operation_status_object(
-        self, operation_result: Dict[str, Any], operation_id: str
-    ) -> Dict[str, Any]:
-        """
-        Creates an operation status object from operation result and ID.
-
-        Args:
-            operation_result: Dictionary containing operation result data
-            operation_id: The ID of the operation
-
-        Returns:
-            Dictionary containing operation status information
-        """
-        # Check if error_type exists in operation_result.data
-        operation_data = (
-            {"status": operation_result.get("status"), **operation_result.get("data")}
-            if operation_result.get("data", {}).get("errorType")
-            else {"status": operation_result.get("status")}
-        )
-
-        return {"operationId": operation_id, **operation_data}
-
-    def decrease_knowledge_collection_allowance(
-        self,
-        allowance_gap: int,
-    ):
-        knowledge_collection_address = self._get_contract_address("KnowledgeCollection")
-        self._decrease_allowance(knowledge_collection_address, allowance_gap)
-
-    def increase_knowledge_collection_allowance(
-        self,
-        sender: str,
-        token_amount: str,
-    ) -> AllowanceResult:
-        """
-        Increases the allowance for knowledge collection if necessary.
-
-        Args:
-            sender: The address of the sender
-            token_amount: The amount of tokens to check/increase allowance for
-
-        Returns:
-            AllowanceResult containing whether allowance was increased and the gap
-        """
-        knowledge_collection_address = self._get_contract_address("KnowledgeCollection")
-
-        allowance = self._get_current_allowance(sender, knowledge_collection_address)
-        allowance_gap = int(token_amount) - int(allowance)
-
-        if allowance_gap > 0:
-            self._increase_allowance(knowledge_collection_address, allowance_gap)
-
-            return AllowanceResult(
-                allowance_increased=True, allowance_gap=allowance_gap
-            )
-
-        return AllowanceResult(allowance_increased=False, allowance_gap=allowance_gap)
-
-    def create_knowledge_collection(
-        self,
-        request: dict,
-        paranet_ka_contract: Optional[Address] = None,
-        paranet_token_id: Optional[int] = None,
-    ) -> KnowledgeCollectionResult:
-        """
-        Creates a knowledge collection on the blockchain.
-
-        Args:
-            request: dict containing all collection parameters
-            paranet_ka_contract: Optional paranet contract address
-            paranet_token_id: Optional paranet token ID
-            blockchain: Blockchain configuration
-
-        Returns:
-            KnowledgeCollectionResult containing collection ID and transaction receipt
-
-        Raises:
-            BlockchainError: If the collection creation fails
-        """
-        sender = self.manager.blockchain_provider.account.address
-        allowance_increased = False
-        allowance_gap = 0
-
-        try:
-            # Handle allowance
-            if request.get("paymaster") and request.get("paymaster") != ZERO_ADDRESS:
-                pass
-            else:
-                allowance_result = self.increase_knowledge_collection_allowance(
-                    sender=sender,
-                    token_amount=request.get("tokenAmount"),
-                )
-                allowance_increased = allowance_result.allowance_increased
-                allowance_gap = allowance_result.allowance_gap
-
-            if not paranet_ka_contract and not paranet_token_id:
-                receipt = self._create_knowledge_collection(
-                    request.get("publishOperationId"),
-                    Web3.to_bytes(hexstr=request.get("merkleRoot")),
-                    request.get("knowledgeAssetsAmount"),
-                    request.get("byteSize"),
-                    request.get("epochs"),
-                    request.get("tokenAmount"),
-                    request.get("isImmutable"),
-                    request.get("paymaster"),
-                    request.get("publisherNodeIdentityId"),
-                    Web3.to_bytes(hexstr=request.get("publisherNodeR")),
-                    Web3.to_bytes(hexstr=request.get("publisherNodeVS")),
-                    request.get("identityIds"),
-                    [Web3.to_bytes(hexstr=x) for x in request.get("r")],
-                    [Web3.to_bytes(hexstr=x) for x in request.get("vs")],
-                )
-            else:
-                receipt = self._mint_knowledge_asset(
-                    paranet_ka_contract,
-                    paranet_token_id,
-                    list(request.values()),
-                )
-
-            event_data = self.manager.blockchain_provider.decode_logs_event(
-                receipt=receipt,
-                contract_name="KnowledgeCollectionStorage",
-                event_name="KnowledgeCollectionCreated",
-            )
-            collection_id = (
-                int(getattr(event_data[0].get("args", {}), "id", None))
-                if event_data
-                else None
-            )
-
-            return KnowledgeCollectionResult(
-                knowledge_collection_id=collection_id, receipt=receipt
-            )
-
-        except Exception as e:
-            if allowance_increased:
-                self.decrease_knowledge_collection_allowance(allowance_gap)
-            raise e
 
     def process_content(self, content: str) -> list:
         return [line.strip() for line in content.split("\n") if line.strip() != ""]
@@ -466,11 +315,13 @@ class KnowledgeAsset(Module):
         dataset_root = kc_tools.calculate_merkle_root(dataset.get("public"))
 
         # Get the contract address for KnowledgeCollectionStorage
-        content_asset_storage_address = self._get_asset_storage_address(
-            "KnowledgeCollectionStorage"
+        content_asset_storage_address = (
+            self.blockchain_service.get_asset_storage_address(
+                "KnowledgeCollectionStorage"
+            )
         )
 
-        publish_operation_id = self._publish(
+        publish_operation_id = self.node_service.publish(
             dataset_root,
             dataset,
             blockchain_id,
@@ -514,10 +365,12 @@ class KnowledgeAsset(Module):
                     dataset_root, signature
                 )
 
-                key_is_operational_wallet = self._key_is_operational_wallet(
-                    signature.get("identityId"),
-                    Web3.solidity_keccak(["address"], [signer_address]),
-                    2,  # IdentityLib.OPERATIONAL_KEY
+                key_is_operational_wallet = (
+                    self.blockchain_service.key_is_operational_wallet(
+                        signature.get("identityId"),
+                        Web3.solidity_keccak(["address"], [signer_address]),
+                        2,  # IdentityLib.OPERATIONAL_KEY
+                    )
                 )
 
                 # If valid, append the signature components
@@ -532,9 +385,11 @@ class KnowledgeAsset(Module):
         if token_amount:
             estimated_publishing_cost = token_amount
         else:
-            time_until_next_epoch = self._time_until_next_epoch()
-            epoch_length = self._epoch_length()
-            stake_weighted_average_ask = self._get_stake_weighted_average_ask()
+            time_until_next_epoch = self.blockchain_service.time_until_next_epoch()
+            epoch_length = self.blockchain_service.epoch_length()
+            stake_weighted_average_ask = (
+                self.blockchain_service.get_stake_weighted_average_ask()
+            )
 
             # Convert to integers and perform calculation
             estimated_publishing_cost = (
@@ -601,7 +456,7 @@ class KnowledgeAsset(Module):
                     ),
                     "operation": {
                         "mintKnowledgeAsset": mint_knowledge_asset_receipt,
-                        "publish": self.get_operation_status_object(
+                        "publish": get_operation_status_object(
                             publish_operation_result, publish_operation_id
                         ),
                         "finality": {
@@ -725,7 +580,7 @@ class KnowledgeAsset(Module):
             if get_public_operation_result.get("data"):
                 return {
                     "operation": {
-                        "get": self.get_operation_status_object(
+                        "get": get_operation_status_object(
                             get_public_operation_result, get_public_operation_id
                         ),
                     },
@@ -740,7 +595,7 @@ class KnowledgeAsset(Module):
 
             return {
                 "operation": {
-                    "get": self.get_operation_status_object(
+                    "get": get_operation_status_object(
                         get_public_operation_result, get_public_operation_id
                     ),
                 },
@@ -758,7 +613,7 @@ class KnowledgeAsset(Module):
 
             return {
                 "operation": {
-                    "get": self.get_operation_status_object(
+                    "get": get_operation_status_object(
                         get_public_operation_result, get_public_operation_id
                     ),
                 },
@@ -800,7 +655,7 @@ class KnowledgeAsset(Module):
         result = {
             "assertion": formatted_assertion,
             "operation": {
-                "get": self.get_operation_status_object(
+                "get": get_operation_status_object(
                     get_public_operation_result, get_public_operation_id
                 ),
             },
@@ -811,56 +666,49 @@ class KnowledgeAsset(Module):
 
         return result
 
-    _extend_storing_period = Method(BlockchainRequest.extend_asset_storing_period)
+    # _extend_storing_period = Method(BlockchainRequest.extend_asset_storing_period)
 
-    def extend_storing_period(
-        self,
-        ual: UAL,
-        additional_epochs: int,
-        token_amount: Wei | None = None,
-    ) -> dict[str, UAL | TxReceipt]:
-        parsed_ual = parse_ual(ual)
-        blockchain_id, content_asset_storage_address, token_id = (
-            parsed_ual["blockchain"],
-            parsed_ual["contract_address"],
-            parsed_ual["token_id"],
-        )
+    # def extend_storing_period(
+    #     self,
+    #     ual: UAL,
+    #     additional_epochs: int,
+    #     token_amount: Wei | None = None,
+    # ) -> dict[str, UAL | TxReceipt]:
+    #     parsed_ual = parse_ual(ual)
+    #     blockchain_id, content_asset_storage_address, token_id = (
+    #         parsed_ual["blockchain"],
+    #         parsed_ual["contract_address"],
+    #         parsed_ual["token_id"],
+    #     )
 
-        if token_amount is None:
-            latest_finalized_state = self._get_latest_assertion_id(token_id)
-            latest_finalized_state_size = self._get_assertion_size(
-                latest_finalized_state
-            )
+    #     if token_amount is None:
+    #         latest_finalized_state = self._get_latest_assertion_id(token_id)
+    #         latest_finalized_state_size = self._get_assertion_size(
+    #             latest_finalized_state
+    #         )
 
-            token_amount = int(
-                self._get_bid_suggestion(
-                    blockchain_id,
-                    additional_epochs,
-                    latest_finalized_state_size,
-                    content_asset_storage_address,
-                    latest_finalized_state,
-                    DefaultParameters.HASH_FUNCTION_ID.value,
-                    token_amount or BidSuggestionRange.LOW,
-                )["bidSuggestion"]
-            )
+    #         token_amount = int(
+    #             self._get_bid_suggestion(
+    #                 blockchain_id,
+    #                 additional_epochs,
+    #                 latest_finalized_state_size,
+    #                 content_asset_storage_address,
+    #                 latest_finalized_state,
+    #                 DefaultParameters.HASH_FUNCTION_ID.value,
+    #                 token_amount or BidSuggestionRange.LOW,
+    #             )["bidSuggestion"]
+    #         )
 
-        receipt: TxReceipt = self._extend_storing_period(
-            token_id, additional_epochs, token_amount
-        )
+    #     receipt: TxReceipt = self._extend_storing_period(
+    #         token_id, additional_epochs, token_amount
+    #     )
 
-        return {
-            "UAL": ual,
-            "operation": json.loads(Web3.to_json(receipt)),
-        }
-
-    _get_block = Method(BlockchainRequest.get_block)
+    #     return {
+    #         "UAL": ual,
+    #         "operation": json.loads(Web3.to_json(receipt)),
+    #     }
 
     _get_assertion_size = Method(BlockchainRequest.get_assertion_size)
-
-    def get_owner(self, ual: UAL) -> Address:
-        token_id = parse_ual(ual)["token_id"]
-
-        return self._owner(token_id)
 
     def to_jsonld(self, nquads: str):
         options = {

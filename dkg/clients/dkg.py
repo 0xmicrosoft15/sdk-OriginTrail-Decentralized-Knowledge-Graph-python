@@ -30,6 +30,7 @@ from dkg.types import UAL, Address, ChecksumAddress
 from dkg.utils.ual import format_ual, parse_ual
 from dkg.services.input_service import InputService
 from dkg.services.node_services.node_service import NodeService
+from dkg.services.blockchain_services.blockchain_service import BlockchainService
 
 
 class DKG(Module):
@@ -53,7 +54,10 @@ class DKG(Module):
         modules = {
             "assertion": Assertion(self.manager),
             "asset": KnowledgeAsset(
-                self.manager, self.input_service, self.node_service
+                self.manager,
+                self.input_service,
+                self.node_service,
+                self.blockchain_service,
             ),
             "paranet": Paranet(self.manager),
             "network": Network(self.manager),
@@ -69,6 +73,7 @@ class DKG(Module):
     def initialize_services(self, config):
         self.input_service = InputService(self.manager, config)
         self.node_service = NodeService(self.manager)
+        self.blockchain_service = BlockchainService(self.manager)
 
     @staticmethod
     @wraps(format_ual)
