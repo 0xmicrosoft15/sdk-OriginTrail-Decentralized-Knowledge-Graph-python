@@ -1,4 +1,5 @@
-from enum import Enum
+from enum import Enum, auto
+from dkg.types import AutoStrEnumUpperCase
 
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
@@ -41,7 +42,7 @@ class DefaultParameters(Enum):
     FREQUENCY: int = 5
     MAX_NUMBER_OF_RETRIES: int = 5
     HASH_FUNCTION_ID: int = 1
-    MIN_NUMBER_OF_FINALIZATION_CONF: int = 3
+    MIN_NUMBER_OF_FINALIZATION_CONFIRMATION: int = 3
     IMMUTABLE: bool = False
     VALIDATE: bool = True
     OUTPUT_FORMAT: str = "JSON-LD"
@@ -166,3 +167,9 @@ class Operations(Enum):
     QUERY = "query"
     PUBLISH_PARANET = "publishParanet"
     FINALITY = "finality"
+
+
+class Status(AutoStrEnumUpperCase):
+    ERROR = auto()
+    NOT_FINALIZED = auto()
+    FINALIZED = auto()

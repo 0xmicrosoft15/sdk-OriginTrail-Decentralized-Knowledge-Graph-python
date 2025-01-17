@@ -147,7 +147,6 @@ class KnowledgeAsset(Module):
         BlockchainRequest.get_stake_weighted_average_ask
     )
     _get_bid_suggestion = Method(NodeRequest.bid_suggestion)
-    _publish = Method(NodeRequest.publish)
     _create_knowledge_collection = Method(BlockchainRequest.create_knowledge_collection)
     _mint_knowledge_asset = Method(BlockchainRequest.mint_knowledge_asset)
 
@@ -472,7 +471,7 @@ class KnowledgeAsset(Module):
             "KnowledgeCollectionStorage"
         )
 
-        publish_operation_id = self._publish(
+        publish_operation_id = self.node_service.publish(
             dataset_root,
             dataset,
             blockchain_id,
@@ -709,7 +708,7 @@ class KnowledgeAsset(Module):
         subject_ual = arguments.get("subject_ual")
 
         ual_with_state = f"{ual}:{state}" if state else ual
-        get_public_operation_id: NodeResponseDict = self._get(
+        get_public_operation_id: NodeResponseDict = self.node_service.get(
             ual_with_state,
             content_type,
             include_metadata,

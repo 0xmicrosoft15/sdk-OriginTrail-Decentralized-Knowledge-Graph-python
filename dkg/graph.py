@@ -19,15 +19,11 @@ from rdflib.plugins.sparql.parser import parseQuery
 
 
 from dkg.manager import DefaultRequestManager
-from dkg.method import Method
 from dkg.module import Module
 from dkg.types import NQuads
-from dkg.utils.node_request import (
-    NodeRequest,
-)
 from dkg.services.node_service import NodeService
 from dkg.services.input_service import InputService
-from dkg.constants import Operations
+from dkg.constants import Operations, Status
 
 
 class Graph(Module):
@@ -40,8 +36,6 @@ class Graph(Module):
         self.manager = manager
         self.input_service = input_service
         self.node_service = node_service
-
-    _query = Method(NodeRequest.query)
 
     def query(
         self,
@@ -58,7 +52,7 @@ class Graph(Module):
         parsed_query = parseQuery(query)
         query_type = parsed_query[1].name.replace("Query", "").upper()
 
-        result = self._query(query, query_type, repository, paranet_ual)
+        result = self.node_service.query(query, query_type, repository, paranet_ual)
         operation_id = result.get("operationId")
         operation_result = self.node_service.get_operation_result(
             operation_id, Operations.QUERY.value, max_number_of_retries, frequency
@@ -84,35 +78,17 @@ class Graph(Module):
                 frequency,
             )
         except Exception as e:
-            return {"status": "ERROR", "error": str(e)}
+            return {"status": Status.ERROR.value, "error": str(e)}
 
-        if finality_status_result == 0:
-            try:
-                finality_operation_id = self.node_service.finality(
-                    UAL,
-                    minimum_number_of_finalization_confirmations,
-                    max_number_of_retries,
-                    frequency,
-                )
-            except Exception as e:
-                return {"status": "ERROR", "error": str(e)}
-
-            try:
-                return self.node_service.get_operation_result(
-                    finality_operation_id, "finality", max_number_of_retries, frequency
-                )
-            except Exception as e:
-                return {"status": "NOT FINALIZED", "error": str(e)}
-
-        elif finality_status_result >= minimum_number_of_finalization_confirmations:
+        if finality_status_result >= minimum_number_of_finalization_confirmations:
             return {
-                "status": "FINALIZED",
+                "status": Status.FINALIZED.value,
                 "numberOfConfirmations": finality_status_result,
                 "requiredConfirmations": minimum_number_of_finalization_confirmations,
             }
         else:
             return {
-                "status": "NOT FINALIZED",
+                "status": Status.NOT_FINALIZED.value,
                 "numberOfConfirmations": finality_status_result,
                 "requiredConfirmations": minimum_number_of_finalization_confirmations,
             }

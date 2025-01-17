@@ -18,7 +18,10 @@ class NodeService(Module):
 
     _get_operation_result = Method(NodeRequest.get_operation_result)
     _finality_status = Method(NodeRequest.finality_status)
-    _finality = Method(NodeRequest.finality)
+    _ask = Method(NodeRequest.ask)
+    _publish = Method(NodeRequest.publish)
+    _get = Method(NodeRequest.get)
+    _query = Method(NodeRequest.query)
 
     def get_operation_result(
         self, operation_id: str, operation: str, max_retries: int, frequency: int
@@ -79,11 +82,11 @@ class NodeService(Module):
 
         return finality
 
-    def finality(self, ual, required_confirmations, max_number_of_retries, frequency):
-        finality_id = 0
+    def ask(self, ual, required_confirmations, max_number_of_retries, frequency):
+        ask = 0
         retries = 0
 
-        while finality_id < required_confirmations and retries < max_number_of_retries:
+        while ask < required_confirmations and retries < max_number_of_retries:
             if retries > max_number_of_retries:
                 raise Exception(
                     f"Unable to achieve required confirmations. "
@@ -97,7 +100,7 @@ class NodeService(Module):
 
             try:
                 try:
-                    response = self._finality(
+                    response = self._ask(
                         ual=ual, minimumNumberOfNodeReplications=required_confirmations
                     )
                 except Exception as e:
@@ -105,12 +108,57 @@ class NodeService(Module):
                     print(f"failed: {e}")
 
                 if response is not None:
-                    operation_id = response.json().get("operationId", 0)
-                    if operation_id >= required_confirmations:
-                        finality_id = operation_id
+                    number_of_confirmations = response.json().get(
+                        "numberOfConfirmations", 0
+                    )
+                    if number_of_confirmations >= required_confirmations:
+                        ask = number_of_confirmations
 
             except Exception as e:
-                finality_id = 0
+                ask = 0
                 print(f"Retry {retries + 1}/{max_number_of_retries} failed: {e}")
 
-            return finality_id
+            return ask
+
+    def publish(
+        self,
+        dataset_root,
+        dataset,
+        blockchain_id,
+        hash_function_id,
+        minimum_number_of_node_replications,
+    ):
+        return self._publish(
+            dataset_root,
+            dataset,
+            blockchain_id,
+            hash_function_id,
+            minimum_number_of_node_replications,
+        )
+
+    def get(
+        self,
+        ual_with_state,
+        content_type,
+        include_metadata,
+        hash_function_id,
+        paranet_ual,
+        subject_ual,
+    ):
+        return self._get(
+            ual_with_state,
+            content_type,
+            include_metadata,
+            hash_function_id,
+            paranet_ual,
+            subject_ual,
+        )
+
+    def query(
+        self,
+        query,
+        query_type,
+        repository,
+        paranet_ual,
+    ):
+        return self._query(query, query_type, repository, paranet_ual)

@@ -64,7 +64,7 @@ class NodeRequest:
         },
     )
 
-    finality = NodeCall(
+    ask = NodeCall(
         method=HTTPRequestMethod.POST,
         path="ask",
         params={
