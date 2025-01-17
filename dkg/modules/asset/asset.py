@@ -562,7 +562,7 @@ class KnowledgeAsset(Module):
         subject_ual = arguments.get("subject_ual")
 
         ual_with_state = f"{ual}:{state}" if state else ual
-        get_public_operation_id: NodeResponseDict = self._get(
+        get_public_operation_id: NodeResponseDict = self.node_service.get(
             ual_with_state,
             content_type,
             include_metadata,

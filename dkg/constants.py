@@ -42,7 +42,7 @@ class DefaultParameters(Enum):
     FREQUENCY: int = 5
     MAX_NUMBER_OF_RETRIES: int = 5
     HASH_FUNCTION_ID: int = 1
-    MIN_NUMBER_OF_FINALIZATION_CONF: int = 3
+    MIN_NUMBER_OF_FINALIZATION_CONFIRMATION: int = 3
     IMMUTABLE: bool = False
     VALIDATE: bool = True
     OUTPUT_FORMAT: str = "JSON-LD"

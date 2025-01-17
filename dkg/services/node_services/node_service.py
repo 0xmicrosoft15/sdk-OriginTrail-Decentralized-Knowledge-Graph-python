@@ -83,10 +83,10 @@ class NodeService(Module):
         return finality
 
     def ask(self, ual, required_confirmations, max_number_of_retries, frequency):
-        finality_id = 0
+        ask = 0
         retries = 0
 
-        while finality_id < required_confirmations and retries < max_number_of_retries:
+        while ask < required_confirmations and retries < max_number_of_retries:
             if retries > max_number_of_retries:
                 raise Exception(
                     f"Unable to achieve required confirmations. "
@@ -108,15 +108,17 @@ class NodeService(Module):
                     print(f"failed: {e}")
 
                 if response is not None:
-                    operation_id = response.json().get("operationId", 0)
-                    if operation_id >= required_confirmations:
-                        finality_id = operation_id
+                    number_of_confirmations = response.json().get(
+                        "numberOfConfirmations", 0
+                    )
+                    if number_of_confirmations >= required_confirmations:
+                        ask = number_of_confirmations
 
             except Exception as e:
-                finality_id = 0
+                ask = 0
                 print(f"Retry {retries + 1}/{max_number_of_retries} failed: {e}")
 
-            return finality_id
+            return ask
 
     def publish(
         self,

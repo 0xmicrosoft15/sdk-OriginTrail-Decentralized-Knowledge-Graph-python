@@ -149,7 +149,7 @@ class InputService:
         return (
             options.get("minimum_number_of_finalization_confirmations")
             or self.config.get("minimum_number_of_finalization_confirmations")
-            or DefaultParameters.MIN_NUMBER_OF_FINALIZATION_CONF.value
+            or DefaultParameters.MIN_NUMBER_OF_FINALIZATION_CONFIRMATION.value
             or None
         )
 

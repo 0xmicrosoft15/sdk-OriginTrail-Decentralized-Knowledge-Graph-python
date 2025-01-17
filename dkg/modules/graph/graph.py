@@ -19,12 +19,8 @@ from rdflib.plugins.sparql.parser import parseQuery
 
 
 from dkg.managers.manager import DefaultRequestManager
-from dkg.method import Method
 from dkg.modules.module import Module
 from dkg.types import NQuads
-from dkg.utils.node_request import (
-    NodeRequest,
-)
 from dkg.services.node_services.node_service import NodeService
 from dkg.services.input_service import InputService
 from dkg.constants import Operations, Status
@@ -41,8 +37,6 @@ class Graph(Module):
         self.input_service = input_service
         self.node_service = node_service
 
-    _query = Method(NodeRequest.query)
-
     def query(
         self,
         query: str,
@@ -58,7 +52,7 @@ class Graph(Module):
         parsed_query = parseQuery(query)
         query_type = parsed_query[1].name.replace("Query", "").upper()
 
-        result = self._query(query, query_type, repository, paranet_ual)
+        result = self.node_service.query(query, query_type, repository, paranet_ual)
         operation_id = result.get("operationId")
         operation_result = self.node_service.get_operation_result(
             operation_id, Operations.QUERY.value, max_number_of_retries, frequency
