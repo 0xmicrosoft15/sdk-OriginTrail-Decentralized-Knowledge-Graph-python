@@ -23,12 +23,17 @@ from dkg.providers import BlockchainProvider, NodeHTTPProvider
 from dkg.constants import Environments, BlockchainIds
 
 node_provider = NodeHTTPProvider(endpoint_uri="http://localhost:8900", api_version="v1")
+# make sure that you have PRIVATE_KEY in .env so the blockchain provider can load it
 blockchain_provider = BlockchainProvider(
     Environments.DEVELOPMENT.value,
     BlockchainIds.HARDHAT_1.value,
 )
-
-dkg = DKG(node_provider, blockchain_provider)
+# here you can create your own custom values that will be applied to all the functions
+config = {
+    "max_number_of_retries": 300,
+    "frequency": 2,
+}
+dkg = DKG(node_provider, blockchain_provider, config)
 
 
 def divider():
@@ -108,3 +113,10 @@ query_operation_result = dkg.graph.query(
 )
 print("======================== ASSET QUERY")
 print_json(query_operation_result)
+
+start_time = time.time()
+publish_finality_result = dkg.graph.publish_finality(create_asset_result.get("UAL"))
+print(
+    f"======================== PUBLISH FINALITY in {time.time() - start_time} seconds"
+)
+print_json(publish_finality_result)

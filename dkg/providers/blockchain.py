@@ -17,6 +17,7 @@
 
 import json
 import os
+from dotenv import load_dotenv
 from collections import namedtuple
 from functools import wraps
 from pathlib import Path
@@ -105,6 +106,7 @@ class BlockchainProvider:
         }
         self._init_contracts()
 
+        load_dotenv()
         if private_key := os.environ.get("PRIVATE_KEY"):
             self.set_account(private_key)
 

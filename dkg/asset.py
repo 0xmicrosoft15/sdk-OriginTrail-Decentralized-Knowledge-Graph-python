@@ -16,7 +16,6 @@
 # under the License.
 
 import json
-import time
 import hashlib
 from typing import Literal, Dict, Optional, Any
 from pyld import jsonld
@@ -45,9 +44,6 @@ from dkg.dataclasses import (
     BidSuggestionRange,
     NodeResponseDict,
 )
-from dkg.exceptions import (
-    OperationNotFinished,
-)
 from dkg.manager import DefaultRequestManager
 from dkg.method import Method
 from dkg.module import Module
@@ -57,11 +53,9 @@ from dkg.utils.blockchain_request import (
     KnowledgeCollectionResult,
     AllowanceResult,
 )
-from dkg.utils.decorators import retry
 from dkg.utils.node_request import (
     NodeRequest,
     OperationStatus,
-    validate_operation_status,
 )
 from dkg.utils.ual import format_ual, parse_ual
 import dkg.utils.knowledge_collection_tools as kc_tools
@@ -69,9 +63,10 @@ import dkg.utils.knowledge_asset_tools as ka_tools
 
 
 class KnowledgeAsset(Module):
-    def __init__(self, manager: DefaultRequestManager, input_service):
+    def __init__(self, manager: DefaultRequestManager, input_service, node_service):
         self.manager = manager
         self.input_service = input_service
+        self.node_service = node_service
 
     _owner = Method(BlockchainRequest.owner_of)
 
@@ -152,8 +147,6 @@ class KnowledgeAsset(Module):
         BlockchainRequest.get_stake_weighted_average_ask
     )
     _get_bid_suggestion = Method(NodeRequest.bid_suggestion)
-    _publish = Method(NodeRequest.publish)
-    _finality_status = Method(NodeRequest.finality_status)
     _create_knowledge_collection = Method(BlockchainRequest.create_knowledge_collection)
     _mint_knowledge_asset = Method(BlockchainRequest.mint_knowledge_asset)
 
@@ -178,37 +171,6 @@ class KnowledgeAsset(Module):
         )
 
         return {"operationId": operation_id, **operation_data}
-
-    def finality_status(
-        self,
-        ual: str,
-        required_confirmations: int,
-        max_number_of_retries: int,
-        frequency: int,
-    ):
-        retries = 0
-        finality = 0
-
-        while finality < required_confirmations and retries <= max_number_of_retries:
-            if retries > max_number_of_retries:
-                raise Exception(
-                    f"Unable to achieve required confirmations. "
-                    f"Max number of retries ({max_number_of_retries}) reached."
-                )
-
-            # Sleep between attempts (except for first try)
-            if retries > 0:
-                time.sleep(frequency)
-
-            retries += 1
-
-            try:
-                response = self._finality_status(ual)
-                finality = response.get("finality", 0)
-            except Exception:
-                finality = 0
-
-        return finality
 
     def decrease_knowledge_collection_allowance(
         self,
@@ -509,14 +471,14 @@ class KnowledgeAsset(Module):
             "KnowledgeCollectionStorage"
         )
 
-        publish_operation_id = self._publish(
+        publish_operation_id = self.node_service.publish(
             dataset_root,
             dataset,
             blockchain_id,
             hash_function_id,
             minimum_number_of_node_replications,
         )["operationId"]
-        publish_operation_result = self.get_operation_result(
+        publish_operation_result = self.node_service.get_operation_result(
             publish_operation_id,
             Operations.PUBLISH.value,
             max_number_of_retries,
@@ -623,7 +585,7 @@ class KnowledgeAsset(Module):
 
         finality_status_result = 0
         if minimum_number_of_finalization_confirmations > 0:
-            finality_status_result = self.finality_status(
+            finality_status_result = self.node_service.finality_status(
                 ual,
                 minimum_number_of_finalization_confirmations,
                 max_number_of_retries,
@@ -644,10 +606,12 @@ class KnowledgeAsset(Module):
                             publish_operation_result, publish_operation_id
                         ),
                         "finality": {
-                            "status": "FINALIZED"
-                            if finality_status_result
-                            >= minimum_number_of_finalization_confirmations
-                            else "NOT FINALIZED"
+                            "status": (
+                                "FINALIZED"
+                                if finality_status_result
+                                >= minimum_number_of_finalization_confirmations
+                                else "NOT FINALIZED"
+                            )
                         },
                         "numberOfConfirmations": finality_status_result,
                         "requiredConfirmations": minimum_number_of_finalization_confirmations,
@@ -744,7 +708,7 @@ class KnowledgeAsset(Module):
         subject_ual = arguments.get("subject_ual")
 
         ual_with_state = f"{ual}:{state}" if state else ual
-        get_public_operation_id: NodeResponseDict = self._get(
+        get_public_operation_id: NodeResponseDict = self.node_service.get(
             ual_with_state,
             content_type,
             include_metadata,
@@ -753,7 +717,7 @@ class KnowledgeAsset(Module):
             subject_ual,
         )["operationId"]
 
-        get_public_operation_result = self.get_operation_result(
+        get_public_operation_result = self.node_service.get_operation_result(
             get_public_operation_id,
             Operations.GET.value,
             max_number_of_retries,
@@ -900,28 +864,6 @@ class KnowledgeAsset(Module):
         token_id = parse_ual(ual)["token_id"]
 
         return self._owner(token_id)
-
-    _get_operation_result = Method(NodeRequest.get_operation_result)
-
-    def get_operation_result(
-        self, operation_id: str, operation: str, max_retries: int, frequency: int
-    ):
-        @retry(
-            catch=OperationNotFinished,
-            max_retries=max_retries,
-            base_delay=frequency,
-            backoff=1,
-        )
-        def retry_get_operation_result():
-            operation_result = self._get_operation_result(
-                operation_id=operation_id,
-                operation=operation,
-            )
-            validate_operation_status(operation_result)
-
-            return operation_result
-
-        return retry_get_operation_result()
 
     def to_jsonld(self, nquads: str):
         options = {
