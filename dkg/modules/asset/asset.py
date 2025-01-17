@@ -408,27 +408,29 @@ class KnowledgeAsset(Module):
         knowledge_collection_id = None
         mint_knowledge_asset_receipt = None
 
-        knowledge_collection_result = self.create_knowledge_collection(
-            {
-                "publishOperationId": publish_operation_id,
-                "merkleRoot": dataset_root,
-                "knowledgeAssetsAmount": kc_tools.count_distinct_subjects(
-                    dataset.get("public")
-                ),
-                "byteSize": dataset_size,
-                "epochs": epochs_num,
-                "tokenAmount": estimated_publishing_cost,
-                "isImmutable": immutable,
-                "paymaster": payer,
-                "publisherNodeIdentityId": publisher_node_identity_id,
-                "publisherNodeR": publisher_node_r,
-                "publisherNodeVS": publisher_node_vs,
-                "identityIds": identity_ids,
-                "r": r,
-                "vs": vs,
-            },
-            None,
-            None,
+        knowledge_collection_result = (
+            self.blockchain_service.create_knowledge_collection(
+                {
+                    "publishOperationId": publish_operation_id,
+                    "merkleRoot": dataset_root,
+                    "knowledgeAssetsAmount": kc_tools.count_distinct_subjects(
+                        dataset.get("public")
+                    ),
+                    "byteSize": dataset_size,
+                    "epochs": epochs_num,
+                    "tokenAmount": estimated_publishing_cost,
+                    "isImmutable": immutable,
+                    "paymaster": payer,
+                    "publisherNodeIdentityId": publisher_node_identity_id,
+                    "publisherNodeR": publisher_node_r,
+                    "publisherNodeVS": publisher_node_vs,
+                    "identityIds": identity_ids,
+                    "r": r,
+                    "vs": vs,
+                },
+                None,
+                None,
+            )
         )
         knowledge_collection_id = knowledge_collection_result.knowledge_collection_id
         mint_knowledge_asset_receipt = knowledge_collection_result.receipt
