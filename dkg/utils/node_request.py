@@ -195,7 +195,7 @@ def validate_operation_status(operation_result: dict[str, Any]) -> None:
 
 
 def get_operation_status_object(
-    self, operation_result: Dict[str, Any], operation_id: str
+    operation_result: Dict[str, Any], operation_id: str
 ) -> Dict[str, Any]:
     """
     Creates an operation status object from operation result and ID.

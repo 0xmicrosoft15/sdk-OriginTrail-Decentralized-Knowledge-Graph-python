@@ -686,7 +686,6 @@ class KnowledgeAsset(Module):
         return {"UAL": ual, "operation": json.loads(Web3.to_json(receipt))}
 
     _get_latest_assertion_id = Method(BlockchainRequest.get_latest_assertion_id)
-    _get_unfinalized_state = Method(BlockchainRequest.get_unfinalized_state)
 
     _get = Method(NodeRequest.get)
     _query = Method(NodeRequest.query)
