@@ -137,9 +137,7 @@ class KnowledgeAsset(Module):
     _get_current_allowance = Method(BlockchainRequest.allowance)
     _increase_allowance = Method(BlockchainRequest.increase_allowance)
     _decrease_allowance = Method(BlockchainRequest.decrease_allowance)
-    _chain_id = Method(BlockchainRequest.chain_id)
     _get_asset_storage_address = Method(BlockchainRequest.get_asset_storage_address)
-    _mint_paranet_knowledge_asset = Method(BlockchainRequest.mint_knowledge_asset)
     _key_is_operational_wallet = Method(BlockchainRequest.key_is_operational_wallet)
     _time_until_next_epoch = Method(BlockchainRequest.time_until_next_epoch)
     _epoch_length = Method(BlockchainRequest.epoch_length)
@@ -687,7 +685,6 @@ class KnowledgeAsset(Module):
 
         return {"UAL": ual, "operation": json.loads(Web3.to_json(receipt))}
 
-    _get_assertion_ids = Method(BlockchainRequest.get_assertion_ids)
     _get_latest_assertion_id = Method(BlockchainRequest.get_latest_assertion_id)
     _get_unfinalized_state = Method(BlockchainRequest.get_unfinalized_state)
 

@@ -19,6 +19,9 @@ class NodeService(Module):
     _get_operation_result = Method(NodeRequest.get_operation_result)
     _finality_status = Method(NodeRequest.finality_status)
     _finality = Method(NodeRequest.finality)
+    _publish = Method(NodeRequest.publish)
+    _get = Method(NodeRequest.get)
+    _query = Method(NodeRequest.query)
 
     def get_operation_result(
         self, operation_id: str, operation: str, max_retries: int, frequency: int
@@ -114,3 +117,46 @@ class NodeService(Module):
                 print(f"Retry {retries + 1}/{max_number_of_retries} failed: {e}")
 
             return finality_id
+
+    def publish(
+        self,
+        dataset_root,
+        dataset,
+        blockchain_id,
+        hash_function_id,
+        minimum_number_of_node_replications,
+    ):
+        return self._publish(
+            dataset_root,
+            dataset,
+            blockchain_id,
+            hash_function_id,
+            minimum_number_of_node_replications,
+        )
+
+    def get(
+        self,
+        ual_with_state,
+        content_type,
+        include_metadata,
+        hash_function_id,
+        paranet_ual,
+        subject_ual,
+    ):
+        return self._get(
+            ual_with_state,
+            content_type,
+            include_metadata,
+            hash_function_id,
+            paranet_ual,
+            subject_ual,
+        )
+
+    def query(
+        self,
+        query,
+        query_type,
+        repository,
+        paranet_ual,
+    ):
+        return self._query(query, query_type, repository, paranet_ual)

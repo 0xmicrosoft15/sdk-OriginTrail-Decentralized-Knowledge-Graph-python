@@ -8,6 +8,8 @@ from rdflib import Graph, BNode, URIRef, Literal as RDFLiteral
 from uuid import uuid4
 from web3 import Web3
 import math
+import hashlib
+from eth_abi.packed import encode_packed
 
 
 def normalize_dataset(
@@ -234,3 +236,13 @@ def count_distinct_subjects(nquads_list: list[str]) -> int:
     subjects = {str(quad[0]) for quad in graph}
 
     return len(subjects)
+
+
+def solidity_packed_sha256(types: list[str], values: list) -> str:
+    # Encode the values using eth_abi's encode_packed
+    packed_data = encode_packed(types, values)
+
+    # Calculate SHA256
+    sha256_hash = hashlib.sha256(packed_data).hexdigest()
+
+    return f"0x{sha256_hash}"

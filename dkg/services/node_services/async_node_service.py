@@ -1,11 +1,10 @@
 from dkg.managers.async_manager import AsyncRequestManager
 from dkg.method import Method
-from dkg.constants import OperationStatuses, DefaultParameters, ErrorType, Status
+from dkg.constants import OperationStatuses, ErrorType, Status
 from dkg.utils.node_request import NodeRequest
 from dkg.modules.async_module import AsyncModule
 from typing import Dict, Any
 from dkg.types import UAL
-from dkg.dataclasses import BidSuggestionRange
 from dkg.dataclasses import NodeResponseDict
 import asyncio
 
@@ -140,26 +139,6 @@ class AsyncNodeService(AsyncModule):
                 print(f"Retry {retries + 1}/{max_number_of_retries} failed: {e}")
 
             return finality_id
-
-    async def get_bid_suggestion(
-        self,
-        blockchain_id,
-        additional_epochs,
-        latest_finalized_state_size,
-        content_asset_storage_address,
-        latest_finalized_state,
-        token_amount,
-    ):
-        result = await self._get_bid_suggestion(
-            blockchain_id,
-            additional_epochs,
-            latest_finalized_state_size,
-            content_asset_storage_address,
-            latest_finalized_state,
-            DefaultParameters.HASH_FUNCTION_ID.value,
-            token_amount or BidSuggestionRange.LOW,
-        )
-        return int(result["bidSuggestion"])
 
     async def publish(
         self,

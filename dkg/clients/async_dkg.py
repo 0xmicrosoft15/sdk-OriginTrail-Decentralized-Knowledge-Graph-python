@@ -29,6 +29,9 @@ from dkg.services.input_service import InputService
 from dkg.providers.blockchain.async_blockchain import AsyncBlockchainProvider
 from dkg.providers.node.async_node_http import AsyncNodeHTTPProvider
 from dkg.services.node_services.async_node_service import AsyncNodeService
+from dkg.services.blockchain_services.async_blockchain_service import (
+    AsyncBlockchainService,
+)
 
 
 class AsyncDKG(AsyncModule):
@@ -48,7 +51,10 @@ class AsyncDKG(AsyncModule):
 
         modules = {
             "asset": AsyncKnowledgeAsset(
-                self.manager, self.input_service, self.node_service
+                self.manager,
+                self.input_service,
+                self.node_service,
+                self.blockchain_service,
             ),
             "node": AsyncNode(self.manager, self.node_service),
             "graph": AsyncGraph(self.manager, self.input_service, self.node_service),
@@ -62,6 +68,7 @@ class AsyncDKG(AsyncModule):
     def initialize_services(self, config: dict = {}):
         self.input_service = InputService(self.manager, config)
         self.node_service = AsyncNodeService(self.manager)
+        self.blockchain_service = AsyncBlockchainService(self.manager)
 
     @staticmethod
     @wraps(format_ual)
