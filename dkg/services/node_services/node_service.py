@@ -1,6 +1,6 @@
-from dkg.manager import DefaultRequestManager
+from dkg.managers.manager import DefaultRequestManager
 from dkg.method import Method
-from dkg.module import Module
+from dkg.modules.module import Module
 import time
 from dkg.utils.decorators import retry
 from dkg.exceptions import (

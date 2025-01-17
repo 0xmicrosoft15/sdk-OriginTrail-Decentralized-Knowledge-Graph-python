@@ -16,9 +16,9 @@
 # under the License.
 
 from dkg.dataclasses import NodeResponseDict
-from dkg.manager import DefaultRequestManager
+from dkg.managers.manager import DefaultRequestManager
 from dkg.method import Method
-from dkg.module import Module
+from dkg.modules.module import Module
 from dkg.utils.node_request import NodeRequest
 from dkg.utils.blockchain_request import BlockchainRequest
 from dkg.types import Address

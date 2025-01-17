@@ -17,8 +17,8 @@
 
 from typing import Literal
 
-from dkg.manager import DefaultRequestManager
-from dkg.module import Module
+from dkg.managers.manager import DefaultRequestManager
+from dkg.modules.module import Module
 from dkg.types import JSONLD, HexStr
 from dkg.utils.merkle import MerkleTree, hash_assertion_with_indexes
 from dkg.utils.metadata import generate_assertion_metadata

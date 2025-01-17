@@ -19,23 +19,25 @@ from dataclasses import asdict
 from typing import Any, Callable, Sequence
 
 from dkg.exceptions import ValidationError
-from dkg.manager import DefaultRequestManager
+from dkg.managers.async_manager import AsyncRequestManager
 from dkg.method import Method
 from dkg.types import TReturn
 
 
-class Module:
-    manager: DefaultRequestManager
+class AsyncModule:
+    manager: AsyncRequestManager
 
     def retrieve_caller_fn(
         self, method: Method[Callable[..., TReturn]]
     ) -> Callable[..., TReturn]:
-        def caller(*args: Any, **kwargs: Any) -> TReturn:
+        async def caller(*args: Any, **kwargs: Any) -> TReturn:
             processed_args = method.process_args(*args, **kwargs)
             request_params = asdict(method.action)
             request_params.update(processed_args)
 
-            return self.manager.blocking_request(type(method.action), request_params)
+            return await self.manager.blocking_request(
+                type(method.action), request_params
+            )
 
         return caller
 
@@ -56,7 +58,7 @@ class Module:
             if module_info_is_list_like:
                 if len(module_info) == 2:
                     submodule_definitions = module_info[1]
-                    module: "Module" = getattr(self, module_name)
+                    module: "AsyncModule" = getattr(self, module_name)
                     module._attach_modules(submodule_definitions)
                 elif len(module_info) != 1:
                     raise ValidationError(

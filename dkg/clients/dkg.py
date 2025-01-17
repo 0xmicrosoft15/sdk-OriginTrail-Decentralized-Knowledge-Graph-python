@@ -18,18 +18,18 @@
 from functools import wraps
 
 from dkg.assertion import Assertion
-from dkg.asset import KnowledgeAsset
-from dkg.graph import Graph
-from dkg.manager import DefaultRequestManager
-from dkg.module import Module
+from dkg.asset.asset import KnowledgeAsset
+from dkg.graph.graph import Graph
+from dkg.managers.manager import DefaultRequestManager
+from dkg.modules.module import Module
 from dkg.network import Network
-from dkg.node import Node
+from dkg.node.node import Node
 from dkg.paranet import Paranet
 from dkg.providers import BlockchainProvider, NodeHTTPProvider
 from dkg.types import UAL, Address, ChecksumAddress
 from dkg.utils.ual import format_ual, parse_ual
 from dkg.services.input_service import InputService
-from dkg.services.node_service import NodeService
+from dkg.services.node_services.node_service import NodeService
 
 
 class DKG(Module):
@@ -40,18 +40,6 @@ class DKG(Module):
     node: Node
     graph: Graph
 
-    @staticmethod
-    @wraps(format_ual)
-    def format_ual(
-        blockchain: str, contract_address: Address | ChecksumAddress, token_id: int
-    ) -> UAL:
-        return format_ual(blockchain, contract_address, token_id)
-
-    @staticmethod
-    @wraps(parse_ual)
-    def parse_ual(ual: UAL) -> dict[str, str | Address | int]:
-        return parse_ual(ual)
-
     def __init__(
         self,
         node_provider: NodeHTTPProvider,
@@ -60,7 +48,7 @@ class DKG(Module):
     ):
         self.manager = DefaultRequestManager(node_provider, blockchain_provider)
 
-        self.initialize_services(self.manager, config)
+        self.initialize_services(config)
 
         modules = {
             "assertion": Assertion(self.manager),
@@ -78,9 +66,21 @@ class DKG(Module):
         self.graph.get = self.asset.get.__get__(self.asset)
         self.graph.create = self.asset.create.__get__(self.asset)
 
-    def initialize_services(self, manager, config):
-        self.input_service = InputService(manager, config)
-        self.node_service = NodeService(manager)
+    def initialize_services(self, config):
+        self.input_service = InputService(self.manager, config)
+        self.node_service = NodeService(self.manager)
+
+    @staticmethod
+    @wraps(format_ual)
+    def format_ual(
+        blockchain: str, contract_address: Address | ChecksumAddress, token_id: int
+    ) -> UAL:
+        return format_ual(blockchain, contract_address, token_id)
+
+    @staticmethod
+    @wraps(parse_ual)
+    def parse_ual(ual: UAL) -> dict[str, str | Address | int]:
+        return parse_ual(ual)
 
     @property
     def node_provider(self) -> NodeHTTPProvider:

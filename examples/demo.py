@@ -22,7 +22,10 @@ from dkg import DKG
 from dkg.providers import BlockchainProvider, NodeHTTPProvider
 from dkg.constants import Environments, BlockchainIds
 
-node_provider = NodeHTTPProvider(endpoint_uri="http://localhost:8900", api_version="v1")
+node_provider = NodeHTTPProvider(
+    endpoint_uri="http://localhost:8900",
+    api_version="v1",
+)
 # make sure that you have PRIVATE_KEY in .env so the blockchain provider can load it
 blockchain_provider = BlockchainProvider(
     Environments.DEVELOPMENT.value,
@@ -80,7 +83,7 @@ print_json(info_result)
 
 divider()
 
-start_time = time.time()
+start_time = time.perf_counter()
 create_asset_result = dkg.asset.create(
     content=content,
     options={
@@ -90,18 +93,23 @@ create_asset_result = dkg.asset.create(
         "token_amount": 100,
     },
 )
-print(f"======================== ASSET CREATED in {time.time() - start_time} seconds")
+print(
+    f"======================== ASSET CREATED in {time.perf_counter() - start_time} seconds"
+)
 print_json(create_asset_result)
 
 divider()
 
-start_time = time.time()
+start_time = time.perf_counter()
 get_result = dkg.asset.get(create_asset_result.get("UAL"))
-print(f"======================== ASSET GET in {time.time() - start_time} seconds")
+print(
+    f"======================== ASSET GET in {time.perf_counter() - start_time} seconds"
+)
 print_json(get_result)
 
 divider()
 
+start_time = time.perf_counter()
 query_operation_result = dkg.graph.query(
     """
     PREFIX SCHEMA: <http://schema.org/>
@@ -111,12 +119,16 @@ query_operation_result = dkg.graph.query(
     }
     """
 )
-print("======================== ASSET QUERY")
+print(
+    f"======================== ASSET QUERY in {time.perf_counter() - start_time} seconds"
+)
 print_json(query_operation_result)
 
-start_time = time.time()
+divider()
+
+start_time = time.perf_counter()
 publish_finality_result = dkg.graph.publish_finality(create_asset_result.get("UAL"))
 print(
-    f"======================== PUBLISH FINALITY in {time.time() - start_time} seconds"
+    f"======================== PUBLISH FINALITY in {time.perf_counter() - start_time} seconds"
 )
 print_json(publish_finality_result)

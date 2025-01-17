@@ -15,36 +15,26 @@
 # specific language governing permissions and limitations
 # under the License.
 
-import json
 import os
 from dotenv import load_dotenv
-from collections import namedtuple
 from functools import wraps
-from pathlib import Path
-from typing import Any, Type
+from typing import Any
 
 import requests
 from dkg.constants import BLOCKCHAINS
 from dkg.exceptions import (
     AccountMissing,
-    EnvironmentNotSupported,
     NetworkNotSupported,
-    RPCURINotDefined,
 )
-from dkg.types import URI, Address, DataHexStr, Environment, Wei
-from eth_account.signers.local import LocalAccount
-from eth_typing import ABI, ABIFunction
+from dkg.types import URI, Address, Environment, Wei
 from web3 import Web3
 from web3.contract import Contract
 from web3.contract.contract import ContractFunction
-from web3.logs import DISCARD
-from web3.middleware import SignAndSendRawMiddlewareBuilder
 from web3.types import TxReceipt
+from dkg.providers.blockchain.base_blockchain import BaseBlockchainProvider
 
 
-class BlockchainProvider:
-    CONTRACTS_METADATA_DIR = Path(__file__).parents[1] / "data/interfaces"
-
+class BlockchainProvider(BaseBlockchainProvider):
     def __init__(
         self,
         environment: Environment,
@@ -53,28 +43,7 @@ class BlockchainProvider:
         gas_price: Wei | None = None,
         verify: bool = True,
     ):
-        if environment not in BLOCKCHAINS.keys():
-            raise EnvironmentNotSupported(f"Environment {environment} isn't supported!")
-
-        self.environment = environment
-        self.rpc_uri = rpc_uri
-        self.blockchain_id = (
-            blockchain_id
-            if blockchain_id in BLOCKCHAINS[self.environment].keys()
-            else None
-        )
-
-        if self.rpc_uri is None and self.blockchain_id is not None:
-            self.blockchain_id = blockchain_id
-            self.rpc_uri = self.rpc_uri or BLOCKCHAINS[self.environment][
-                self.blockchain_id
-            ].get("rpc", None)
-
-        if self.rpc_uri is None:
-            raise RPCURINotDefined(
-                "No RPC URI provided for unrecognized "
-                f"blockchain ID {self.blockchain_id}"
-            )
+        super().__init__(environment, blockchain_id, rpc_uri, gas_price)
 
         self.w3 = Web3(
             Web3.HTTPProvider(self.rpc_uri, request_kwargs={"verify": verify})
@@ -87,14 +56,10 @@ class BlockchainProvider:
                     f"Network with blockchain ID {self.blockchain_id} isn't supported!"
                 )
 
-        self.gas_price = gas_price
         self.gas_price_oracle = BLOCKCHAINS[self.environment][self.blockchain_id].get(
             "gas_price_oracle",
             None,
         )
-
-        self.abi = self._load_abi()
-        self.output_named_tuples = self._generate_output_named_tuples()
 
         hub_address: Address = BLOCKCHAINS[self.environment][self.blockchain_id]["hub"]
         self.contracts: dict[str, Contract] = {
@@ -194,23 +159,6 @@ class BlockchainProvider:
 
             return tx_receipt
 
-    def decode_logs_event(
-        self, receipt: TxReceipt, contract_name: str, event_name: str
-    ) -> Any:
-        return (
-            self.contracts[contract_name]
-            .events[event_name]()
-            .process_receipt(receipt, errors=DISCARD)
-        )
-
-    def set_account(self, private_key: DataHexStr):
-        self.account: LocalAccount = self.w3.eth.account.from_key(private_key)
-        self.w3.middleware_onion.inject(
-            SignAndSendRawMiddlewareBuilder.build(private_key),
-            layer=0,
-        )
-        self.w3.eth.default_account = self.account.address
-
     def _get_network_gas_price(self) -> Wei | None:
         if self.environment == "development":
             return None
@@ -278,33 +226,3 @@ class BlockchainProvider:
             return self.call_function(contract, "status")
         except Exception:
             return False
-
-    def _generate_output_named_tuples(self) -> dict[str, dict[str, Type[tuple]]]:
-        def generate_output_namedtuple(function_abi: ABIFunction) -> Type[tuple] | None:
-            output_names = [output["name"] for output in function_abi["outputs"]]
-            if all(name != "" for name in output_names):
-                return namedtuple(f"{function_abi['name']}Result", output_names)
-            return None
-
-        output_named_tuples = {}
-        for contract_name, contract_abi in self.abi.items():
-            output_named_tuples[contract_name] = {}
-            for item in contract_abi:
-                if (item["type"] != "function") or not item["outputs"]:
-                    continue
-                elif item["name"] in output_named_tuples[contract_name]:
-                    continue
-                named_tuple = generate_output_namedtuple(item)
-                if named_tuple is not None:
-                    output_named_tuples[contract_name][item["name"]] = named_tuple
-
-        return output_named_tuples
-
-    def _load_abi(self) -> ABI:
-        abi = {}
-
-        for contract_metadata in self.CONTRACTS_METADATA_DIR.glob("*.json"):
-            with open(contract_metadata, "r") as metadata_json:
-                abi[contract_metadata.stem] = json.load(metadata_json)
-
-        return abi

@@ -1,2 +1,9 @@
-from .blockchain import BlockchainProvider  # NOQA
-from .node_http import NodeHTTPProvider  # NOQA
+from .blockchain import BlockchainProvider, AsyncBlockchainProvider
+from .node import NodeHTTPProvider, AsyncNodeHTTPProvider
+
+__all__ = [
+    "BlockchainProvider",
+    "AsyncBlockchainProvider",
+    "NodeHTTPProvider",
+    "AsyncNodeHTTPProvider",
+]

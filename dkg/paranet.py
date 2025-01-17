@@ -27,9 +27,9 @@ from dkg.dataclasses import (
     ParanetNodesAccessPolicy,
     ParanetMinersAccessPolicy,
 )
-from dkg.manager import DefaultRequestManager
+from dkg.managers.manager import DefaultRequestManager
 from dkg.method import Method
-from dkg.module import Module
+from dkg.modules.module import Module
 from dkg.types import Address, UAL, HexStr
 from dkg.utils.blockchain_request import BlockchainRequest
 from dkg.utils.ual import parse_ual

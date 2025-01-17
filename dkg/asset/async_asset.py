@@ -17,6 +17,7 @@
 
 import json
 import hashlib
+import asyncio
 from typing import Literal, Dict, Optional, Any
 from pyld import jsonld
 from web3 import Web3
@@ -42,11 +43,10 @@ from dkg.constants import (
 )
 from dkg.dataclasses import (
     BidSuggestionRange,
-    NodeResponseDict,
 )
-from dkg.manager import DefaultRequestManager
+from dkg.managers.async_manager import AsyncRequestManager
 from dkg.method import Method
-from dkg.module import Module
+from dkg.modules.async_module import AsyncModule
 from dkg.types import JSONLD, UAL, Address, HexStr, Wei
 from dkg.utils.blockchain_request import (
     BlockchainRequest,
@@ -54,16 +54,22 @@ from dkg.utils.blockchain_request import (
     AllowanceResult,
 )
 from dkg.utils.node_request import (
-    NodeRequest,
     OperationStatus,
 )
 from dkg.utils.ual import format_ual, parse_ual
 import dkg.utils.knowledge_collection_tools as kc_tools
 import dkg.utils.knowledge_asset_tools as ka_tools
+from dkg.services.input_service import InputService
+from dkg.services.node_services.async_node_service import AsyncNodeService
 
 
-class KnowledgeAsset(Module):
-    def __init__(self, manager: DefaultRequestManager, input_service, node_service):
+class AsyncKnowledgeAsset(AsyncModule):
+    def __init__(
+        self,
+        manager: AsyncRequestManager,
+        input_service: InputService,
+        node_service: AsyncNodeService,
+    ):
         self.manager = manager
         self.input_service = input_service
         self.node_service = node_service
@@ -146,8 +152,6 @@ class KnowledgeAsset(Module):
     _get_stake_weighted_average_ask = Method(
         BlockchainRequest.get_stake_weighted_average_ask
     )
-    _get_bid_suggestion = Method(NodeRequest.bid_suggestion)
-    _publish = Method(NodeRequest.publish)
     _create_knowledge_collection = Method(BlockchainRequest.create_knowledge_collection)
     _mint_knowledge_asset = Method(BlockchainRequest.mint_knowledge_asset)
 
@@ -173,14 +177,16 @@ class KnowledgeAsset(Module):
 
         return {"operationId": operation_id, **operation_data}
 
-    def decrease_knowledge_collection_allowance(
+    async def decrease_knowledge_collection_allowance(
         self,
         allowance_gap: int,
     ):
-        knowledge_collection_address = self._get_contract_address("KnowledgeCollection")
-        self._decrease_allowance(knowledge_collection_address, allowance_gap)
+        knowledge_collection_address = await self._get_contract_address(
+            "KnowledgeCollection"
+        )
+        await self._decrease_allowance(knowledge_collection_address, allowance_gap)
 
-    def increase_knowledge_collection_allowance(
+    async def increase_knowledge_collection_allowance(
         self,
         sender: str,
         token_amount: str,
@@ -195,13 +201,17 @@ class KnowledgeAsset(Module):
         Returns:
             AllowanceResult containing whether allowance was increased and the gap
         """
-        knowledge_collection_address = self._get_contract_address("KnowledgeCollection")
+        knowledge_collection_address = await self._get_contract_address(
+            "KnowledgeCollection"
+        )
 
-        allowance = self._get_current_allowance(sender, knowledge_collection_address)
+        allowance = await self._get_current_allowance(
+            sender, knowledge_collection_address
+        )
         allowance_gap = int(token_amount) - int(allowance)
 
         if allowance_gap > 0:
-            self._increase_allowance(knowledge_collection_address, allowance_gap)
+            await self._increase_allowance(knowledge_collection_address, allowance_gap)
 
             return AllowanceResult(
                 allowance_increased=True, allowance_gap=allowance_gap
@@ -209,7 +219,7 @@ class KnowledgeAsset(Module):
 
         return AllowanceResult(allowance_increased=False, allowance_gap=allowance_gap)
 
-    def create_knowledge_collection(
+    async def create_knowledge_collection(
         self,
         request: dict,
         paranet_ka_contract: Optional[Address] = None,
@@ -239,7 +249,7 @@ class KnowledgeAsset(Module):
             if request.get("paymaster") and request.get("paymaster") != ZERO_ADDRESS:
                 pass
             else:
-                allowance_result = self.increase_knowledge_collection_allowance(
+                allowance_result = await self.increase_knowledge_collection_allowance(
                     sender=sender,
                     token_amount=request.get("tokenAmount"),
                 )
@@ -247,7 +257,7 @@ class KnowledgeAsset(Module):
                 allowance_gap = allowance_result.allowance_gap
 
             if not paranet_ka_contract and not paranet_token_id:
-                receipt = self._create_knowledge_collection(
+                receipt = await self._create_knowledge_collection(
                     request.get("publishOperationId"),
                     Web3.to_bytes(hexstr=request.get("merkleRoot")),
                     request.get("knowledgeAssetsAmount"),
@@ -264,7 +274,7 @@ class KnowledgeAsset(Module):
                     [Web3.to_bytes(hexstr=x) for x in request.get("vs")],
                 )
             else:
-                receipt = self._mint_knowledge_asset(
+                receipt = await self._mint_knowledge_asset(
                     paranet_ka_contract,
                     paranet_token_id,
                     list(request.values()),
@@ -287,7 +297,7 @@ class KnowledgeAsset(Module):
 
         except Exception as e:
             if allowance_increased:
-                self.decrease_knowledge_collection_allowance(allowance_gap)
+                await self.decrease_knowledge_collection_allowance(allowance_gap)
             raise e
 
     def process_content(self, content: str) -> list:
@@ -339,11 +349,52 @@ class KnowledgeAsset(Module):
 
         return Account.recover_message(message, signature=sig)
 
-    def create(
+    async def process_signatures(self, signatures, dataset_root):
+        async def process_signature(signature):
+            try:
+                signer_address = self.get_message_signer_address(
+                    dataset_root, signature
+                )
+
+                key_is_operational_wallet = await self._key_is_operational_wallet(
+                    signature.get("identityId"),
+                    Web3.solidity_keccak(["address"], [signer_address]),
+                    2,  # IdentityLib.OPERATIONAL_KEY
+                )
+
+                if key_is_operational_wallet:
+                    return {
+                        "identityId": signature.get("identityId"),
+                        "r": signature.get("r"),
+                        "vs": signature.get("vs"),
+                    }
+
+            except Exception:
+                pass
+            return None
+
+        # Run all signature processing concurrently
+        results = await asyncio.gather(
+            *(process_signature(sig) for sig in signatures), return_exceptions=False
+        )
+
+        # Filter out None results and organize the data
+        valid_results = [r for r in results if r is not None]
+
+        return {
+            "identity_ids": [r["identityId"] for r in valid_results],
+            "r": [r["r"] for r in valid_results],
+            "vs": [r["vs"] for r in valid_results],
+        }
+
+    async def create(
         self,
         content: dict[Literal["public", "private"], JSONLD],
-        options: dict = {},
+        options: dict = None,
     ) -> dict[str, UAL | HexStr | dict[str, dict[str, str] | TxReceipt]]:
+        if options is None:
+            options = {}
+
         arguments = self.input_service.get_asset_create_arguments(options)
 
         max_number_of_retries = arguments.get("max_number_of_retries")
@@ -468,18 +519,19 @@ class KnowledgeAsset(Module):
         dataset_root = kc_tools.calculate_merkle_root(dataset.get("public"))
 
         # Get the contract address for KnowledgeCollectionStorage
-        content_asset_storage_address = self._get_asset_storage_address(
+        content_asset_storage_address = await self._get_asset_storage_address(
             "KnowledgeCollectionStorage"
         )
 
-        publish_operation_id = self._publish(
+        result = await self.node_service.publish(
             dataset_root,
             dataset,
             blockchain_id,
             hash_function_id,
             minimum_number_of_node_replications,
-        )["operationId"]
-        publish_operation_result = self.node_service.get_operation_result(
+        )
+        publish_operation_id = result.get("operationId")
+        publish_operation_result = await self.node_service.get_operation_result(
             publish_operation_id,
             Operations.PUBLISH.value,
             max_number_of_retries,
@@ -508,35 +560,17 @@ class KnowledgeAsset(Module):
         publisher_node_r = publisher_node_signature.get("r")
         publisher_node_vs = publisher_node_signature.get("vs")
 
-        identity_ids, r, vs = [], [], []
-
-        for signature in signatures:
-            try:
-                signer_address = self.get_message_signer_address(
-                    dataset_root, signature
-                )
-
-                key_is_operational_wallet = self._key_is_operational_wallet(
-                    signature.get("identityId"),
-                    Web3.solidity_keccak(["address"], [signer_address]),
-                    2,  # IdentityLib.OPERATIONAL_KEY
-                )
-
-                # If valid, append the signature components
-                if key_is_operational_wallet:
-                    identity_ids.append(signature.get("identityId"))
-                    r.append(signature.get("r"))
-                    vs.append(signature.get("vs"))
-
-            except Exception:
-                continue
+        results = await self.process_signatures(signatures, dataset_root)
+        identity_ids = results["identity_ids"]
+        r = results["r"]
+        vs = results["vs"]
 
         if token_amount:
             estimated_publishing_cost = token_amount
         else:
-            time_until_next_epoch = self._time_until_next_epoch()
-            epoch_length = self._epoch_length()
-            stake_weighted_average_ask = self._get_stake_weighted_average_ask()
+            time_until_next_epoch = await self._time_until_next_epoch()
+            epoch_length = await self._epoch_length()
+            stake_weighted_average_ask = await self._get_stake_weighted_average_ask()
 
             # Convert to integers and perform calculation
             estimated_publishing_cost = (
@@ -555,7 +589,7 @@ class KnowledgeAsset(Module):
         knowledge_collection_id = None
         mint_knowledge_asset_receipt = None
 
-        knowledge_collection_result = self.create_knowledge_collection(
+        knowledge_collection_result = await self.create_knowledge_collection(
             {
                 "publishOperationId": publish_operation_id,
                 "merkleRoot": dataset_root,
@@ -586,7 +620,7 @@ class KnowledgeAsset(Module):
 
         finality_status_result = 0
         if minimum_number_of_finalization_confirmations > 0:
-            finality_status_result = self.node_service.finality_status(
+            finality_status_result = await self.node_service.finality_status(
                 ual,
                 minimum_number_of_finalization_confirmations,
                 max_number_of_retries,
@@ -607,12 +641,10 @@ class KnowledgeAsset(Module):
                             publish_operation_result, publish_operation_id
                         ),
                         "finality": {
-                            "status": (
-                                "FINALIZED"
-                                if finality_status_result
-                                >= minimum_number_of_finalization_confirmations
-                                else "NOT FINALIZED"
-                            )
+                            "status": "FINALIZED"
+                            if finality_status_result
+                            >= minimum_number_of_finalization_confirmations
+                            else "NOT FINALIZED"
                         },
                         "numberOfConfirmations": finality_status_result,
                         "requiredConfirmations": minimum_number_of_finalization_confirmations,
@@ -691,10 +723,10 @@ class KnowledgeAsset(Module):
     _get_latest_assertion_id = Method(BlockchainRequest.get_latest_assertion_id)
     _get_unfinalized_state = Method(BlockchainRequest.get_unfinalized_state)
 
-    _get = Method(NodeRequest.get)
-    _query = Method(NodeRequest.query)
+    async def get(self, ual: UAL, options: dict = None) -> dict:
+        if options is None:
+            options = {}
 
-    def get(self, ual: UAL, options: dict = {}) -> dict:
         arguments = self.input_service.get_asset_get_arguments(options)
 
         max_number_of_retries = arguments.get("max_number_of_retries")
@@ -709,16 +741,16 @@ class KnowledgeAsset(Module):
         subject_ual = arguments.get("subject_ual")
 
         ual_with_state = f"{ual}:{state}" if state else ual
-        get_public_operation_id: NodeResponseDict = self._get(
+        result = await self.node_service.get(
             ual_with_state,
             content_type,
             include_metadata,
             hash_function_id,
             paranet_ual,
             subject_ual,
-        )["operationId"]
-
-        get_public_operation_result = self.node_service.get_operation_result(
+        )
+        get_public_operation_id = result.get("operationId")
+        get_public_operation_result = await self.node_service.get_operation_result(
             get_public_operation_id,
             Operations.GET.value,
             max_number_of_retries,
@@ -817,7 +849,7 @@ class KnowledgeAsset(Module):
 
     _extend_storing_period = Method(BlockchainRequest.extend_asset_storing_period)
 
-    def extend_storing_period(
+    async def extend_storing_period(
         self,
         ual: UAL,
         additional_epochs: int,
@@ -836,16 +868,14 @@ class KnowledgeAsset(Module):
                 latest_finalized_state
             )
 
-            token_amount = int(
-                self._get_bid_suggestion(
-                    blockchain_id,
-                    additional_epochs,
-                    latest_finalized_state_size,
-                    content_asset_storage_address,
-                    latest_finalized_state,
-                    DefaultParameters.HASH_FUNCTION_ID.value,
-                    token_amount or BidSuggestionRange.LOW,
-                )["bidSuggestion"]
+            token_amount = await self.node_service.get_bid_suggestion(
+                blockchain_id,
+                additional_epochs,
+                latest_finalized_state_size,
+                content_asset_storage_address,
+                latest_finalized_state,
+                DefaultParameters.HASH_FUNCTION_ID.value,
+                token_amount or BidSuggestionRange.LOW,
             )
 
         receipt: TxReceipt = self._extend_storing_period(
