@@ -2,7 +2,7 @@
 name = "dkg"
 version = "8.0.0"
 description = "Python library for interacting with the OriginTrail Decentralized Knowledge Graph"
-authors = ["Zvonimir Sculac <zvonimir.sculac@origin-trail.com>"]
+authors = ["Uladzislau Hubar <hubar.uladzislau@gmail.com>"]
 license = "Apache-2.0"
 readme = "README.md"
 
