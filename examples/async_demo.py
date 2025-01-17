@@ -72,7 +72,7 @@ async def main():
             "epochs_num": 2,
             "minimum_number_of_finalization_confirmations": 3,
             "minimum_number_of_node_replications": 1,
-            # "token_amount": 100,
+            "token_amount": 100,
         },
     )
     print(
