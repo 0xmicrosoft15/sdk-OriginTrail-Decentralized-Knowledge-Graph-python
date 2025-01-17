@@ -22,7 +22,7 @@ from dkg.asset.asset import KnowledgeAsset
 from dkg.graph.graph import Graph
 from dkg.managers.manager import DefaultRequestManager
 from dkg.modules.module import Module
-from dkg.network import Network
+from dkg.network.network import Network
 from dkg.node.node import Node
 from dkg.paranet import Paranet
 from dkg.providers import BlockchainProvider, NodeHTTPProvider

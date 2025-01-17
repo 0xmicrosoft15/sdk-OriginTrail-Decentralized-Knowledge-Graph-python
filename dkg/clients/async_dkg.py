@@ -23,7 +23,7 @@ from dkg.asset.async_asset import AsyncKnowledgeAsset
 from dkg.graph.async_graph import AsyncGraph
 from dkg.managers.async_manager import AsyncRequestManager
 from dkg.modules.async_module import AsyncModule
-from dkg.network import Network
+from dkg.network.network import Network
 from dkg.node.async_node import AsyncNode
 from dkg.paranet import Paranet
 from dkg.types import UAL, Address, ChecksumAddress
