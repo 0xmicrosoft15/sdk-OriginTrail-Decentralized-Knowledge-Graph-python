@@ -61,9 +61,19 @@ class AsyncDKG(AsyncModule):
         }
         self._attach_modules(modules)
 
-        # Backwards compatibility
-        self.graph.get = self.asset.get.__get__(self.asset)
-        self.graph.create = self.asset.create.__get__(self.asset)
+        self._setup_backwards_compatibility()
+
+    def _setup_backwards_compatibility(self):
+        # Create async wrapper methods
+        async def graph_get(*args, **kwargs):
+            return await self.asset.get(*args, **kwargs)
+
+        async def graph_create(*args, **kwargs):
+            return await self.asset.create(*args, **kwargs)
+
+        # Attach methods to graph
+        self.graph.get = graph_get
+        self.graph.create = graph_create
 
     def initialize_services(self, config: dict = {}):
         self.input_service = InputService(self.manager, config)

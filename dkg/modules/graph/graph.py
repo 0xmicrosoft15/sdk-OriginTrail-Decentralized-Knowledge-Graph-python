@@ -86,25 +86,7 @@ class Graph(Module):
         except Exception as e:
             return {"status": Status.ERROR.value, "error": str(e)}
 
-        if finality_status_result == 0:
-            try:
-                finality_operation_id = self.node_service.finality(
-                    UAL,
-                    minimum_number_of_finalization_confirmations,
-                    max_number_of_retries,
-                    frequency,
-                )
-            except Exception as e:
-                return {"status": Status.ERROR.value, "error": str(e)}
-
-            try:
-                return self.node_service.get_operation_result(
-                    finality_operation_id, "finality", max_number_of_retries, frequency
-                )
-            except Exception as e:
-                return {"status": Status.NOT_FINALIZED.value, "error": str(e)}
-
-        elif finality_status_result >= minimum_number_of_finalization_confirmations:
+        if finality_status_result >= minimum_number_of_finalization_confirmations:
             return {
                 "status": Status.FINALIZED.value,
                 "numberOfConfirmations": finality_status_result,

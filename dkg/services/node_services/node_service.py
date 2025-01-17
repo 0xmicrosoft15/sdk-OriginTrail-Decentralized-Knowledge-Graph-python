@@ -18,7 +18,7 @@ class NodeService(Module):
 
     _get_operation_result = Method(NodeRequest.get_operation_result)
     _finality_status = Method(NodeRequest.finality_status)
-    _finality = Method(NodeRequest.finality)
+    _ask = Method(NodeRequest.ask)
     _publish = Method(NodeRequest.publish)
     _get = Method(NodeRequest.get)
     _query = Method(NodeRequest.query)
@@ -82,7 +82,7 @@ class NodeService(Module):
 
         return finality
 
-    def finality(self, ual, required_confirmations, max_number_of_retries, frequency):
+    def ask(self, ual, required_confirmations, max_number_of_retries, frequency):
         finality_id = 0
         retries = 0
 
@@ -100,7 +100,7 @@ class NodeService(Module):
 
             try:
                 try:
-                    response = self._finality(
+                    response = self._ask(
                         ual=ual, minimumNumberOfNodeReplications=required_confirmations
                     )
                 except Exception as e:
