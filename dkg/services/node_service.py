@@ -1,10 +1,12 @@
 from dkg.manager import DefaultRequestManager
 from dkg.method import Method
-from dkg.constants import OperationStatuses
+from dkg.constants import OperationStatuses, DefaultParameters
 from dkg.utils.node_request import NodeRequest
 from dkg.module import Module
 from typing import Dict, Any
 from dkg.types import UAL
+from dkg.dataclasses import BidSuggestionRange
+from dkg.dataclasses import NodeResponseDict
 import asyncio
 
 
@@ -12,9 +14,17 @@ class NodeService(Module):
     def __init__(self, manager: DefaultRequestManager):
         self.manager = manager
 
+    _info = Method(NodeRequest.info)
     _get_operation_result = Method(NodeRequest.get_operation_result)
     _finality_status = Method(NodeRequest.finality_status)
     _finality = Method(NodeRequest.finality)
+    _get_bid_suggestion = Method(NodeRequest.bid_suggestion)
+    _publish = Method(NodeRequest.publish)
+    _get = Method(NodeRequest.get)
+    _query = Method(NodeRequest.query)
+
+    async def info(self) -> NodeResponseDict:
+        return await self._info()
 
     async def get_operation_result(
         self,
@@ -130,3 +140,66 @@ class NodeService(Module):
                 print(f"Retry {retries + 1}/{max_number_of_retries} failed: {e}")
 
             return finality_id
+
+    async def get_bid_suggestion(
+        self,
+        blockchain_id,
+        additional_epochs,
+        latest_finalized_state_size,
+        content_asset_storage_address,
+        latest_finalized_state,
+        token_amount,
+    ):
+        result = await self._get_bid_suggestion(
+            blockchain_id,
+            additional_epochs,
+            latest_finalized_state_size,
+            content_asset_storage_address,
+            latest_finalized_state,
+            DefaultParameters.HASH_FUNCTION_ID.value,
+            token_amount or BidSuggestionRange.LOW,
+        )
+        return int(result["bidSuggestion"])
+
+    async def publish(
+        self,
+        dataset_root,
+        dataset,
+        blockchain_id,
+        hash_function_id,
+        minimum_number_of_node_replications,
+    ):
+        return await self._publish(
+            dataset_root,
+            dataset,
+            blockchain_id,
+            hash_function_id,
+            minimum_number_of_node_replications,
+        )
+
+    async def get(
+        self,
+        ual_with_state,
+        content_type,
+        include_metadata,
+        hash_function_id,
+        paranet_ual,
+        subject_ual,
+    ):
+        return await self._get(
+            ual_with_state,
+            content_type,
+            include_metadata,
+            hash_function_id,
+            paranet_ual,
+            subject_ual,
+        )
+
+    async def query(
+        self,
+        query,
+        query_type,
+        repository,
+        paranet_ual,
+    ):
+        return await self._query(query, query_type, repository, paranet_ual)

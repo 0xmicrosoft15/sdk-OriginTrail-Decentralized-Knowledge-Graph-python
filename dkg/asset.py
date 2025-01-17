@@ -54,7 +54,6 @@ from dkg.utils.blockchain_request import (
     AllowanceResult,
 )
 from dkg.utils.node_request import (
-    NodeRequest,
     OperationStatus,
 )
 from dkg.utils.ual import format_ual, parse_ual
@@ -153,8 +152,6 @@ class KnowledgeAsset(Module):
     _get_stake_weighted_average_ask = Method(
         BlockchainRequest.get_stake_weighted_average_ask
     )
-    _get_bid_suggestion = Method(NodeRequest.bid_suggestion)
-    _publish = Method(NodeRequest.publish)
     _create_knowledge_collection = Method(BlockchainRequest.create_knowledge_collection)
     _mint_knowledge_asset = Method(BlockchainRequest.mint_knowledge_asset)
 
@@ -526,7 +523,7 @@ class KnowledgeAsset(Module):
             "KnowledgeCollectionStorage"
         )
 
-        result = await self._publish(
+        result = await self.node_service.publish(
             dataset_root,
             dataset,
             blockchain_id,
@@ -726,9 +723,6 @@ class KnowledgeAsset(Module):
     _get_latest_assertion_id = Method(BlockchainRequest.get_latest_assertion_id)
     _get_unfinalized_state = Method(BlockchainRequest.get_unfinalized_state)
 
-    _get = Method(NodeRequest.get)
-    _query = Method(NodeRequest.query)
-
     async def get(self, ual: UAL, options: dict = None) -> dict:
         if options is None:
             options = {}
@@ -747,7 +741,7 @@ class KnowledgeAsset(Module):
         subject_ual = arguments.get("subject_ual")
 
         ual_with_state = f"{ual}:{state}" if state else ual
-        result = await self._get(
+        result = await self.node_service.get(
             ual_with_state,
             content_type,
             include_metadata,
@@ -855,7 +849,7 @@ class KnowledgeAsset(Module):
 
     _extend_storing_period = Method(BlockchainRequest.extend_asset_storing_period)
 
-    def extend_storing_period(
+    async def extend_storing_period(
         self,
         ual: UAL,
         additional_epochs: int,
@@ -874,16 +868,14 @@ class KnowledgeAsset(Module):
                 latest_finalized_state
             )
 
-            token_amount = int(
-                self._get_bid_suggestion(
-                    blockchain_id,
-                    additional_epochs,
-                    latest_finalized_state_size,
-                    content_asset_storage_address,
-                    latest_finalized_state,
-                    DefaultParameters.HASH_FUNCTION_ID.value,
-                    token_amount or BidSuggestionRange.LOW,
-                )["bidSuggestion"]
+            token_amount = await self.node_service.get_bid_suggestion(
+                blockchain_id,
+                additional_epochs,
+                latest_finalized_state_size,
+                content_asset_storage_address,
+                latest_finalized_state,
+                DefaultParameters.HASH_FUNCTION_ID.value,
+                token_amount or BidSuggestionRange.LOW,
             )
 
         receipt: TxReceipt = self._extend_storing_period(

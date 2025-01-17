@@ -19,20 +19,19 @@ from dkg.dataclasses import NodeResponseDict
 from dkg.manager import DefaultRequestManager
 from dkg.method import Method
 from dkg.module import Module
-from dkg.utils.node_request import NodeRequest
 from dkg.utils.blockchain_request import BlockchainRequest
 from dkg.types import Address
+from dkg.services.node_service import NodeService
 
 
 class Node(Module):
-    def __init__(self, manager: DefaultRequestManager):
+    def __init__(self, manager: DefaultRequestManager, node_service: NodeService):
         self.manager = manager
-
-    _info = Method(NodeRequest.info)
+        self.node_service = node_service
 
     @property
     async def info(self) -> NodeResponseDict:
-        return await self._info()
+        return await self.node_service.info()
 
     _get_identity_id = Method(BlockchainRequest.get_identity_id)
 

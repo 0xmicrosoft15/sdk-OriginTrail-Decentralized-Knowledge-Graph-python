@@ -70,7 +70,7 @@ class DKG(Module):
             ),
             "paranet": Paranet(self.manager),
             "network": Network(self.manager),
-            "node": Node(self.manager),
+            "node": Node(self.manager, self.node_service),
             "graph": Graph(self.manager, self.input_service, self.node_service),
         }
         self._attach_modules(modules)
