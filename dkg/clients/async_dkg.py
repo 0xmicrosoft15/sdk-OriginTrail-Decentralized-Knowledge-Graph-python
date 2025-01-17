@@ -19,13 +19,13 @@ from functools import wraps
 
 
 from dkg.assertion import Assertion
-from dkg.asset.async_asset import AsyncKnowledgeAsset
-from dkg.graph.async_graph import AsyncGraph
+from dkg.modules.asset import AsyncKnowledgeAsset
+from dkg.modules.graph import AsyncGraph
 from dkg.managers.async_manager import AsyncRequestManager
 from dkg.modules.async_module import AsyncModule
-from dkg.network.network import Network
-from dkg.node.async_node import AsyncNode
-from dkg.paranet import Paranet
+from dkg.modules.network import Network
+from dkg.modules.node import AsyncNode
+from dkg.modules.paranet import Paranet
 from dkg.types import UAL, Address, ChecksumAddress
 from dkg.utils.ual import format_ual, parse_ual
 from dkg.services.input_service import InputService
