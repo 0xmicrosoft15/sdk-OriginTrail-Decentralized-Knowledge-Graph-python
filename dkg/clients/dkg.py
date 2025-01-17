@@ -18,13 +18,13 @@
 from functools import wraps
 
 from dkg.assertion import Assertion
-from dkg.modules.asset import KnowledgeAsset
-from dkg.modules.graph import Graph
+from dkg.modules.asset.asset import KnowledgeAsset
+from dkg.modules.graph.graph import Graph
 from dkg.managers.manager import DefaultRequestManager
 from dkg.modules.module import Module
-from dkg.modules.network import Network
-from dkg.modules.node import Node
-from dkg.modules.paranet import Paranet
+from dkg.modules.network.network import Network
+from dkg.modules.node.node import Node
+from dkg.modules.paranet.paranet import Paranet
 from dkg.providers import BlockchainProvider, NodeHTTPProvider
 from dkg.types import UAL, Address, ChecksumAddress
 from dkg.utils.ual import format_ual, parse_ual
