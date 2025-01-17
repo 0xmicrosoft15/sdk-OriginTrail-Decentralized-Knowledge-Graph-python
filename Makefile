@@ -8,8 +8,8 @@ run-demo:
 	python3 examples/demo.py
 
 ruff:
+	ruff check --fix
 	ruff format
-	ruff check
 
 help:
 	@echo "Available commands:"

@@ -1,6 +1,6 @@
-from dkg.manager import DefaultRequestManager
+from dkg.managers.manager import DefaultRequestManager
 from dkg.method import Method
-from dkg.module import Module
+from dkg.modules.module import Module
 import time
 from dkg.utils.decorators import retry
 from dkg.exceptions import (
@@ -83,10 +83,13 @@ class NodeService(Module):
         return finality
 
     def ask(self, ual, required_confirmations, max_number_of_retries, frequency):
-        ask = 0
+        confirmations_count = 0
         retries = 0
 
-        while ask < required_confirmations and retries < max_number_of_retries:
+        while (
+            confirmations_count < required_confirmations
+            and retries < max_number_of_retries
+        ):
             if retries > max_number_of_retries:
                 raise Exception(
                     f"Unable to achieve required confirmations. "
@@ -112,13 +115,13 @@ class NodeService(Module):
                         "numberOfConfirmations", 0
                     )
                     if number_of_confirmations >= required_confirmations:
-                        ask = number_of_confirmations
+                        confirmations_count = number_of_confirmations
 
             except Exception as e:
-                ask = 0
+                confirmations_count = 0
                 print(f"Retry {retries + 1}/{max_number_of_retries} failed: {e}")
 
-            return ask
+            return confirmations_count
 
     def publish(
         self,

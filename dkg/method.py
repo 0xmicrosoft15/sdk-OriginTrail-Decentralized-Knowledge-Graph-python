@@ -30,7 +30,8 @@ from dkg.utils.node_request import NodeCall
 from dkg.utils.string_transformations import snake_to_camel
 
 if TYPE_CHECKING:
-    from dkg.module import Module
+    from dkg.modules.module import Module
+    from dkg.modules.async_module import AsyncModule
 
 
 class Method(Generic[TFunc]):
@@ -38,7 +39,9 @@ class Method(Generic[TFunc]):
         self.action = action
 
     def __get__(
-        self, obj: "Module | None" = None, _: Type["Module"] | None = None
+        self,
+        obj: "Module | AsyncModule | None" = None,
+        _: Type["Module | AsyncModule"] | None = None,
     ) -> TFunc:
         if obj is None:
             raise TypeError(

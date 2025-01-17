@@ -135,11 +135,6 @@ class BlockchainRequest:
         function="transferFrom",
         args={"from": Address, "to": Address, "tokenId": int},
     )
-    get_assertion_ids = ContractCall(
-        contract="ContentAssetStorage",
-        function="getAssertionIds",
-        args={"tokenId": int},
-    )
     get_latest_assertion_id = ContractCall(
         contract="ContentAssetStorage",
         function="getLatestAssertionId",
@@ -148,12 +143,6 @@ class BlockchainRequest:
     owner_of = ContractCall(
         contract="ContentAssetStorage",
         function="ownerOf",
-        args={"tokenId": int},
-    )
-
-    get_unfinalized_state = ContractCall(
-        contract="UnfinalizedStateStorage",
-        function="getUnfinalizedState",
         args={"tokenId": int},
     )
 

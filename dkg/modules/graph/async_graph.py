@@ -15,33 +15,37 @@
 # specific language governing permissions and limitations
 # under the License.
 
+
 from rdflib.plugins.sparql.parser import parseQuery
 
-
-from dkg.manager import DefaultRequestManager
-from dkg.module import Module
+from dkg.managers.async_manager import AsyncRequestManager
+from dkg.modules.async_module import AsyncModule
 from dkg.types import NQuads
-from dkg.services.node_service import NodeService
-from dkg.services.input_service import InputService
 from dkg.constants import Operations, Status
+from dkg.services.input_service import InputService
+from dkg.services.node_services.async_node_service import AsyncNodeService
+from dkg.types import UAL
 
 
-class Graph(Module):
+class AsyncGraph(AsyncModule):
     def __init__(
         self,
-        manager: DefaultRequestManager,
+        manager: AsyncRequestManager,
         input_service: InputService,
-        node_service: NodeService,
+        node_service: AsyncNodeService,
     ):
         self.manager = manager
         self.input_service = input_service
         self.node_service = node_service
 
-    def query(
+    async def query(
         self,
         query: str,
-        options: dict = {},
+        options: dict = None,
     ) -> NQuads:
+        if options is None:
+            options = {}
+
         arguments = self.input_service.get_query_arguments(options)
 
         max_number_of_retries = arguments.get("max_number_of_retries")
@@ -52,15 +56,17 @@ class Graph(Module):
         parsed_query = parseQuery(query)
         query_type = parsed_query[1].name.replace("Query", "").upper()
 
-        result = self.node_service.query(query, query_type, repository, paranet_ual)
+        result = await self.node_service.query(
+            query, query_type, repository, paranet_ual
+        )
         operation_id = result.get("operationId")
-        operation_result = self.node_service.get_operation_result(
+        operation_result = await self.node_service.get_operation_result(
             operation_id, Operations.QUERY.value, max_number_of_retries, frequency
         )
 
         return operation_result["data"]
 
-    def publish_finality(self, UAL, options=None):
+    async def publish_finality(self, UAL: UAL, options=None):
         if options is None:
             options = {}
 
@@ -71,7 +77,7 @@ class Graph(Module):
         )
         frequency = arguments.get("frequency")
         try:
-            finality_status_result = self.node_service.finality_status(
+            finality_status_result = await self.node_service.finality_status(
                 UAL,
                 minimum_number_of_finalization_confirmations,
                 max_number_of_retries,
@@ -80,7 +86,25 @@ class Graph(Module):
         except Exception as e:
             return {"status": Status.ERROR.value, "error": str(e)}
 
-        if finality_status_result >= minimum_number_of_finalization_confirmations:
+        if finality_status_result == 0:
+            try:
+                finality_operation_id = await self.node_service.finality(
+                    UAL,
+                    minimum_number_of_finalization_confirmations,
+                    max_number_of_retries,
+                    frequency,
+                )
+            except Exception as e:
+                return {"status": Status.ERROR.value, "error": str(e)}
+
+            try:
+                return await self.node_service.get_operation_result(
+                    finality_operation_id, "finality", max_number_of_retries, frequency
+                )
+            except Exception as e:
+                return {"status": Status.NOT_FINALIZED.value, "error": str(e)}
+
+        elif finality_status_result >= minimum_number_of_finalization_confirmations:
             return {
                 "status": Status.FINALIZED.value,
                 "numberOfConfirmations": finality_status_result,

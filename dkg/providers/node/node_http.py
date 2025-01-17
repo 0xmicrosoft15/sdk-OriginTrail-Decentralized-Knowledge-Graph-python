@@ -22,17 +22,17 @@ from dkg.dataclasses import HTTPRequestMethod, NodeResponseDict
 from dkg.exceptions import HTTPRequestMethodNotSupported, NodeRequestError
 from dkg.types import URI
 from requests.exceptions import HTTPError, ConnectionError, Timeout, RequestException
+from dkg.providers.node.base_node_http import BaseNodeHTTPProvider
 
 
-class NodeHTTPProvider:
+class NodeHTTPProvider(BaseNodeHTTPProvider):
     def __init__(
         self,
         endpoint_uri: URI | str,
         api_version: str = "v1",
         auth_token: str | None = None,
     ):
-        self.url = f"{URI(endpoint_uri)}/{api_version}"
-        self.headers = {"Authorization": f"Bearer {auth_token}"} if auth_token else {}
+        super().__init__(endpoint_uri, api_version, auth_token)
 
     def make_request(
         self,

@@ -173,3 +173,8 @@ class Status(AutoStrEnumUpperCase):
     ERROR = auto()
     NOT_FINALIZED = auto()
     FINALIZED = auto()
+    NETWORK_ERROR = auto()
+
+
+class ErrorType(AutoStrEnumUpperCase):
+    DKG_CLIENT_ERROR = auto()

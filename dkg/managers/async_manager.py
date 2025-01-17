@@ -19,45 +19,50 @@ from typing import Any, Type
 
 from dkg.dataclasses import BlockchainResponseDict, NodeResponseDict
 from dkg.exceptions import InvalidRequest
-from dkg.providers import BlockchainProvider, NodeHTTPProvider
 from dkg.utils.blockchain_request import ContractInteraction, JSONRPCRequest
 from dkg.utils.node_request import NodeCall
+from dkg.providers.node.async_node_http import AsyncNodeHTTPProvider
+from dkg.providers.blockchain.async_blockchain import AsyncBlockchainProvider
 
 
-class DefaultRequestManager:
+class AsyncRequestManager:
     def __init__(
-        self, node_provider: NodeHTTPProvider, blockchain_provider: BlockchainProvider
+        self,
+        node_provider: AsyncNodeHTTPProvider,
+        blockchain_provider: AsyncBlockchainProvider,
     ):
         self._node_provider = node_provider
         self._blockchain_provider = blockchain_provider
 
     @property
-    def node_provider(self) -> NodeHTTPProvider:
+    def node_provider(self) -> AsyncNodeHTTPProvider:
         return self._node_provider
 
     @node_provider.setter
-    def node_provider(self, node_provider: NodeHTTPProvider) -> None:
+    def node_provider(self, node_provider: AsyncNodeHTTPProvider) -> None:
         self._node_provider = node_provider
 
     @property
-    def blockchain_provider(self) -> BlockchainProvider:
+    def blockchain_provider(self) -> AsyncBlockchainProvider:
         return self._blockchain_provider
 
     @blockchain_provider.setter
-    def blockchain_provider(self, blockchain_provider: BlockchainProvider) -> None:
+    def blockchain_provider(self, blockchain_provider: AsyncBlockchainProvider) -> None:
         self._blockchain_provider = blockchain_provider
 
-    def blocking_request(
+    async def blocking_request(
         self,
         request_type: Type[JSONRPCRequest | ContractInteraction | NodeCall],
         request_params: dict[str, Any],
     ) -> BlockchainResponseDict | NodeResponseDict:
         if issubclass(request_type, JSONRPCRequest):
-            return self.blockchain_provider.make_json_rpc_request(**request_params)
+            return await self.blockchain_provider.make_json_rpc_request(
+                **request_params
+            )
         elif issubclass(request_type, ContractInteraction):
-            return self.blockchain_provider.call_function(**request_params)
+            return await self.blockchain_provider.call_function(**request_params)
         elif issubclass(request_type, NodeCall):
-            return self.node_provider.make_request(**request_params)
+            return await self.node_provider.make_request(**request_params)
         else:
             raise InvalidRequest(
                 "Invalid Request. Manager can only process Blockchain/Node requests."

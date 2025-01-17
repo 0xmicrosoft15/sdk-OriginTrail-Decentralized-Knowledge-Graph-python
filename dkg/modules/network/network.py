@@ -17,9 +17,9 @@
 
 from dkg.constants import DefaultParameters
 from dkg.dataclasses import BidSuggestionRange
-from dkg.manager import DefaultRequestManager
+from dkg.managers.manager import DefaultRequestManager
 from dkg.method import Method
-from dkg.module import Module
+from dkg.modules.module import Module
 from dkg.types import DataHexStr
 from dkg.utils.blockchain_request import BlockchainRequest
 from dkg.utils.node_request import NodeRequest

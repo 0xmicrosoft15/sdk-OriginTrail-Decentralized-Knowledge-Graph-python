@@ -17,7 +17,7 @@
 
 from dataclasses import dataclass, field
 from enum import auto, Enum
-from typing import Any, Type
+from typing import Any, Type, Dict
 
 from dkg.dataclasses import BidSuggestionRange, HTTPRequestMethod
 from dkg.exceptions import OperationFailed, OperationNotFinished
@@ -192,3 +192,26 @@ def validate_operation_status(operation_result: dict[str, Any]) -> None:
             )
         case _:
             raise OperationNotFinished("Operation isn't finished")
+
+
+def get_operation_status_object(
+    operation_result: Dict[str, Any], operation_id: str
+) -> Dict[str, Any]:
+    """
+    Creates an operation status object from operation result and ID.
+
+    Args:
+        operation_result: Dictionary containing operation result data
+        operation_id: The ID of the operation
+
+    Returns:
+        Dictionary containing operation status information
+    """
+    # Check if error_type exists in operation_result.data
+    operation_data = (
+        {"status": operation_result.get("status"), **operation_result.get("data")}
+        if operation_result.get("data", {}).get("errorType")
+        else {"status": operation_result.get("status")}
+    )
+
+    return {"operationId": operation_id, **operation_data}
