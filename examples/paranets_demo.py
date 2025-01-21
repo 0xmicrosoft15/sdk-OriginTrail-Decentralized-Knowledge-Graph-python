@@ -103,10 +103,18 @@ print("======================== PARANET SERVICE KNOWLEDGE ASSET CREATED")
 print_json(create_paranet_service_knowledge_asset_result)
 
 divider()
-
 paranet_service_ual = create_paranet_service_knowledge_asset_result["UAL"]
+
+
+submitTOParanet =  dkg.asset.submit_to_paranet(paranet_service_ual, paranet_ual)
+
+print("======================== SUBMITED TO PARANET")
+print_json(submitTOParanet)
+
+divider()
+
 create_paranet_service_result = dkg.paranet.create_service(
-    paranet_service_ual,
+    submitTOParanet["UAL"],
     "TestParanetService",
     "TestParanetServiceDescription",
     ["0x03C094044301E082468876634F0b209E11d98452"],
@@ -228,6 +236,13 @@ print(
     "======================== KNOWLEDGE ASSET #1 CREATED AND SUBMITTED TO THE PARANET"
 )
 print_json(create_submit_ka1_result)
+
+divider()
+
+submitTOParanet2 =  dkg.asset.submit_to_paranet(create_submit_ka1_result["UAL"], paranet_ual)
+
+print("======================== SUBMITED TO PARANET")
+print_json(submitTOParanet2)
 
 divider()
 
