@@ -457,7 +457,7 @@ class KnowledgeAsset(Module):
                         "signatures"
                     ),
                     "operation": {
-                        "mintKnowledgeAsset": mint_knowledge_collection_receipt,
+                        "mintKnowledgeCollection": mint_knowledge_collection_receipt,
                         "publish": get_operation_status_object(
                             publish_operation_result, publish_operation_id
                         ),
