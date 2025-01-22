@@ -305,7 +305,7 @@ class BlockchainRequest:
     )
     submit_knowledge_asset = ContractTransaction(
         contract="Paranet",
-        function="submitKnowledgeAsset",
+        function="submitKnowledgeCollection",
         args={
             "paranetKAStorageContract": Address,
             "paranetKATokenId": int,
@@ -336,7 +336,7 @@ class BlockchainRequest:
 
     get_updating_knowledge_asset_states = ContractCall(
         contract="ParanetKnowledgeMinersRegistry",
-        function="getUpdatingKnowledgeAssetStates",
+        function="getUpdatingKnowledgeCollectionStates",
         args={
             "miner": Address,
             "paranetId": HexStr,
@@ -414,7 +414,7 @@ class BlockchainRequest:
 
     mint_knowledge_asset = ContractTransaction(
         contract="Paranet",
-        function="mintKnowledgeAsset",
+        function="mintKnowledgeCollection",
         args={
             "paranetKAStorageContract": Address,
             "paranetKATokenId": int,
