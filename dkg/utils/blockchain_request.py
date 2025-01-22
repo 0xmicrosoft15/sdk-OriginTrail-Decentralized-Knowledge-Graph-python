@@ -307,10 +307,10 @@ class BlockchainRequest:
         contract="Paranet",
         function="submitKnowledgeCollection",
         args={
-            "paranetKAStorageContract": Address,
-            "paranetKATokenId": int,
-            "knowledgeAssetStorageContract": Address,
-            "knowledgeAssetTokenId": int,
+            "paranetKCStorageContract": Address,
+            "paranetKnowledgeCollectionId": int,
+            "knowledgeCollectionStorageContract": Address,
+            "knowledgeCollectionTokenId": int,
         },
     )
 
@@ -416,8 +416,8 @@ class BlockchainRequest:
         contract="Paranet",
         function="mintKnowledgeCollection",
         args={
-            "paranetKAStorageContract": Address,
-            "paranetKATokenId": int,
+            "paranetKCStorageContract": Address,
+            "paranetKCTokenId": int,
             "knowledgeAssetArgs": dict,
         },
     )
