@@ -22,13 +22,15 @@ from hexbytes import HexBytes
 from dkg import DKG
 from dkg.providers import BlockchainProvider, NodeHTTPProvider
 from dkg.dataclasses import ParanetNodesAccessPolicy, ParanetMinersAccessPolicy
+from dkg.constants import Environments, BlockchainIds
+from dkg.providers import BlockchainProvider
 
 node_provider = NodeHTTPProvider("http://localhost:8900")
+
 blockchain_provider = BlockchainProvider(
-    "development",
-    "hardhat2:31337",
-    private_key="0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80",
-)
+        Environments.DEVELOPMENT.value,
+        BlockchainIds.HARDHAT_1.value,
+    )
 
 dkg = DKG(node_provider, blockchain_provider)
 
@@ -65,14 +67,14 @@ paranet_data = {
     }
 }
 
-create_paranet_knowledge_asset_result = dkg.asset.create(paranet_data, 1)
+create_paranet_knowledge_collection_result = dkg.asset.create(paranet_data, 1)
 
 print("======================== PARANET KNOWLEDGE ASSET CREATED")
-print_json(create_paranet_knowledge_asset_result)
+print_json(create_paranet_knowledge_collection_result)
 
 divider()
 
-paranet_ual = create_paranet_knowledge_asset_result["UAL"]
+paranet_ual = create_paranet_knowledge_collection_result["UAL"]
 create_paranet_result = dkg.paranet.create(
     paranet_ual,
     "TestParanet",
@@ -95,26 +97,26 @@ paranet_service_data = {
     }
 }
 
-create_paranet_service_knowledge_asset_result = dkg.asset.create(
+create_paranet_service_knowledge_collection_result = dkg.asset.create(
     paranet_service_data, 1
 )
 
 print("======================== PARANET SERVICE KNOWLEDGE ASSET CREATED")
-print_json(create_paranet_service_knowledge_asset_result)
+print_json(create_paranet_service_knowledge_collection_result)
 
 divider()
-paranet_service_ual = create_paranet_service_knowledge_asset_result["UAL"]
+paranet_service_ual = create_paranet_service_knowledge_collection_result["UAL"]
 
 
-submitTOParanet =  dkg.asset.submit_to_paranet(paranet_service_ual, paranet_ual)
+submit_to_paranet =  dkg.asset.submit_to_paranet(paranet_service_ual, paranet_ual)
 
 print("======================== SUBMITED TO PARANET")
-print_json(submitTOParanet)
+print_json(submit_to_paranet)
 
 divider()
 
 create_paranet_service_result = dkg.paranet.create_service(
-    submitTOParanet["UAL"],
+    submit_to_paranet["UAL"],
     "TestParanetService",
     "TestParanetServiceDescription",
     ["0x03C094044301E082468876634F0b209E11d98452"],
@@ -239,10 +241,10 @@ print_json(create_submit_ka1_result)
 
 divider()
 
-submitTOParanet2 =  dkg.asset.submit_to_paranet(create_submit_ka1_result["UAL"], paranet_ual)
+submit_to_paranet_result2 =  dkg.asset.submit_to_paranet(create_submit_ka1_result["UAL"], paranet_ual)
 
 print("======================== SUBMITED TO PARANET")
-print_json(submitTOParanet2)
+print_json(submit_to_paranet_result2)
 
 divider()
 

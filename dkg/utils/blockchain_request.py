@@ -303,7 +303,7 @@ class BlockchainRequest:
             "paranetServiceAddresses": list[Address],
         },
     )
-    submit_knowledge_asset = ContractTransaction(
+    submit_knowledge_collection = ContractTransaction(
         contract="Paranet",
         function="submitKnowledgeCollection",
         args={
@@ -334,7 +334,7 @@ class BlockchainRequest:
         },
     )
 
-    get_updating_knowledge_asset_states = ContractCall(
+    get_updating_knowledge_collection_states = ContractCall(
         contract="ParanetKnowledgeMinersRegistry",
         function="getUpdatingKnowledgeCollectionStates",
         args={
@@ -412,7 +412,7 @@ class BlockchainRequest:
         },
     )
 
-    mint_knowledge_asset = ContractTransaction(
+    mint_knowledge_collection = ContractTransaction(
         contract="Paranet",
         function="mintKnowledgeCollection",
         args={

@@ -755,8 +755,8 @@ class Paranet(Module):
             "operation": json.loads(Web3.to_json(receipt)),
         }
 
-    _get_updating_knowledge_asset_states = Method(
-        BlockchainRequest.get_updating_knowledge_asset_states
+    _get_updating_knowledge_collection_states = Method(
+        BlockchainRequest.get_updating_knowledge_collection_states
     )
 
     def _get_incentives_pool_contract(

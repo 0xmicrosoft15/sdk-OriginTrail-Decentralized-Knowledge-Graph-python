@@ -420,7 +420,7 @@ class AsyncKnowledgeAsset(AsyncModule):
             )
 
         knowledge_collection_id = None
-        mint_knowledge_asset_receipt = None
+        mint_knowledge_collection_receipt = None
 
         knowledge_collection_result = (
             await self.blockchain_service.create_knowledge_collection(
@@ -447,7 +447,7 @@ class AsyncKnowledgeAsset(AsyncModule):
             )
         )
         knowledge_collection_id = knowledge_collection_result.knowledge_collection_id
-        mint_knowledge_asset_receipt = knowledge_collection_result.receipt
+        mint_knowledge_collection_receipt = knowledge_collection_result.receipt
 
         ual = format_ual(
             blockchain_id, content_asset_storage_address, knowledge_collection_id
@@ -471,7 +471,7 @@ class AsyncKnowledgeAsset(AsyncModule):
                         "signatures"
                     ),
                     "operation": {
-                        "mintKnowledgeAsset": mint_knowledge_asset_receipt,
+                        "mintKnowledgeAsset": mint_knowledge_collection_receipt,
                         "publish": get_operation_status_object(
                             publish_operation_result, publish_operation_id
                         ),
