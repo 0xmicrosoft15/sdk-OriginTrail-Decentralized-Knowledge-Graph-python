@@ -23,11 +23,11 @@ from web3 import Web3
 def format_ual(
     blockchain: str,
     contract_address: Address | ChecksumAddress,
-    knowledge_collection_id: int,
-    knowledge_asset_id: int | None = None,
+    knowledge_collection_token_id: int,
+    knowledge_asset_token_id: int | None = None,
 ) -> UAL:
-    ual = f"did:dkg:{blockchain.lower()}/{contract_address.lower()}/{knowledge_collection_id}"
-    return f"{ual}/{knowledge_asset_id}" if knowledge_asset_id else ual
+    ual = f"did:dkg:{blockchain.lower()}/{contract_address.lower()}/{knowledge_collection_token_id}"
+    return f"{ual}/{knowledge_asset_token_id}" if knowledge_asset_token_id else ual
 
 
 def parse_ual(ual: UAL) -> dict[str, str | Address | int]:
@@ -36,21 +36,26 @@ def parse_ual(ual: UAL) -> dict[str, str | Address | int]:
 
     args = ual.replace("did:dkg:", "").split("/")
 
-    knowledge_asset_id = None
+    knowledge_asset_token_id = None
     if len(args) == 4:
-        blockchain, contract_address, knowledge_collection_id, knowledge_asset_id = args
+        (
+            blockchain,
+            contract_address,
+            knowledge_collection_token_id,
+            knowledge_asset_token_id,
+        ) = args
     elif len(args) == 3:
-        blockchain, contract_address, knowledge_collection_id = args
+        blockchain, contract_address, knowledge_collection_token_id = args
     else:
         raise ValidationError("Invalid UAL!")
 
     resolved_ual = {
         "blockchain": blockchain,
         "contract_address": Web3.to_checksum_address(contract_address),
-        "knowledge_collection_id": int(knowledge_collection_id),
+        "knowledge_collection_token_id": int(knowledge_collection_token_id),
     }
 
-    if knowledge_asset_id:
-        resolved_ual["knowledge_asset_id"] = int(knowledge_asset_id)
+    if knowledge_asset_token_id:
+        resolved_ual["knowledge_asset_token_id"] = int(knowledge_asset_token_id)
 
     return resolved_ual

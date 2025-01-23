@@ -80,7 +80,7 @@ class Paranet(Module):
         parsed_ual = parse_ual(ual)
         knowledge_collection_storage, knowledge_collection_token_id = (
             parsed_ual["contract_address"],
-            parsed_ual["knowledge_collection_id"],
+            parsed_ual["knowledge_collection_token_id"],
         )
 
         receipt: TxReceipt = self.blockchain_service.register_paranet(

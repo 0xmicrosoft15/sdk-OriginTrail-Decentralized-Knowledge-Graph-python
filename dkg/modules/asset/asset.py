@@ -476,28 +476,26 @@ class KnowledgeAsset(Module):
             )
         )
 
-    _submit_knowledge_collection = Method(BlockchainRequest.submit_knowledge_collection)
-
     def submit_to_paranet(
         self, ual: UAL, paranet_ual: UAL
     ) -> dict[str, UAL | Address | TxReceipt]:
         parsed_ual = parse_ual(ual)
-        knowledge_asset_storage, knowledge_asset_token_id = (
+        knowledge_collection_storage, knowledge_collection_token_id = (
             parsed_ual["contract_address"],
-            parsed_ual["token_id"],
+            parsed_ual["knowledge_collection_token_id"],
         )
 
         parsed_paranet_ual = parse_ual(paranet_ual)
-        paranet_knowledge_asset_storage, paranet_knowledge_asset_token_id = (
+        paranet_knowledge_collection_storage, paranet_knowledge_collection_token_id = (
             parsed_paranet_ual["contract_address"],
-            parsed_paranet_ual["token_id"],
+            parsed_paranet_ual["knowledge_collection_token_id"],
         )
 
-        receipt: TxReceipt = self._submit_knowledge_collection(
-            paranet_knowledge_asset_storage,
-            paranet_knowledge_asset_token_id,
-            knowledge_asset_storage,
-            knowledge_asset_token_id,
+        receipt: TxReceipt = self.blockchain_service.submit_knowledge_collection(
+            paranet_knowledge_collection_storage,
+            paranet_knowledge_collection_token_id,
+            knowledge_collection_storage,
+            knowledge_collection_token_id,
         )
 
         return {
@@ -506,7 +504,7 @@ class KnowledgeAsset(Module):
             "paranetId": Web3.to_hex(
                 Web3.solidity_keccak(
                     ["address", "uint256"],
-                    [knowledge_asset_storage, knowledge_asset_token_id],
+                    [knowledge_collection_storage, knowledge_collection_token_id],
                 )
             ),
             "operation": json.loads(Web3.to_json(receipt)),

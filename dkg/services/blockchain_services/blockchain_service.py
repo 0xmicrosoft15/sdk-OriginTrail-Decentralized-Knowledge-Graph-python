@@ -30,6 +30,7 @@ class BlockchainService(Module):
     )
     _get_block = Method(BlockchainRequest.get_block)
     _register_paranet = Method(BlockchainRequest.register_paranet)
+    _submit_knowledge_collection = Method(BlockchainRequest.submit_knowledge_collection)
 
     def decrease_knowledge_collection_allowance(
         self,
@@ -190,4 +191,18 @@ class BlockchainService(Module):
             description,
             paranet_nodes_access_policy,
             paranet_miners_access_policy,
+        )
+
+    def submit_knowledge_collection(
+        self,
+        paranet_knowledge_collection_storage: str | Address,
+        paranet_knowledge_collection_token_id: int,
+        knowledge_collection_storage: str | Address,
+        knowledge_collection_token_id: int,
+    ):
+        return self._submit_knowledge_collection(
+            paranet_knowledge_collection_storage,
+            paranet_knowledge_collection_token_id,
+            knowledge_collection_storage,
+            knowledge_collection_token_id,
         )
