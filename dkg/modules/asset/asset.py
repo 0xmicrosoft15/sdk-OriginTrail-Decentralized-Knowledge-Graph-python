@@ -476,7 +476,7 @@ class KnowledgeAsset(Module):
             )
         )
 
-    _submit_knowledge_asset = Method(BlockchainRequest.submit_knowledge_asset)
+    _submit_knowledge_collection = Method(BlockchainRequest.submit_knowledge_collection)
 
     def submit_to_paranet(
         self, ual: UAL, paranet_ual: UAL
@@ -493,7 +493,7 @@ class KnowledgeAsset(Module):
             parsed_paranet_ual["token_id"],
         )
 
-        receipt: TxReceipt = self._submit_knowledge_asset(
+        receipt: TxReceipt = self._submit_knowledge_collection(
             paranet_knowledge_asset_storage,
             paranet_knowledge_asset_token_id,
             knowledge_asset_storage,

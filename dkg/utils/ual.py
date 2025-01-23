@@ -24,7 +24,7 @@ def format_ual(
     blockchain: str,
     contract_address: Address | ChecksumAddress,
     knowledge_collection_id: int,
-    knowledge_asset_id: int,
+    knowledge_asset_id: int | None = None,
 ) -> UAL:
     ual = f"did:dkg:{blockchain.lower()}/{contract_address.lower()}/{knowledge_collection_id}"
     return f"{ual}/{knowledge_asset_id}" if knowledge_asset_id else ual
