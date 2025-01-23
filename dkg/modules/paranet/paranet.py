@@ -44,11 +44,13 @@ class Paranet(Module):
 
         def to_contract_args(self) -> dict:
             return {
-                "tracToNeuroEmissionMultiplier": int(
+                "trac_to_neuro_emission_multiplier": int(
                     self.neuro_emission_multiplier * (10**12)
                 ),
-                "paranetOperatorRewardPercentage": int(self.operator_percentage * 100),
-                "paranetIncentivizationProposalVotersRewardPercentage": int(
+                "paranet_operator_reward_percentage": int(
+                    self.operator_percentage * 100
+                ),
+                "paranet_incentivization_proposal_voters_reward_percentage": int(
                     self.voters_percentage * 100
                 ),
             }
@@ -62,9 +64,6 @@ class Paranet(Module):
         self.manager = manager
         self.input_service = input_service
         self.blockchain_service = blockchain_service
-        self.incentives_pools_deployment_functions = {
-            ParanetIncentivizationType.NEUROWEB: self._deploy_neuro_incentives_pool,
-        }
 
     def create(
         self,
@@ -461,75 +460,82 @@ class Paranet(Module):
 
         return self._get_knowledge_miners(paranet_id)
 
-    _deploy_neuro_incentives_pool = Method(
-        BlockchainRequest.deploy_neuro_incentives_pool
-    )
-
     def deploy_incentives_contract(
         self,
-        ual: UAL,
+        paranet_ual: UAL,
         incentives_pool_parameters: NeuroWebIncentivesPoolParams,
         incentives_type: ParanetIncentivizationType = ParanetIncentivizationType.NEUROWEB,
     ) -> dict[str, str | HexStr | TxReceipt]:
-        deploy_incentives_pool_fn = self.incentives_pools_deployment_functions.get(
-            incentives_type,
-            None,
-        )
+        incentives_types = [item.value for item in ParanetIncentivizationType]
+        if incentives_type in incentives_types:
+            parsed_ual = parse_ual(paranet_ual)
+            paranet_knowledge_collection_storage = parsed_ual["contract_address"]
+            paranet_knowledge_collection_token_id = parsed_ual[
+                "knowledge_collection_token_id"
+            ]
 
-        if deploy_incentives_pool_fn is None:
-            raise ValueError(
-                f"{incentives_type} Incentive Type isn't supported. Supported "
-                f"Incentive Types: {self.incentives_pools_deployment_functions.keys()}"
+            is_native_reward = (
+                True
+                if incentives_type == ParanetIncentivizationType.NEUROWEB
+                else False
             )
 
-        parsed_ual = parse_ual(ual)
-        knowledge_collection_storage, knowledge_collection_token_id = (
-            parsed_ual["contract_address"],
-            parsed_ual["knowledge_collection_token_id"],
+            receipt: TxReceipt = self.blockchain_service.deploy_neuro_incentives_pool(
+                is_native_reward=is_native_reward,
+                paranet_knowledge_collection_storage=paranet_knowledge_collection_storage,
+                paranet_knowledge_collection_token_id=paranet_knowledge_collection_token_id,
+                **incentives_pool_parameters.to_contract_args(),
+            )
+
+            events = self.manager.blockchain_provider.decode_logs_event(
+                receipt,
+                "ParanetIncentivesPoolFactory",
+                "ParanetIncetivesPoolDeployed",
+            )
+
+            return {
+                "paranetUAL": paranet_ual,
+                "paranetId": Web3.to_hex(
+                    Web3.solidity_keccak(
+                        ["address", "uint256"],
+                        [
+                            paranet_knowledge_collection_storage,
+                            paranet_knowledge_collection_token_id,
+                        ],
+                    )
+                ),
+                "incentivesPoolContractAddress": events[0].args["incentivesPool"][
+                    "addr"
+                ],
+                "operation": json.loads(Web3.to_json(receipt)),
+            }
+
+        raise ValueError(
+            f"{incentives_type} Incentive Type isn't supported. Supported "
+            f"Incentive Types: {incentives_types}"
         )
-
-        receipt: TxReceipt = deploy_incentives_pool_fn(
-            knowledge_collection_storage,
-            knowledge_collection_token_id,
-            **incentives_pool_parameters.to_contract_args(),
-        )
-
-        events = self.manager.blockchain_provider.decode_logs_event(
-            receipt,
-            "ParanetIncentivesPoolFactory",
-            "ParanetIncetivesPoolDeployed",
-        )
-
-        return {
-            "paranetUAL": ual,
-            "paranetId": Web3.to_hex(
-                Web3.solidity_keccak(
-                    ["address", "uint256"],
-                    [knowledge_collection_storage, knowledge_collection_token_id],
-                )
-            ),
-            "incentivesPoolAddress": events[0].args["incentivesPool"]["addr"],
-            "operation": json.loads(Web3.to_json(receipt)),
-        }
-
-    _get_incentives_pool_address = Method(BlockchainRequest.get_incentives_pool_address)
 
     def get_incentives_pool_address(
         self,
-        ual: UAL,
+        paranet_ual: UAL,
         incentives_type: ParanetIncentivizationType = ParanetIncentivizationType.NEUROWEB,
     ) -> Address:
-        parsed_ual = parse_ual(ual)
-        knowledge_collection_storage, knowledge_collection_token_id = (
+        parsed_ual = parse_ual(paranet_ual)
+        paranet_knowledge_collection_storage, paranet_knowledge_collection_token_id = (
             parsed_ual["contract_address"],
             parsed_ual["knowledge_collection_token_id"],
         )
         paranet_id = Web3.solidity_keccak(
             ["address", "uint256"],
-            [knowledge_collection_storage, knowledge_collection_token_id],
+            [
+                paranet_knowledge_collection_storage,
+                paranet_knowledge_collection_token_id,
+            ],
         )
 
-        return self._get_incentives_pool_address(paranet_id, incentives_type)
+        return self.blockchain_service.get_incentives_pool_address(
+            paranet_id, incentives_type
+        )
 
     def create_service(
         self, ual: UAL, options: dict = {}

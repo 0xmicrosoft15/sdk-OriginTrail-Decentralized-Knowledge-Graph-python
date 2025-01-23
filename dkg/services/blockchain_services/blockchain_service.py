@@ -5,9 +5,10 @@ from dkg.method import Method
 from dkg.constants import ZERO_ADDRESS
 from web3 import Web3
 from typing import Optional
-from dkg.types import Address, UAL
+from dkg.types import Address, UAL, HexStr
 from dkg.utils.blockchain_request import KnowledgeCollectionResult, AllowanceResult
 from dkg.utils.ual import parse_ual
+from dkg.dataclasses import ParanetIncentivizationType
 
 
 class BlockchainService(Module):
@@ -33,6 +34,10 @@ class BlockchainService(Module):
     _submit_knowledge_collection = Method(BlockchainRequest.submit_knowledge_collection)
     _register_paranet_service = Method(BlockchainRequest.register_paranet_service)
     _add_paranet_services = Method(BlockchainRequest.add_paranet_services)
+    _deploy_neuro_incentives_pool = Method(
+        BlockchainRequest.deploy_neuro_incentives_pool
+    )
+    _get_incentives_pool_address = Method(BlockchainRequest.get_incentives_pool_address)
 
     def decrease_knowledge_collection_allowance(
         self,
@@ -236,3 +241,26 @@ class BlockchainService(Module):
             paranet_knowledge_collection_token_id,
             services,
         )
+
+    def deploy_neuro_incentives_pool(
+        self,
+        is_native_reward: bool,
+        paranet_knowledge_collection_storage: str | Address,
+        paranet_knowledge_collection_token_id: int,
+        trac_to_neuro_emission_multiplier: float,
+        paranet_operator_reward_percentage: float,
+        paranet_incentivization_proposal_voters_reward_percentage: float,
+    ):
+        return self._deploy_neuro_incentives_pool(
+            is_native_reward,
+            paranet_knowledge_collection_storage,
+            paranet_knowledge_collection_token_id,
+            trac_to_neuro_emission_multiplier,
+            paranet_operator_reward_percentage,
+            paranet_incentivization_proposal_voters_reward_percentage,
+        )
+
+    def get_incentives_pool_address(
+        self, paranet_id: HexStr, incentives_pool_type: ParanetIncentivizationType
+    ):
+        return self._get_incentives_pool_address(paranet_id, incentives_pool_type)

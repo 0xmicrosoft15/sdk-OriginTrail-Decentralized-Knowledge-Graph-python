@@ -318,6 +318,7 @@ class BlockchainRequest:
         contract="ParanetIncentivesPoolFactory",
         function="deployNeuroIncentivesPool",
         args={
+            "isNativeReward": bool,
             "paranetKCStorageContract": Address,
             "paranetKCTokenId": int,
             "tracToNeuroEmissionMultiplier": float,

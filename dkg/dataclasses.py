@@ -16,11 +16,11 @@
 # under the License.
 
 from dataclasses import dataclass
-from enum import auto, Enum, IntEnum
+from enum import auto, Enum, IntEnum, StrEnum
 
 import pandas as pd
 
-from dkg.types import AutoStrEnum, AutoStrEnumCapitalize, AutoStrEnumUpperCase
+from dkg.types import AutoStrEnum, AutoStrEnumUpperCase
 
 
 class BlockchainResponseDict(dict):
@@ -55,8 +55,9 @@ class KnowledgeAssetContentVisibility(AutoStrEnumUpperCase):
     PRIVATE = auto()
 
 
-class ParanetIncentivizationType(AutoStrEnumCapitalize):
-    NEUROWEB = auto()
+class ParanetIncentivizationType(StrEnum):
+    NEUROWEB = "Neuroweb"
+    NEUROWEB_ERC20 = "NeurowebERC20"
 
 
 class ParanetNodesAccessPolicy(IntEnum):
