@@ -617,46 +617,59 @@ class Paranet(Module):
             "operation": json.loads(Web3.to_json(receipt)),
         }
 
-    _is_knowledge_miner_registered = Method(
-        BlockchainRequest.is_knowledge_miner_registered
-    )
-
-    def is_knowledge_miner(self, ual: UAL, address: Address | None = None) -> bool:
-        parsed_ual = parse_ual(ual)
-        knowledge_collection_storage, knowledge_collection_token_id = (
+    def is_knowledge_miner(
+        self,
+        paranet_ual: UAL,
+        address: Address | None = None,
+    ) -> bool:
+        parsed_ual = parse_ual(paranet_ual)
+        paranet_knowledge_collection_storage, paranet_knowledge_collection_token_id = (
             parsed_ual["contract_address"],
             parsed_ual["knowledge_collection_token_id"],
         )
 
         paranet_id = Web3.solidity_keccak(
             ["address", "uint256"],
-            [knowledge_collection_storage, knowledge_collection_token_id],
+            [
+                paranet_knowledge_collection_storage,
+                paranet_knowledge_collection_token_id,
+            ],
         )
 
-        return self._is_knowledge_miner_registered(
+        return self.blockchain_service.is_knowledge_miner_registered(
             paranet_id, address or self.manager.blockchain_provider.account.address
         )
 
-    _owner_of = Method(BlockchainRequest.owner_of)
-
-    def is_operator(self, ual: UAL, address: Address | None = None) -> bool:
-        knowledge_collection_token_id = parse_ual(ual)["token_id"]
-
-        return self._owner_of(knowledge_collection_token_id) == (
-            address or self.manager.blockchain_provider.account.address
+    def is_operator(
+        self,
+        paranet_ual: UAL,
+        incentives_type: ParanetIncentivizationType,
+        address: Address | None = None,
+    ) -> bool:
+        incentives_pool_address = self.get_incentives_pool_address(
+            paranet_ual, incentives_type
         )
 
-    _is_proposal_voter = Method(BlockchainRequest.is_proposal_voter)
+        self.blockchain_service.set_incentives_pool(incentives_pool_address)
+
+        return self.blockchain_service.is_paranet_operator(
+            operator_address=address or self.manager.blockchain_provider.account.address
+        )
 
     def is_voter(
         self,
-        ual: UAL,
-        address: Address | None = None,
+        paranet_ual: UAL,
         incentives_type: ParanetIncentivizationType = ParanetIncentivizationType.NEUROWEB,
+        address: Address | None = None,
     ) -> bool:
-        return self._is_proposal_voter(
-            contract=self._get_incentives_pool_contract(ual, incentives_type),
-            addr=address or self.manager.blockchain_provider.account.address,
+        incentives_pool_address = self.get_incentives_pool_address(
+            paranet_ual, incentives_type
+        )
+
+        self.blockchain_service.set_incentives_pool(incentives_pool_address)
+
+        return self.blockchain_service.is_proposal_voter(
+            address=address or self.manager.blockchain_provider.account.address,
         )
 
     _get_claimable_knowledge_miner_reward_amount = Method(

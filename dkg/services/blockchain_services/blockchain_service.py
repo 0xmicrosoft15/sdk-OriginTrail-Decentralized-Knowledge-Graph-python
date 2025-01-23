@@ -5,9 +5,8 @@ from dkg.method import Method
 from dkg.constants import ZERO_ADDRESS
 from web3 import Web3
 from typing import Optional
-from dkg.types import Address, UAL, HexStr
+from dkg.types import Address, HexStr
 from dkg.utils.blockchain_request import KnowledgeCollectionResult, AllowanceResult
-from dkg.utils.ual import parse_ual
 from dkg.dataclasses import ParanetIncentivizationType
 
 
@@ -15,7 +14,6 @@ class BlockchainService(Module):
     def __init__(self, manager: DefaultRequestManager):
         self.manager = manager
 
-    _owner = Method(BlockchainRequest.owner_of)
     _get_contract_address = Method(BlockchainRequest.get_contract_address)
     _get_current_allowance = Method(BlockchainRequest.allowance)
     _increase_allowance = Method(BlockchainRequest.increase_allowance)
@@ -38,6 +36,14 @@ class BlockchainService(Module):
         BlockchainRequest.deploy_neuro_incentives_pool
     )
     _get_incentives_pool_address = Method(BlockchainRequest.get_incentives_pool_address)
+    _is_knowledge_miner_registered = Method(
+        BlockchainRequest.is_knowledge_miner_registered
+    )
+    _is_knowledge_collection_owner = Method(
+        BlockchainRequest.is_knowledge_collection_owner
+    )
+    _is_paranet_operator = Method(BlockchainRequest.is_paranet_operator)
+    _is_proposal_voter = Method(BlockchainRequest.is_proposal_voter)
 
     def decrease_knowledge_collection_allowance(
         self,
@@ -156,12 +162,6 @@ class BlockchainService(Module):
                 self.decrease_knowledge_collection_allowance(allowance_gap)
             raise e
 
-    # TODO: change self._owner to v8 compatible function
-    def get_owner(self, ual: UAL) -> Address:
-        token_id = parse_ual(ual)["token_id"]
-
-        return self._owner(token_id)
-
     def get_asset_storage_address(self, asset_storage_name: str) -> Address:
         return self._get_asset_storage_address(asset_storage_name)
 
@@ -264,3 +264,20 @@ class BlockchainService(Module):
         self, paranet_id: HexStr, incentives_pool_type: ParanetIncentivizationType
     ):
         return self._get_incentives_pool_address(paranet_id, incentives_pool_type)
+
+    def is_knowledge_miner_registered(self, paranet_id: HexStr, address: Address):
+        return self._is_knowledge_miner_registered(paranet_id, address)
+
+    def is_knowledge_collection_owner(self, owner: Address, id: int):
+        return self._is_knowledge_collection_owner(owner, id)
+
+    def is_paranet_operator(self, operator_address: Address):
+        return self._is_paranet_operator(operator_address)
+
+    def set_incentives_pool(self, incentives_pool_address: Address):
+        return self.manager.blockchain_provider.set_incentives_pool(
+            incentives_pool_address
+        )
+
+    def is_proposal_voter(self, address: Address):
+        return self._is_proposal_voter(address)

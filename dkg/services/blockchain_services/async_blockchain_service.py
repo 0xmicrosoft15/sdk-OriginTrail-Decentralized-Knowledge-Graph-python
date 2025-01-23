@@ -5,16 +5,14 @@ from dkg.method import Method
 from dkg.constants import ZERO_ADDRESS
 from web3 import Web3
 from typing import Optional
-from dkg.types import Address, UAL
+from dkg.types import Address
 from dkg.utils.blockchain_request import KnowledgeCollectionResult, AllowanceResult
-from dkg.utils.ual import parse_ual
 
 
 class AsyncBlockchainService(AsyncModule):
     def __init__(self, manager: AsyncRequestManager):
         self.manager = manager
 
-    _owner = Method(BlockchainRequest.owner_of)
     _get_contract_address = Method(BlockchainRequest.get_contract_address)
     _get_current_allowance = Method(BlockchainRequest.allowance)
     _increase_allowance = Method(BlockchainRequest.increase_allowance)
@@ -152,12 +150,6 @@ class AsyncBlockchainService(AsyncModule):
             if allowance_increased:
                 await self.decrease_knowledge_collection_allowance(allowance_gap)
             raise e
-
-    # TODO: change self._owner to v8 compatible function
-    async def get_owner(self, ual: UAL) -> Address:
-        token_id = parse_ual(ual)["token_id"]
-
-        return await self._owner(token_id)
 
     async def get_asset_storage_address(self, asset_storage_name: str) -> Address:
         return await self._get_asset_storage_address(asset_storage_name)

@@ -135,15 +135,17 @@ class BlockchainRequest:
         function="transferFrom",
         args={"from": Address, "to": Address, "tokenId": int},
     )
+
     get_latest_assertion_id = ContractCall(
         contract="ContentAssetStorage",
         function="getLatestAssertionId",
         args={"tokenId": int},
     )
-    owner_of = ContractCall(
-        contract="ContentAssetStorage",
-        function="ownerOf",
-        args={"tokenId": int},
+
+    is_knowledge_collection_owner = ContractCall(
+        contract="KnowledgeCollectionStorage",
+        function="isKnowledgeCollectionOwner",
+        args={"owner": Address, "id": int},
     )
 
     get_assertion_size = ContractCall(
@@ -171,6 +173,12 @@ class BlockchainRequest:
             "nodesAccessPolicy": int,
             "minersAccessPolicy": int,
         },
+    )
+
+    is_paranet_operator = ContractCall(
+        contract="ParanetNeuroIncentivesPool",
+        function="isParanetOperator",
+        args={"addr": Address},
     )
 
     add_paranet_curated_nodes = ContractTransaction(
@@ -353,6 +361,7 @@ class BlockchainRequest:
         },
     )
     is_proposal_voter = ContractCall(
+        contract="ParanetNeuroIncentivesPool",
         function="isProposalVoter",
         args={"addr": Address},
     )
