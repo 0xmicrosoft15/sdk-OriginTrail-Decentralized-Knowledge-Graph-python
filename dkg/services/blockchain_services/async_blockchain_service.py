@@ -20,7 +20,7 @@ class AsyncBlockchainService(AsyncModule):
     _increase_allowance = Method(BlockchainRequest.increase_allowance)
     _decrease_allowance = Method(BlockchainRequest.decrease_allowance)
     _create_knowledge_collection = Method(BlockchainRequest.create_knowledge_collection)
-    _mint_knowledge_asset = Method(BlockchainRequest.mint_knowledge_asset)
+    _mint_knowledge_collection = Method(BlockchainRequest.mint_knowledge_collection)
     _get_asset_storage_address = Method(BlockchainRequest.get_asset_storage_address)
     _key_is_operational_wallet = Method(BlockchainRequest.key_is_operational_wallet)
     _time_until_next_epoch = Method(BlockchainRequest.time_until_next_epoch)
@@ -127,7 +127,7 @@ class AsyncBlockchainService(AsyncModule):
                     [Web3.to_bytes(hexstr=x) for x in request.get("vs")],
                 )
             else:
-                receipt = await self._mint_knowledge_asset(
+                receipt = await self._mint_knowledge_collection(
                     paranet_ka_contract,
                     paranet_token_id,
                     list(request.values()),

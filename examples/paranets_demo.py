@@ -22,13 +22,14 @@ from hexbytes import HexBytes
 from dkg import DKG
 from dkg.providers import BlockchainProvider, NodeHTTPProvider
 from dkg.dataclasses import ParanetNodesAccessPolicy, ParanetMinersAccessPolicy
+from dkg.constants import Environments, BlockchainIds
 
 node_provider = NodeHTTPProvider("http://localhost:8900")
+
 blockchain_provider = BlockchainProvider(
-    "development",
-    "hardhat2:31337",
-    private_key="0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80",
-)
+        Environments.DEVELOPMENT.value,
+        BlockchainIds.HARDHAT_1.value,
+    )
 
 dkg = DKG(node_provider, blockchain_provider)
 
@@ -65,14 +66,14 @@ paranet_data = {
     }
 }
 
-create_paranet_knowledge_asset_result = dkg.asset.create(paranet_data, 1)
+create_paranet_knowledge_collection_result = dkg.asset.create(paranet_data, 1)
 
-print("======================== PARANET KNOWLEDGE ASSET CREATED")
-print_json(create_paranet_knowledge_asset_result)
+print("======================== PARANET KNOWLEDGE COLLECTION CREATED")
+print_json(create_paranet_knowledge_collection_result)
 
 divider()
 
-paranet_ual = create_paranet_knowledge_asset_result["UAL"]
+paranet_ual = create_paranet_knowledge_collection_result["UAL"]
 create_paranet_result = dkg.paranet.create(
     paranet_ual,
     "TestParanet",
@@ -95,16 +96,24 @@ paranet_service_data = {
     }
 }
 
-create_paranet_service_knowledge_asset_result = dkg.asset.create(
+create_paranet_service_knowledge_collection_result = dkg.asset.create(
     paranet_service_data, 1
 )
 
-print("======================== PARANET SERVICE KNOWLEDGE ASSET CREATED")
-print_json(create_paranet_service_knowledge_asset_result)
+print("======================== PARANET SERVICE KNOWLEDGE COLLECTION CREATED")
+print_json(create_paranet_service_knowledge_collection_result)
+
+divider()
+paranet_service_ual = create_paranet_service_knowledge_collection_result["UAL"]
+
+
+submit_to_paranet =  dkg.asset.submit_to_paranet(paranet_service_ual, paranet_ual)
+
+print("======================== SUBMITED TO PARANET")
+print_json(submit_to_paranet)
 
 divider()
 
-paranet_service_ual = create_paranet_service_knowledge_asset_result["UAL"]
 create_paranet_service_result = dkg.paranet.create_service(
     paranet_service_ual,
     "TestParanetService",
@@ -207,7 +216,7 @@ print_reward_stats(is_voter)
 
 divider()
 
-ka1 = {
+kc1 = {
     "public": {
         "@context": ["http://schema.org"],
         "@id": "uuid:3",
@@ -217,8 +226,8 @@ ka1 = {
     }
 }
 
-create_submit_ka1_result = dkg.asset.create(
-    ka1,
+create_submit_kc1_result = dkg.asset.create(
+    kc1,
     1,
     100000000000000000000,
     paranet_ual=paranet_ual,
@@ -227,11 +236,18 @@ create_submit_ka1_result = dkg.asset.create(
 print(
     "======================== KNOWLEDGE ASSET #1 CREATED AND SUBMITTED TO THE PARANET"
 )
-print_json(create_submit_ka1_result)
+print_json(create_submit_kc1_result)
 
 divider()
 
-ka2 = {
+submit_to_paranet_result2 =  dkg.asset.submit_to_paranet(create_submit_kc1_result["UAL"], paranet_ual)
+
+print("======================== SUBMITED TO PARANET")
+print_json(submit_to_paranet_result2)
+
+divider()
+
+kc2 = {
     "public": {
         "@context": ["http://schema.org"],
         "@id": "uuid:4",
@@ -241,16 +257,16 @@ ka2 = {
     }
 }
 
-create_ka2_result = dkg.asset.create(ka2, 1, 20000000000000000000)
+create_kc2_result = dkg.asset.create(kc2, 1, 20000000000000000000)
 
 print("======================== KNOWLEDGE ASSET #2 CREATED")
-print_json(create_ka2_result)
+print_json(create_kc2_result)
 
-ka2_ual = create_ka2_result["UAL"]
-submit_ka2_result = dkg.asset.submit_to_paranet(ka2_ual, paranet_ual)
+kc2_ual = create_kc2_result["UAL"]
+submit_kc2_result = dkg.asset.submit_to_paranet(kc2_ual, paranet_ual)
 
 print("======================== KNOWLEDGE ASSET #2 SUBMITTED TO THE PARANET")
-print_json(submit_ka2_result)
+print_json(submit_kc2_result)
 
 # divider()
 
@@ -271,7 +287,7 @@ print_json(submit_ka2_result)
 # }}
 # """
 # query_result = dkg.graph.query(
-#     federated_query.format(ual=ka2_ual),
+#     federated_query.format(ual=kc2_ual),
 #     paranet_ual,
 # )
 
