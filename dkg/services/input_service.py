@@ -3,6 +3,7 @@ from dkg.constants import (
     ZERO_ADDRESS,
     DEFAULT_PROXIMITY_SCORE_FUNCTIONS_PAIR_IDS,
 )
+from dkg.dataclasses import ParanetNodesAccessPolicy, ParanetMinersAccessPolicy
 
 
 class InputService:
@@ -55,6 +56,18 @@ class InputService:
             "max_number_of_retries": self.get_max_number_of_retries(options),
             "frequency": self.get_frequency(options),
             "minimum_number_of_finalization_confirmations": self.get_minimum_number_of_finalization_confirmations(
+                options
+            ),
+        }
+
+    def get_paranet_create_arguments(self, options):
+        return {
+            "paranet_name": self.get_paranet_name(options),
+            "paranet_description": self.get_paranet_description(options),
+            "paranet_nodes_access_policy": self.get_paranet_nodes_access_policy(
+                options
+            ),
+            "paranet_miners_access_policy": self.get_paranet_miners_access_policy(
                 options
             ),
         }
@@ -180,4 +193,21 @@ class InputService:
             options.get("repository")
             or self.config.get("repository")
             or DefaultParameters.REPOSITORY.value
+        )
+
+    def get_paranet_name(self, options):
+        return options.get("paranet_name") or None
+
+    def get_paranet_description(self, options):
+        return options.get("paranet_description") or None
+
+    def get_paranet_nodes_access_policy(self, options):
+        return (
+            options.get("paranet_nodes_access_policy") or ParanetNodesAccessPolicy.OPEN
+        )
+
+    def get_paranet_miners_access_policy(self, options):
+        return (
+            options.get("paranet_miners_access_policy")
+            or ParanetMinersAccessPolicy.OPEN
         )

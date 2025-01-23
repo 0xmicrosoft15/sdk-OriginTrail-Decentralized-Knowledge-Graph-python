@@ -164,8 +164,8 @@ class BlockchainRequest:
         contract="Paranet",
         function="registerParanet",
         args={
-            "paranetKAStorageContract": Address,
-            "paranetKATokenId": int,
+            "paranetKCStorageContract": Address,
+            "paranetKCTokenId": int,
             "paranetName": str,
             "paranetDescription": str,
             "nodesAccessPolicy": int,
@@ -177,8 +177,8 @@ class BlockchainRequest:
         contract="Paranet",
         function="addParanetCuratedNodes",
         args={
-            "paranetKAStorageContract": Address,
-            "paranetKATokenId": int,
+            "paranetKCStorageContract": Address,
+            "paranetKCTokenId": int,
             "identityIds": list[int],
         },
     )
@@ -187,8 +187,8 @@ class BlockchainRequest:
         contract="Paranet",
         function="removeParanetCuratedNodes",
         args={
-            "paranetKAStorageContract": Address,
-            "paranetKATokenId": int,
+            "paranetKCStorageContract": Address,
+            "paranetKCTokenId": int,
             "identityIds": list[int],
         },
     )
@@ -197,8 +197,8 @@ class BlockchainRequest:
         contract="Paranet",
         function="requestParanetCuratedNodeAccess",
         args={
-            "paranetKAStorageContract": Address,
-            "paranetKATokenId": int,
+            "paranetKCStorageContract": Address,
+            "paranetKCTokenId": int,
         },
     )
 
@@ -206,8 +206,8 @@ class BlockchainRequest:
         contract="Paranet",
         function="approveCuratedNode",
         args={
-            "paranetKAStorageContract": Address,
-            "paranetKATokenId": int,
+            "paranetKCStorageContract": Address,
+            "paranetKCTokenId": int,
             "identityId": int,
         },
     )
@@ -216,8 +216,8 @@ class BlockchainRequest:
         contract="Paranet",
         function="rejectCuratedNode",
         args={
-            "paranetKAStorageContract": Address,
-            "paranetKATokenId": int,
+            "paranetKCStorageContract": Address,
+            "paranetKCTokenId": int,
             "identityId": int,
         },
     )
@@ -232,8 +232,8 @@ class BlockchainRequest:
         contract="Paranet",
         function="addParanetCuratedMiners",
         args={
-            "paranetKAStorageContract": Address,
-            "paranetKATokenId": int,
+            "paranetKCStorageContract": Address,
+            "paranetKCTokenId": int,
             "minerAddresses": list[Address],
         },
     )
@@ -242,8 +242,8 @@ class BlockchainRequest:
         contract="Paranet",
         function="removeParanetCuratedMiners",
         args={
-            "paranetKAStorageContract": Address,
-            "paranetKATokenId": int,
+            "paranetKCStorageContract": Address,
+            "paranetKCTokenId": int,
             "minerAddresses": list[Address],
         },
     )
@@ -252,8 +252,8 @@ class BlockchainRequest:
         contract="Paranet",
         function="requestParanetCuratedMinerAccess",
         args={
-            "paranetKAStorageContract": Address,
-            "paranetKATokenId": int,
+            "paranetKCStorageContract": Address,
+            "paranetKCTokenId": int,
         },
     )
 
@@ -261,8 +261,8 @@ class BlockchainRequest:
         contract="Paranet",
         function="approveCuratedMiner",
         args={
-            "paranetKAStorageContract": Address,
-            "paranetKATokenId": int,
+            "paranetKCStorageContract": Address,
+            "paranetKCTokenId": int,
             "minerAddress": Address,
         },
     )
@@ -271,8 +271,8 @@ class BlockchainRequest:
         contract="Paranet",
         function="rejectCuratedMiner",
         args={
-            "paranetKAStorageContract": Address,
-            "paranetKATokenId": int,
+            "paranetKCStorageContract": Address,
+            "paranetKCTokenId": int,
             "minerAddress": Address,
         },
     )
@@ -287,8 +287,8 @@ class BlockchainRequest:
         contract="Paranet",
         function="addParanetServices",
         args={
-            "paranetKAStorageContract": Address,
-            "paranetKATokenId": int,
+            "paranetKCStorageContract": Address,
+            "paranetKCTokenId": int,
             "services": dict[str, Address | int],
         },
     )
@@ -296,8 +296,8 @@ class BlockchainRequest:
         contract="Paranet",
         function="registerParanetService",
         args={
-            "paranetServiceKAStorageContract": Address,
-            "paranetServiceKATokenId": int,
+            "paranetServiceKCStorageContract": Address,
+            "paranetServiceKCTokenId": int,
             "paranetServiceName": str,
             "paranetServiceDescription": str,
             "paranetServiceAddresses": list[Address],
@@ -318,8 +318,8 @@ class BlockchainRequest:
         contract="ParanetIncentivesPoolFactory",
         function="deployNeuroIncentivesPool",
         args={
-            "paranetKAStorageContract": Address,
-            "paranetKATokenId": int,
+            "paranetKCStorageContract": Address,
+            "paranetKCTokenId": int,
             "tracToNeuroEmissionMultiplier": float,
             "paranetOperatorRewardPercentage": float,
             "paranetIncentivizationProposalVotersRewardPercentage": float,

@@ -59,7 +59,9 @@ class DKG(Module):
                 self.node_service,
                 self.blockchain_service,
             ),
-            "paranet": Paranet(self.manager),
+            "paranet": Paranet(
+                self.manager, self.input_service, self.blockchain_service
+            ),
             "network": Network(self.manager),
             "node": Node(self.manager),
             "graph": Graph(self.manager, self.input_service, self.node_service),

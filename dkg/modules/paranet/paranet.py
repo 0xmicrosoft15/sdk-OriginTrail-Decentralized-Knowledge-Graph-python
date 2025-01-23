@@ -24,8 +24,6 @@ from web3.types import TxReceipt
 from dkg.dataclasses import (
     BaseIncentivesPoolParams,
     ParanetIncentivizationType,
-    ParanetNodesAccessPolicy,
-    ParanetMinersAccessPolicy,
 )
 from dkg.managers.manager import DefaultRequestManager
 from dkg.method import Method
@@ -33,6 +31,8 @@ from dkg.modules.module import Module
 from dkg.types import Address, UAL, HexStr
 from dkg.utils.blockchain_request import BlockchainRequest
 from dkg.utils.ual import parse_ual
+from dkg.services.input_service import InputService
+from dkg.services.blockchain_services.blockchain_service import BlockchainService
 
 
 class Paranet(Module):
@@ -53,31 +53,39 @@ class Paranet(Module):
                 ),
             }
 
-    def __init__(self, manager: DefaultRequestManager):
+    def __init__(
+        self,
+        manager: DefaultRequestManager,
+        input_service: InputService,
+        blockchain_service: BlockchainService,
+    ):
         self.manager = manager
+        self.input_service = input_service
+        self.blockchain_service = blockchain_service
         self.incentives_pools_deployment_functions = {
             ParanetIncentivizationType.NEUROWEB: self._deploy_neuro_incentives_pool,
         }
 
-    _register_paranet = Method(BlockchainRequest.register_paranet)
-
     def create(
         self,
         ual: UAL,
-        name: str,
-        description: str,
-        paranet_nodes_access_policy: ParanetNodesAccessPolicy,
-        paranet_miners_access_policy: ParanetMinersAccessPolicy,
+        options: dict = {},
     ) -> dict[str, str | HexStr | TxReceipt]:
+        arguments = self.input_service.get_paranet_create_arguments(options)
+        name = arguments["paranet_name"]
+        description = arguments["paranet_description"]
+        paranet_nodes_access_policy = arguments["paranet_nodes_access_policy"]
+        paranet_miners_access_policy = arguments["paranet_miners_access_policy"]
+
         parsed_ual = parse_ual(ual)
-        knowledge_asset_storage, knowledge_asset_token_id = (
+        knowledge_collection_storage, knowledge_collection_token_id = (
             parsed_ual["contract_address"],
-            parsed_ual["token_id"],
+            parsed_ual["knowledge_collection_id"],
         )
 
-        receipt: TxReceipt = self._register_paranet(
-            knowledge_asset_storage,
-            knowledge_asset_token_id,
+        receipt: TxReceipt = self.blockchain_service.register_paranet(
+            knowledge_collection_storage,
+            knowledge_collection_token_id,
             name,
             description,
             paranet_nodes_access_policy,
@@ -89,7 +97,7 @@ class Paranet(Module):
             "paranetId": Web3.to_hex(
                 Web3.solidity_keccak(
                     ["address", "uint256"],
-                    [knowledge_asset_storage, knowledge_asset_token_id],
+                    [knowledge_collection_storage, knowledge_collection_token_id],
                 )
             ),
             "operation": json.loads(Web3.to_json(receipt)),
@@ -101,14 +109,14 @@ class Paranet(Module):
         self, paranet_ual: UAL, identity_ids: list[int]
     ) -> dict[str, str | HexStr | TxReceipt]:
         parsed_ual = parse_ual(paranet_ual)
-        paranet_knowledge_asset_storage, paranet_knowledge_asset_token_id = (
+        paranet_knowledge_collection_storage, paranet_knowledge_collection_token_id = (
             parsed_ual["contract_address"],
             parsed_ual["token_id"],
         )
 
         receipt = self._add_paranet_curated_nodes(
-            paranet_knowledge_asset_storage,
-            paranet_knowledge_asset_token_id,
+            paranet_knowledge_collection_storage,
+            paranet_knowledge_collection_token_id,
             identity_ids,
         )
 
@@ -117,7 +125,10 @@ class Paranet(Module):
             "paranetId": Web3.to_hex(
                 Web3.solidity_keccak(
                     ["address", "uint256"],
-                    [paranet_knowledge_asset_storage, paranet_knowledge_asset_token_id],
+                    [
+                        paranet_knowledge_collection_storage,
+                        paranet_knowledge_collection_token_id,
+                    ],
                 )
             ),
             "operation": json.loads(Web3.to_json(receipt)),
@@ -131,14 +142,14 @@ class Paranet(Module):
         self, paranet_ual: UAL, identity_ids: list[int]
     ) -> dict[str, str | HexStr | TxReceipt]:
         parsed_ual = parse_ual(paranet_ual)
-        paranet_knowledge_asset_storage, paranet_knowledge_asset_token_id = (
+        paranet_knowledge_collection_storage, paranet_knowledge_collection_token_id = (
             parsed_ual["contract_address"],
             parsed_ual["token_id"],
         )
 
         receipt = self._remove_paranet_curated_nodes(
-            paranet_knowledge_asset_storage,
-            paranet_knowledge_asset_token_id,
+            paranet_knowledge_collection_storage,
+            paranet_knowledge_collection_token_id,
             identity_ids,
         )
 
@@ -147,7 +158,10 @@ class Paranet(Module):
             "paranetId": Web3.to_hex(
                 Web3.solidity_keccak(
                     ["address", "uint256"],
-                    [paranet_knowledge_asset_storage, paranet_knowledge_asset_token_id],
+                    [
+                        paranet_knowledge_collection_storage,
+                        paranet_knowledge_collection_token_id,
+                    ],
                 )
             ),
             "operation": json.loads(Web3.to_json(receipt)),
@@ -161,14 +175,14 @@ class Paranet(Module):
         self, paranet_ual: UAL
     ) -> dict[str, str | HexStr | TxReceipt]:
         parsed_ual = parse_ual(paranet_ual)
-        paranet_knowledge_asset_storage, paranet_knowledge_asset_token_id = (
+        paranet_knowledge_collection_storage, paranet_knowledge_collection_token_id = (
             parsed_ual["contract_address"],
             parsed_ual["token_id"],
         )
 
         receipt = self._request_paranet_curated_node_access(
-            paranet_knowledge_asset_storage,
-            paranet_knowledge_asset_token_id,
+            paranet_knowledge_collection_storage,
+            paranet_knowledge_collection_token_id,
         )
 
         return {
@@ -176,7 +190,10 @@ class Paranet(Module):
             "paranetId": Web3.to_hex(
                 Web3.solidity_keccak(
                     ["address", "uint256"],
-                    [paranet_knowledge_asset_storage, paranet_knowledge_asset_token_id],
+                    [
+                        paranet_knowledge_collection_storage,
+                        paranet_knowledge_collection_token_id,
+                    ],
                 )
             ),
             "operation": json.loads(Web3.to_json(receipt)),
@@ -188,14 +205,14 @@ class Paranet(Module):
         self, paranet_ual: UAL, identity_id: int
     ) -> dict[str, str | HexStr | TxReceipt]:
         parsed_ual = parse_ual(paranet_ual)
-        paranet_knowledge_asset_storage, paranet_knowledge_asset_token_id = (
+        paranet_knowledge_collection_storage, paranet_knowledge_collection_token_id = (
             parsed_ual["contract_address"],
             parsed_ual["token_id"],
         )
 
         receipt = self._approve_curated_node(
-            paranet_knowledge_asset_storage,
-            paranet_knowledge_asset_token_id,
+            paranet_knowledge_collection_storage,
+            paranet_knowledge_collection_token_id,
             identity_id,
         )
 
@@ -204,7 +221,10 @@ class Paranet(Module):
             "paranetId": Web3.to_hex(
                 Web3.solidity_keccak(
                     ["address", "uint256"],
-                    [paranet_knowledge_asset_storage, paranet_knowledge_asset_token_id],
+                    [
+                        paranet_knowledge_collection_storage,
+                        paranet_knowledge_collection_token_id,
+                    ],
                 )
             ),
             "operation": json.loads(Web3.to_json(receipt)),
@@ -216,14 +236,14 @@ class Paranet(Module):
         self, paranet_ual: UAL, identity_id: int
     ) -> dict[str, str | HexStr | TxReceipt]:
         parsed_ual = parse_ual(paranet_ual)
-        paranet_knowledge_asset_storage, paranet_knowledge_asset_token_id = (
+        paranet_knowledge_collection_storage, paranet_knowledge_collection_token_id = (
             parsed_ual["contract_address"],
             parsed_ual["token_id"],
         )
 
         receipt = self._reject_curated_node(
-            paranet_knowledge_asset_storage,
-            paranet_knowledge_asset_token_id,
+            paranet_knowledge_collection_storage,
+            paranet_knowledge_collection_token_id,
             identity_id,
         )
 
@@ -232,7 +252,10 @@ class Paranet(Module):
             "paranetId": Web3.to_hex(
                 Web3.solidity_keccak(
                     ["address", "uint256"],
-                    [paranet_knowledge_asset_storage, paranet_knowledge_asset_token_id],
+                    [
+                        paranet_knowledge_collection_storage,
+                        paranet_knowledge_collection_token_id,
+                    ],
                 )
             ),
             "operation": json.loads(Web3.to_json(receipt)),
@@ -244,14 +267,17 @@ class Paranet(Module):
         self, paranet_ual: UAL
     ) -> dict[str, str | HexStr | TxReceipt]:
         parsed_ual = parse_ual(paranet_ual)
-        paranet_knowledge_asset_storage, paranet_knowledge_asset_token_id = (
+        paranet_knowledge_collection_storage, paranet_knowledge_collection_token_id = (
             parsed_ual["contract_address"],
             parsed_ual["token_id"],
         )
 
         paranet_id = Web3.solidity_keccak(
             ["address", "uint256"],
-            [paranet_knowledge_asset_storage, paranet_knowledge_asset_token_id],
+            [
+                paranet_knowledge_collection_storage,
+                paranet_knowledge_collection_token_id,
+            ],
         )
 
         return self._get_curated_nodes(paranet_id)
@@ -262,14 +288,14 @@ class Paranet(Module):
         self, paranet_ual: UAL, miner_addresses: list[Address]
     ) -> dict[str, str | HexStr | TxReceipt]:
         parsed_ual = parse_ual(paranet_ual)
-        paranet_knowledge_asset_storage, paranet_knowledge_asset_token_id = (
+        paranet_knowledge_collection_storage, paranet_knowledge_collection_token_id = (
             parsed_ual["contract_address"],
             parsed_ual["token_id"],
         )
 
         receipt = self._add_paranet_curated_miners(
-            paranet_knowledge_asset_storage,
-            paranet_knowledge_asset_token_id,
+            paranet_knowledge_collection_storage,
+            paranet_knowledge_collection_token_id,
             miner_addresses,
         )
 
@@ -278,7 +304,10 @@ class Paranet(Module):
             "paranetId": Web3.to_hex(
                 Web3.solidity_keccak(
                     ["address", "uint256"],
-                    [paranet_knowledge_asset_storage, paranet_knowledge_asset_token_id],
+                    [
+                        paranet_knowledge_collection_storage,
+                        paranet_knowledge_collection_token_id,
+                    ],
                 )
             ),
             "operation": json.loads(Web3.to_json(receipt)),
@@ -292,14 +321,14 @@ class Paranet(Module):
         self, paranet_ual: UAL, miner_addresses: list[Address]
     ) -> dict[str, str | HexStr | TxReceipt]:
         parsed_ual = parse_ual(paranet_ual)
-        paranet_knowledge_asset_storage, paranet_knowledge_asset_token_id = (
+        paranet_knowledge_collection_storage, paranet_knowledge_collection_token_id = (
             parsed_ual["contract_address"],
             parsed_ual["token_id"],
         )
 
         receipt = self._remove_paranet_curated_miners(
-            paranet_knowledge_asset_storage,
-            paranet_knowledge_asset_token_id,
+            paranet_knowledge_collection_storage,
+            paranet_knowledge_collection_token_id,
             miner_addresses,
         )
 
@@ -308,7 +337,10 @@ class Paranet(Module):
             "paranetId": Web3.to_hex(
                 Web3.solidity_keccak(
                     ["address", "uint256"],
-                    [paranet_knowledge_asset_storage, paranet_knowledge_asset_token_id],
+                    [
+                        paranet_knowledge_collection_storage,
+                        paranet_knowledge_collection_token_id,
+                    ],
                 )
             ),
             "operation": json.loads(Web3.to_json(receipt)),
@@ -322,14 +354,14 @@ class Paranet(Module):
         self, paranet_ual: UAL
     ) -> dict[str, str | HexStr | TxReceipt]:
         parsed_ual = parse_ual(paranet_ual)
-        paranet_knowledge_asset_storage, paranet_knowledge_asset_token_id = (
+        paranet_knowledge_collection_storage, paranet_knowledge_collection_token_id = (
             parsed_ual["contract_address"],
             parsed_ual["token_id"],
         )
 
         receipt = self._request_paranet_curated_miner_access(
-            paranet_knowledge_asset_storage,
-            paranet_knowledge_asset_token_id,
+            paranet_knowledge_collection_storage,
+            paranet_knowledge_collection_token_id,
         )
 
         return {
@@ -337,7 +369,10 @@ class Paranet(Module):
             "paranetId": Web3.to_hex(
                 Web3.solidity_keccak(
                     ["address", "uint256"],
-                    [paranet_knowledge_asset_storage, paranet_knowledge_asset_token_id],
+                    [
+                        paranet_knowledge_collection_storage,
+                        paranet_knowledge_collection_token_id,
+                    ],
                 )
             ),
             "operation": json.loads(Web3.to_json(receipt)),
@@ -349,14 +384,14 @@ class Paranet(Module):
         self, paranet_ual: UAL, miner_address: Address
     ) -> dict[str, str | HexStr | TxReceipt]:
         parsed_ual = parse_ual(paranet_ual)
-        paranet_knowledge_asset_storage, paranet_knowledge_asset_token_id = (
+        paranet_knowledge_collection_storage, paranet_knowledge_collection_token_id = (
             parsed_ual["contract_address"],
             parsed_ual["token_id"],
         )
 
         receipt = self._approve_curated_miner(
-            paranet_knowledge_asset_storage,
-            paranet_knowledge_asset_token_id,
+            paranet_knowledge_collection_storage,
+            paranet_knowledge_collection_token_id,
             miner_address,
         )
 
@@ -365,7 +400,10 @@ class Paranet(Module):
             "paranetId": Web3.to_hex(
                 Web3.solidity_keccak(
                     ["address", "uint256"],
-                    [paranet_knowledge_asset_storage, paranet_knowledge_asset_token_id],
+                    [
+                        paranet_knowledge_collection_storage,
+                        paranet_knowledge_collection_token_id,
+                    ],
                 )
             ),
             "operation": json.loads(Web3.to_json(receipt)),
@@ -377,14 +415,14 @@ class Paranet(Module):
         self, paranet_ual: UAL, miner_address: Address
     ) -> dict[str, str | HexStr | TxReceipt]:
         parsed_ual = parse_ual(paranet_ual)
-        paranet_knowledge_asset_storage, paranet_knowledge_asset_token_id = (
+        paranet_knowledge_collection_storage, paranet_knowledge_collection_token_id = (
             parsed_ual["contract_address"],
             parsed_ual["token_id"],
         )
 
         receipt = self._reject_curated_miner(
-            paranet_knowledge_asset_storage,
-            paranet_knowledge_asset_token_id,
+            paranet_knowledge_collection_storage,
+            paranet_knowledge_collection_token_id,
             miner_address,
         )
 
@@ -393,7 +431,10 @@ class Paranet(Module):
             "paranetId": Web3.to_hex(
                 Web3.solidity_keccak(
                     ["address", "uint256"],
-                    [paranet_knowledge_asset_storage, paranet_knowledge_asset_token_id],
+                    [
+                        paranet_knowledge_collection_storage,
+                        paranet_knowledge_collection_token_id,
+                    ],
                 )
             ),
             "operation": json.loads(Web3.to_json(receipt)),
@@ -405,14 +446,17 @@ class Paranet(Module):
         self, paranet_ual: UAL
     ) -> dict[str, str | HexStr | TxReceipt]:
         parsed_ual = parse_ual(paranet_ual)
-        paranet_knowledge_asset_storage, paranet_knowledge_asset_token_id = (
+        paranet_knowledge_collection_storage, paranet_knowledge_collection_token_id = (
             parsed_ual["contract_address"],
             parsed_ual["token_id"],
         )
 
         paranet_id = Web3.solidity_keccak(
             ["address", "uint256"],
-            [paranet_knowledge_asset_storage, paranet_knowledge_asset_token_id],
+            [
+                paranet_knowledge_collection_storage,
+                paranet_knowledge_collection_token_id,
+            ],
         )
 
         return self._get_knowledge_miners(paranet_id)
@@ -439,14 +483,14 @@ class Paranet(Module):
             )
 
         parsed_ual = parse_ual(ual)
-        knowledge_asset_storage, knowledge_asset_token_id = (
+        knowledge_collection_storage, knowledge_collection_token_id = (
             parsed_ual["contract_address"],
             parsed_ual["token_id"],
         )
 
         receipt: TxReceipt = deploy_incentives_pool_fn(
-            knowledge_asset_storage,
-            knowledge_asset_token_id,
+            knowledge_collection_storage,
+            knowledge_collection_token_id,
             **incentives_pool_parameters.to_contract_args(),
         )
 
@@ -461,7 +505,7 @@ class Paranet(Module):
             "paranetId": Web3.to_hex(
                 Web3.solidity_keccak(
                     ["address", "uint256"],
-                    [knowledge_asset_storage, knowledge_asset_token_id],
+                    [knowledge_collection_storage, knowledge_collection_token_id],
                 )
             ),
             "incentivesPoolAddress": events[0].args["incentivesPool"]["addr"],
@@ -476,12 +520,13 @@ class Paranet(Module):
         incentives_type: ParanetIncentivizationType = ParanetIncentivizationType.NEUROWEB,
     ) -> Address:
         parsed_ual = parse_ual(ual)
-        knowledge_asset_storage, knowledge_asset_token_id = (
+        knowledge_collection_storage, knowledge_collection_token_id = (
             parsed_ual["contract_address"],
             parsed_ual["token_id"],
         )
         paranet_id = Web3.solidity_keccak(
-            ["address", "uint256"], [knowledge_asset_storage, knowledge_asset_token_id]
+            ["address", "uint256"],
+            [knowledge_collection_storage, knowledge_collection_token_id],
         )
 
         return self._get_incentives_pool_address(paranet_id, incentives_type)
@@ -492,14 +537,14 @@ class Paranet(Module):
         self, ual: UAL, name: str, description: str, addresses: list[Address]
     ) -> dict[str, str | HexStr | TxReceipt]:
         parsed_ual = parse_ual(ual)
-        knowledge_asset_storage, knowledge_asset_token_id = (
+        knowledge_collection_storage, knowledge_collection_token_id = (
             parsed_ual["contract_address"],
             parsed_ual["token_id"],
         )
 
         receipt: TxReceipt = self._register_paranet_service(
-            knowledge_asset_storage,
-            knowledge_asset_token_id,
+            knowledge_collection_storage,
+            knowledge_collection_token_id,
             name,
             description,
             addresses,
@@ -510,7 +555,7 @@ class Paranet(Module):
             "paranetServiceId": Web3.to_hex(
                 Web3.solidity_keccak(
                     ["address", "uint256"],
-                    [knowledge_asset_storage, knowledge_asset_token_id],
+                    [knowledge_collection_storage, knowledge_collection_token_id],
                 )
             ),
             "operation": json.loads(Web3.to_json(receipt)),
@@ -522,7 +567,7 @@ class Paranet(Module):
         self, ual: UAL, services_uals: list[UAL]
     ) -> dict[str, str | HexStr | TxReceipt]:
         parsed_paranet_ual = parse_ual(ual)
-        paranet_knowledge_asset_storage, paranet_knowledge_asset_token_id = (
+        paranet_knowledge_collection_storage, paranet_knowledge_collection_token_id = (
             parsed_paranet_ual["contract_address"],
             parsed_paranet_ual["token_id"],
         )
@@ -530,21 +575,24 @@ class Paranet(Module):
         parsed_service_uals = []
         for service_ual in services_uals:
             parsed_service_ual = parse_ual(service_ual)
-            (service_knowledge_asset_storage, service_knowledge_asset_token_id) = (
+            (
+                service_knowledge_collection_storage,
+                service_knowledge_collection_token_id,
+            ) = (
                 parsed_service_ual["contract_address"],
                 parsed_service_ual["token_id"],
             )
 
             parsed_service_uals.append(
                 {
-                    "knowledgeAssetStorageContract": service_knowledge_asset_storage,
-                    "tokenId": service_knowledge_asset_token_id,
+                    "knowledgeAssetStorageContract": service_knowledge_collection_storage,
+                    "tokenId": service_knowledge_collection_token_id,
                 }
             )
 
         receipt: TxReceipt = self._add_paranet_services(
-            paranet_knowledge_asset_storage,
-            paranet_knowledge_asset_token_id,
+            paranet_knowledge_collection_storage,
+            paranet_knowledge_collection_token_id,
             parsed_service_uals,
         )
 
@@ -553,7 +601,10 @@ class Paranet(Module):
             "paranetId": Web3.to_hex(
                 Web3.solidity_keccak(
                     ["address", "uint256"],
-                    [paranet_knowledge_asset_storage, paranet_knowledge_asset_token_id],
+                    [
+                        paranet_knowledge_collection_storage,
+                        paranet_knowledge_collection_token_id,
+                    ],
                 )
             ),
             "operation": json.loads(Web3.to_json(receipt)),
@@ -565,13 +616,14 @@ class Paranet(Module):
 
     def is_knowledge_miner(self, ual: UAL, address: Address | None = None) -> bool:
         parsed_ual = parse_ual(ual)
-        knowledge_asset_storage, knowledge_asset_token_id = (
+        knowledge_collection_storage, knowledge_collection_token_id = (
             parsed_ual["contract_address"],
             parsed_ual["token_id"],
         )
 
         paranet_id = Web3.solidity_keccak(
-            ["address", "uint256"], [knowledge_asset_storage, knowledge_asset_token_id]
+            ["address", "uint256"],
+            [knowledge_collection_storage, knowledge_collection_token_id],
         )
 
         return self._is_knowledge_miner_registered(
@@ -581,9 +633,9 @@ class Paranet(Module):
     _owner_of = Method(BlockchainRequest.owner_of)
 
     def is_operator(self, ual: UAL, address: Address | None = None) -> bool:
-        knowledge_asset_token_id = parse_ual(ual)["token_id"]
+        knowledge_collection_token_id = parse_ual(ual)["token_id"]
 
-        return self._owner_of(knowledge_asset_token_id) == (
+        return self._owner_of(knowledge_collection_token_id) == (
             address or self.manager.blockchain_provider.account.address
         )
 
@@ -640,7 +692,7 @@ class Paranet(Module):
         )
 
         parsed_ual = parse_ual(ual)
-        knowledge_asset_storage, knowledge_asset_token_id = (
+        knowledge_collection_storage, knowledge_collection_token_id = (
             parsed_ual["contract_address"],
             parsed_ual["token_id"],
         )
@@ -650,7 +702,7 @@ class Paranet(Module):
             "paranetId": Web3.to_hex(
                 Web3.solidity_keccak(
                     ["address", "uint256"],
-                    [knowledge_asset_storage, knowledge_asset_token_id],
+                    [knowledge_collection_storage, knowledge_collection_token_id],
                 )
             ),
             "operation": json.loads(Web3.to_json(receipt)),
@@ -683,7 +735,7 @@ class Paranet(Module):
         )
 
         parsed_ual = parse_ual(ual)
-        knowledge_asset_storage, knowledge_asset_token_id = (
+        knowledge_collection_storage, knowledge_collection_token_id = (
             parsed_ual["contract_address"],
             parsed_ual["token_id"],
         )
@@ -693,7 +745,7 @@ class Paranet(Module):
             "paranetId": Web3.to_hex(
                 Web3.solidity_keccak(
                     ["address", "uint256"],
-                    [knowledge_asset_storage, knowledge_asset_token_id],
+                    [knowledge_collection_storage, knowledge_collection_token_id],
                 )
             ),
             "operation": json.loads(Web3.to_json(receipt)),
@@ -739,7 +791,7 @@ class Paranet(Module):
         )
 
         parsed_ual = parse_ual(ual)
-        knowledge_asset_storage, knowledge_asset_token_id = (
+        knowledge_collection_storage, knowledge_collection_token_id = (
             parsed_ual["contract_address"],
             parsed_ual["token_id"],
         )
@@ -749,13 +801,11 @@ class Paranet(Module):
             "paranetId": Web3.to_hex(
                 Web3.solidity_keccak(
                     ["address", "uint256"],
-                    [knowledge_asset_storage, knowledge_asset_token_id],
+                    [knowledge_collection_storage, knowledge_collection_token_id],
                 )
             ),
             "operation": json.loads(Web3.to_json(receipt)),
         }
-
-
 
     def _get_incentives_pool_contract(
         self,

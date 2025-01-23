@@ -21,9 +21,13 @@ from web3 import Web3
 
 
 def format_ual(
-    blockchain: str, contract_address: Address | ChecksumAddress, token_id: int
+    blockchain: str,
+    contract_address: Address | ChecksumAddress,
+    knowledge_collection_id: int,
+    knowledge_asset_id: int,
 ) -> UAL:
-    return f"did:dkg:{blockchain.lower()}/{contract_address.lower()}/{token_id}"
+    ual = f"did:dkg:{blockchain.lower()}/{contract_address.lower()}/{knowledge_collection_id}"
+    return f"{ual}/{knowledge_asset_id}" if knowledge_asset_id else ual
 
 
 def parse_ual(ual: UAL) -> dict[str, str | Address | int]:
@@ -32,13 +36,21 @@ def parse_ual(ual: UAL) -> dict[str, str | Address | int]:
 
     args = ual.replace("did:dkg:", "").split("/")
 
-    if len(args) != 3:
+    knowledge_asset_id = None
+    if len(args) == 4:
+        blockchain, contract_address, knowledge_collection_id, knowledge_asset_id = args
+    elif len(args) == 3:
+        blockchain, contract_address, knowledge_collection_id = args
+    else:
         raise ValidationError("Invalid UAL!")
 
-    blockchain, contract_address, token_id = args
-
-    return {
+    resolved_ual = {
         "blockchain": blockchain,
         "contract_address": Web3.to_checksum_address(contract_address),
-        "token_id": int(token_id),
+        "knowledge_collection_id": int(knowledge_collection_id),
     }
+
+    if knowledge_asset_id:
+        resolved_ual["knowledge_asset_id"] = int(knowledge_asset_id)
+
+    return resolved_ual
