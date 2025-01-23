@@ -72,6 +72,15 @@ class InputService:
             ),
         }
 
+    def get_paranet_create_service_arguments(self, options):
+        return {
+            "paranet_service_name": self.get_paranet_service_name(options),
+            "paranet_service_description": self.get_paranet_service_description(
+                options
+            ),
+            "paranet_service_addresses": self.get_paranet_service_addresses(options),
+        }
+
     def get_max_number_of_retries(self, options):
         return (
             options.get("max_number_of_retries")
@@ -211,3 +220,12 @@ class InputService:
             options.get("paranet_miners_access_policy")
             or ParanetMinersAccessPolicy.OPEN
         )
+
+    def get_paranet_service_name(self, options):
+        return options.get("paranet_service_name") or None
+
+    def get_paranet_service_description(self, options):
+        return options.get("paranet_service_description") or None
+
+    def get_paranet_service_addresses(self, options):
+        return options.get("paranet_service_addresses") or []
