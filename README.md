@@ -40,7 +40,8 @@
       <a href="#🚀-getting-started">🚀 Getting Started</a>
       <ul>
         <li><a href="#prerequisites">Prerequisites</a></li>
-        <li><a href="#installation">Installation</a></li>
+        <li><a href="#library-installation">Library Installation</a></li>
+        <li><a href="#installation-for-developers">Installation for developers</a></li>
       </ul>
     </li>
     <li><a href="#📄-license">📄 License</a></li>
@@ -172,21 +173,49 @@ In order to use in the local environment, make sure to [run the local DKG networ
 
 <br/>
 
-### Installation
+### Library Installation
 
-Create virtual environment (you can choose any existing folder this command will create configurations and virtual env for python):
+Run the command to install dkg.py library using pip:
+
+```bash
+pip install dkg
+```
+
+pip x:
+
+```bash
+pipx install dkg
+```
+
+or poetry:
+
+```bash
+poetry add dkg
+```
+
+<br/>
+
+More information about the library can be found in the [documentation](https://docs.origintrail.io/dkg-v8-current-version/v8-dkg-sdk/dkg-v8-py-client).
+
+---
+
+<br/>
+
+### Installation for developers
+
+Create a virtual environment (you can choose any existing folder). This command will create configurations and virtual env for python:
 
 ```bash
 python3 -m venv /path/to/folder
 ```
 
-Inside of previously generated folder you will find activate script in bin folder and run it:
+Inside of previously generated folder you will find the 'activate' script in bin folder. Run it:
 
 ```bash
 source /path/to/folder/bin/activate
 ```
 
-Install dependencies and configure pre-commit hooks:
+Install dependencies and configure pre-commit hooks for linting and formatting:
 
 ```bash
 make install
