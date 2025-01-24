@@ -227,6 +227,12 @@ Now you can run a demo example file (you need to have the local DKG network runn
 make run-demo
 ```
 
+or an async demo example file:
+
+```bash
+make run-async-demo
+```
+
 <br/>
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 

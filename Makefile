@@ -7,6 +7,9 @@ install:
 run-demo:
 	python3 examples/demo.py
 
+run-async-demo:
+	python3 examples/async_paranets_demo.py
+
 ruff:
 	ruff check --fix
 	ruff format
@@ -16,3 +19,4 @@ help:
 	@echo "  install   - Install dependencies and set up pre-commit hooks"
 	@echo "  ruff      - Format code and fix linting issues using ruff"
 	@echo "  run-demo  - Run /examples/demo.py file"
+	@echo "  run-async-demo  - Run /examples/async_paranets_demo.py file"
