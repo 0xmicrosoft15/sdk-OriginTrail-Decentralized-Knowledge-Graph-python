@@ -96,7 +96,7 @@ print_json(create_paranet_knowledge_collection_result)
 
 divider()
 
-# Paranet UAL is a combination of knowledge collection UAL and knowledge asset token id
+# Paranet UAL is a Knowledge Asset UAL (combination of Knowledge Collection UAL and Knowledge Asset token id)
 paranet_ual = f"{create_paranet_knowledge_collection_result['UAL']}/1"
 paranet_options = {
     "paranet_name": "FirstParanet",

@@ -94,7 +94,8 @@ async def main():
 
     divider()
 
-    paranet_ual = create_paranet_knowledge_collection_result["UAL"]
+    # Paranet UAL is a Knowledge Asset UAL (combination of Knowledge Collection UAL and Knowledge Asset token id)
+    paranet_ual = f"{create_paranet_knowledge_collection_result['UAL']}/1"
     paranet_options = {
         "paranet_name": "FirstParanet",
         "paranet_description": "First ever paranet on DKG!",
