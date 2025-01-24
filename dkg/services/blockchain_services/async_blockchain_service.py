@@ -5,8 +5,9 @@ from dkg.method import Method
 from dkg.constants import ZERO_ADDRESS
 from web3 import Web3
 from typing import Optional
-from dkg.types import Address
+from dkg.types import Address, HexStr
 from dkg.utils.blockchain_request import KnowledgeCollectionResult, AllowanceResult
+from dkg.dataclasses import ParanetIncentivizationType
 
 
 class AsyncBlockchainService(AsyncModule):
@@ -27,6 +28,22 @@ class AsyncBlockchainService(AsyncModule):
         BlockchainRequest.get_stake_weighted_average_ask
     )
     _get_block = Method(BlockchainRequest.get_block)
+    _register_paranet = Method(BlockchainRequest.register_paranet)
+    _submit_knowledge_collection = Method(BlockchainRequest.submit_knowledge_collection)
+    _register_paranet_service = Method(BlockchainRequest.register_paranet_service)
+    _add_paranet_services = Method(BlockchainRequest.add_paranet_services)
+    _deploy_neuro_incentives_pool = Method(
+        BlockchainRequest.deploy_neuro_incentives_pool
+    )
+    _get_incentives_pool_address = Method(BlockchainRequest.get_incentives_pool_address)
+    _is_knowledge_miner_registered = Method(
+        BlockchainRequest.is_knowledge_miner_registered
+    )
+    _is_knowledge_collection_owner = Method(
+        BlockchainRequest.is_knowledge_collection_owner
+    )
+    _is_paranet_operator = Method(BlockchainRequest.is_paranet_operator)
+    _is_proposal_voter = Method(BlockchainRequest.is_proposal_voter)
 
     async def decrease_knowledge_collection_allowance(
         self,
@@ -170,3 +187,101 @@ class AsyncBlockchainService(AsyncModule):
 
     async def get_block(self, block_identifier: str | int):
         return await self._get_block(block_identifier)
+
+    async def register_paranet(
+        self,
+        knowledge_collection_storage: str | Address,
+        knowledge_collection_token_id: int,
+        name: str,
+        description: str,
+        paranet_nodes_access_policy: int,
+        paranet_miners_access_policy: int,
+    ):
+        return await self._register_paranet(
+            knowledge_collection_storage,
+            knowledge_collection_token_id,
+            name,
+            description,
+            paranet_nodes_access_policy,
+            paranet_miners_access_policy,
+        )
+
+    async def submit_knowledge_collection(
+        self,
+        paranet_knowledge_collection_storage: str | Address,
+        paranet_knowledge_collection_token_id: int,
+        knowledge_collection_storage: str | Address,
+        knowledge_collection_token_id: int,
+    ):
+        return await self._submit_knowledge_collection(
+            paranet_knowledge_collection_storage,
+            paranet_knowledge_collection_token_id,
+            knowledge_collection_storage,
+            knowledge_collection_token_id,
+        )
+
+    async def register_paranet_service(
+        self,
+        knowledge_collection_storage: str | Address,
+        knowledge_collection_token_id: int,
+        paranet_service_name: str,
+        paranet_service_description: str,
+        paranet_service_addresses: list[Address],
+    ):
+        return await self._register_paranet_service(
+            knowledge_collection_storage,
+            knowledge_collection_token_id,
+            paranet_service_name,
+            paranet_service_description,
+            paranet_service_addresses,
+        )
+
+    async def add_paranet_services(
+        self,
+        paranet_knowledge_collection_storage: str | Address,
+        paranet_knowledge_collection_token_id: int,
+        services: list,
+    ):
+        return await self._add_paranet_services(
+            paranet_knowledge_collection_storage,
+            paranet_knowledge_collection_token_id,
+            services,
+        )
+
+    async def deploy_neuro_incentives_pool(
+        self,
+        is_native_reward: bool,
+        paranet_knowledge_collection_storage: str | Address,
+        paranet_knowledge_collection_token_id: int,
+        trac_to_neuro_emission_multiplier: float,
+        paranet_operator_reward_percentage: float,
+        paranet_incentivization_proposal_voters_reward_percentage: float,
+    ):
+        return await self._deploy_neuro_incentives_pool(
+            is_native_reward,
+            paranet_knowledge_collection_storage,
+            paranet_knowledge_collection_token_id,
+            trac_to_neuro_emission_multiplier,
+            paranet_operator_reward_percentage,
+            paranet_incentivization_proposal_voters_reward_percentage,
+        )
+
+    async def get_incentives_pool_address(
+        self, paranet_id: HexStr, incentives_pool_type: ParanetIncentivizationType
+    ):
+        return await self._get_incentives_pool_address(paranet_id, incentives_pool_type)
+
+    async def is_knowledge_miner_registered(self, paranet_id: HexStr, address: Address):
+        return await self._is_knowledge_miner_registered(paranet_id, address)
+
+    async def is_knowledge_collection_owner(self, owner: Address, id: int):
+        return await self._is_knowledge_collection_owner(owner, id)
+
+    async def is_paranet_operator(self, operator_address: Address):
+        return await self._is_paranet_operator(operator_address)
+
+    def set_incentives_pool(self, incentives_pool_address: Address):
+        self.manager.blockchain_provider.set_incentives_pool(incentives_pool_address)
+
+    async def is_proposal_voter(self, address: Address):
+        return await self._is_proposal_voter(address)

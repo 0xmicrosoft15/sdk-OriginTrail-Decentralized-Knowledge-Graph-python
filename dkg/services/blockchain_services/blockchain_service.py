@@ -275,9 +275,7 @@ class BlockchainService(Module):
         return self._is_paranet_operator(operator_address)
 
     def set_incentives_pool(self, incentives_pool_address: Address):
-        return self.manager.blockchain_provider.set_incentives_pool(
-            incentives_pool_address
-        )
+        self.manager.blockchain_provider.set_incentives_pool(incentives_pool_address)
 
     def is_proposal_voter(self, address: Address):
         return self._is_proposal_voter(address)

@@ -488,24 +488,22 @@ class AsyncKnowledgeAsset(AsyncModule):
             )
         )
 
-    _submit_knowledge_collection = Method(BlockchainRequest.submit_knowledge_collection)
-
-    def submit_to_paranet(
+    async def submit_to_paranet(
         self, ual: UAL, paranet_ual: UAL
     ) -> dict[str, UAL | Address | TxReceipt]:
         parsed_ual = parse_ual(ual)
         knowledge_asset_storage, knowledge_asset_token_id = (
             parsed_ual["contract_address"],
-            parsed_ual["token_id"],
+            parsed_ual["knowledge_collection_token_id"],
         )
 
         parsed_paranet_ual = parse_ual(paranet_ual)
         paranet_knowledge_asset_storage, paranet_knowledge_asset_token_id = (
             parsed_paranet_ual["contract_address"],
-            parsed_paranet_ual["token_id"],
+            parsed_paranet_ual["knowledge_collection_token_id"],
         )
 
-        receipt: TxReceipt = self._submit_knowledge_collection(
+        receipt: TxReceipt = await self.blockchain_service.submit_knowledge_collection(
             paranet_knowledge_asset_storage,
             paranet_knowledge_asset_token_id,
             knowledge_asset_storage,
@@ -531,7 +529,7 @@ class AsyncKnowledgeAsset(AsyncModule):
         ual: UAL,
         new_owner: Address,
     ) -> dict[str, UAL | Address | TxReceipt]:
-        token_id = parse_ual(ual)["token_id"]
+        token_id = parse_ual(ual)["knowledge_collection_token_id"]
 
         receipt: TxReceipt = self._transfer(
             self.manager.blockchain_provider.account,
@@ -548,7 +546,7 @@ class AsyncKnowledgeAsset(AsyncModule):
     _burn_asset = Method(BlockchainRequest.burn_asset)
 
     def burn(self, ual: UAL) -> dict[str, UAL | TxReceipt]:
-        token_id = parse_ual(ual)["token_id"]
+        token_id = parse_ual(ual)["knowledge_collection_token_id"]
 
         receipt: TxReceipt = self._burn_asset(token_id)
 
