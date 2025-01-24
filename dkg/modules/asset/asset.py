@@ -53,7 +53,7 @@ from dkg.utils.node_request import (
     OperationStatus,
     get_operation_status_object,
 )
-from dkg.utils.ual import format_ual, parse_ual
+from dkg.utils.ual import format_ual, parse_ual, get_paranet_ual_details, get_paranet_id
 import dkg.utils.knowledge_collection_tools as kc_tools
 import dkg.utils.knowledge_asset_tools as ka_tools
 from dkg.services.input_service import InputService
@@ -485,15 +485,16 @@ class KnowledgeAsset(Module):
             parsed_ual["knowledge_collection_token_id"],
         )
 
-        parsed_paranet_ual = parse_ual(paranet_ual)
-        paranet_knowledge_collection_storage, paranet_knowledge_collection_token_id = (
-            parsed_paranet_ual["contract_address"],
-            parsed_paranet_ual["knowledge_collection_token_id"],
-        )
+        (
+            paranet_knowledge_collection_storage,
+            paranet_knowledge_collection_token_id,
+            paranet_knowledge_asset_token_id,
+        ) = get_paranet_ual_details(paranet_ual)
 
         receipt: TxReceipt = self.blockchain_service.submit_knowledge_collection(
             paranet_knowledge_collection_storage,
             paranet_knowledge_collection_token_id,
+            paranet_knowledge_asset_token_id,
             knowledge_collection_storage,
             knowledge_collection_token_id,
         )
@@ -501,12 +502,7 @@ class KnowledgeAsset(Module):
         return {
             "UAL": ual,
             "paranetUAL": paranet_ual,
-            "paranetId": Web3.to_hex(
-                Web3.solidity_keccak(
-                    ["address", "uint256"],
-                    [knowledge_collection_storage, knowledge_collection_token_id],
-                )
-            ),
+            "paranetId": Web3.to_hex(get_paranet_id(paranet_ual)),
             "operation": json.loads(Web3.to_json(receipt)),
         }
 

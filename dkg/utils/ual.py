@@ -59,3 +59,46 @@ def parse_ual(ual: UAL) -> dict[str, str | Address | int]:
         resolved_ual["knowledge_asset_token_id"] = int(knowledge_asset_token_id)
 
     return resolved_ual
+
+
+def get_paranet_ual_details(paranet_ual: UAL) -> dict[str, str | Address | int]:
+    parsed_ual = parse_ual(paranet_ual)
+    (
+        paranet_knowledge_collection_storage,
+        paranet_knowledge_collection_token_id,
+        paranet_knowledge_asset_token_id,
+    ) = (
+        parsed_ual["contract_address"],
+        parsed_ual["knowledge_collection_token_id"],
+        parsed_ual.get("knowledge_asset_token_id", None),
+    )
+
+    if not paranet_knowledge_asset_token_id:
+        raise ValidationError(
+            "Invalid paranet UAL! Knowledge asset token id is required!"
+        )
+
+    return (
+        paranet_knowledge_collection_storage,
+        paranet_knowledge_collection_token_id,
+        paranet_knowledge_asset_token_id,
+    )
+
+
+def get_paranet_id(paranet_ual: UAL) -> bytes:
+    (
+        paranet_knowledge_collection_storage,
+        paranet_knowledge_collection_token_id,
+        paranet_knowledge_asset_token_id,
+    ) = get_paranet_ual_details(paranet_ual)
+
+    paranet_id = Web3.solidity_keccak(
+        ["address", "uint256", "uint256"],
+        [
+            paranet_knowledge_collection_storage,
+            paranet_knowledge_collection_token_id,
+            paranet_knowledge_asset_token_id,
+        ],
+    )
+
+    return paranet_id

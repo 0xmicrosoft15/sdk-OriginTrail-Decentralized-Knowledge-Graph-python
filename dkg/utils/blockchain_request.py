@@ -168,6 +168,7 @@ class BlockchainRequest:
         args={
             "paranetKCStorageContract": Address,
             "paranetKCTokenId": int,
+            "paranetKATokenId": int,
             "paranetName": str,
             "paranetDescription": str,
             "nodesAccessPolicy": int,
@@ -187,6 +188,7 @@ class BlockchainRequest:
         args={
             "paranetKCStorageContract": Address,
             "paranetKCTokenId": int,
+            "paranetKATokenId": int,
             "identityIds": list[int],
         },
     )
@@ -197,6 +199,7 @@ class BlockchainRequest:
         args={
             "paranetKCStorageContract": Address,
             "paranetKCTokenId": int,
+            "paranetKATokenId": int,
             "identityIds": list[int],
         },
     )
@@ -207,6 +210,7 @@ class BlockchainRequest:
         args={
             "paranetKCStorageContract": Address,
             "paranetKCTokenId": int,
+            "paranetKATokenId": int,
         },
     )
 
@@ -216,6 +220,7 @@ class BlockchainRequest:
         args={
             "paranetKCStorageContract": Address,
             "paranetKCTokenId": int,
+            "paranetKATokenId": int,
             "identityId": int,
         },
     )
@@ -226,6 +231,7 @@ class BlockchainRequest:
         args={
             "paranetKCStorageContract": Address,
             "paranetKCTokenId": int,
+            "paranetKATokenId": int,
             "identityId": int,
         },
     )
@@ -242,6 +248,7 @@ class BlockchainRequest:
         args={
             "paranetKCStorageContract": Address,
             "paranetKCTokenId": int,
+            "paranetKATokenId": int,
             "minerAddresses": list[Address],
         },
     )
@@ -252,6 +259,7 @@ class BlockchainRequest:
         args={
             "paranetKCStorageContract": Address,
             "paranetKCTokenId": int,
+            "paranetKATokenId": int,
             "minerAddresses": list[Address],
         },
     )
@@ -262,6 +270,7 @@ class BlockchainRequest:
         args={
             "paranetKCStorageContract": Address,
             "paranetKCTokenId": int,
+            "paranetKATokenId": int,
         },
     )
 
@@ -271,6 +280,7 @@ class BlockchainRequest:
         args={
             "paranetKCStorageContract": Address,
             "paranetKCTokenId": int,
+            "paranetKATokenId": int,
             "minerAddress": Address,
         },
     )
@@ -281,6 +291,7 @@ class BlockchainRequest:
         args={
             "paranetKCStorageContract": Address,
             "paranetKCTokenId": int,
+            "paranetKATokenId": int,
             "minerAddress": Address,
         },
     )
@@ -297,6 +308,7 @@ class BlockchainRequest:
         args={
             "paranetKCStorageContract": Address,
             "paranetKCTokenId": int,
+            "paranetKATokenId": int,
             "services": dict[str, Address | int],
         },
     )
@@ -306,6 +318,7 @@ class BlockchainRequest:
         args={
             "paranetServiceKCStorageContract": Address,
             "paranetServiceKCTokenId": int,
+            "paranetServiceKATokenId": int,
             "paranetServiceName": str,
             "paranetServiceDescription": str,
             "paranetServiceAddresses": list[Address],
@@ -317,6 +330,7 @@ class BlockchainRequest:
         args={
             "paranetKCStorageContract": Address,
             "paranetKnowledgeCollectionId": int,
+            "paranetKnowledgeAssetTokenId": int,
             "knowledgeCollectionStorageContract": Address,
             "knowledgeCollectionTokenId": int,
         },
@@ -329,6 +343,7 @@ class BlockchainRequest:
             "isNativeReward": bool,
             "paranetKCStorageContract": Address,
             "paranetKCTokenId": int,
+            "paranetKATokenId": int,
             "tracToNeuroEmissionMultiplier": float,
             "paranetOperatorRewardPercentage": float,
             "paranetIncentivizationProposalVotersRewardPercentage": float,

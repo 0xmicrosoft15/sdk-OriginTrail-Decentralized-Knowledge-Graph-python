@@ -186,6 +186,7 @@ class BlockchainService(Module):
         self,
         knowledge_collection_storage: str | Address,
         knowledge_collection_token_id: int,
+        knowledge_asset_token_id: int,
         name: str,
         description: str,
         paranet_nodes_access_policy: int,
@@ -194,6 +195,7 @@ class BlockchainService(Module):
         return self._register_paranet(
             knowledge_collection_storage,
             knowledge_collection_token_id,
+            knowledge_asset_token_id,
             name,
             description,
             paranet_nodes_access_policy,
@@ -204,12 +206,14 @@ class BlockchainService(Module):
         self,
         paranet_knowledge_collection_storage: str | Address,
         paranet_knowledge_collection_token_id: int,
+        paranet_knowledge_asset_token_id: int,
         knowledge_collection_storage: str | Address,
         knowledge_collection_token_id: int,
     ):
         return self._submit_knowledge_collection(
             paranet_knowledge_collection_storage,
             paranet_knowledge_collection_token_id,
+            paranet_knowledge_asset_token_id,
             knowledge_collection_storage,
             knowledge_collection_token_id,
         )
@@ -218,6 +222,7 @@ class BlockchainService(Module):
         self,
         knowledge_collection_storage: str | Address,
         knowledge_collection_token_id: int,
+        knowledge_asset_token_id: int,
         paranet_service_name: str,
         paranet_service_description: str,
         paranet_service_addresses: list[Address],
@@ -225,6 +230,7 @@ class BlockchainService(Module):
         return self._register_paranet_service(
             knowledge_collection_storage,
             knowledge_collection_token_id,
+            knowledge_asset_token_id,
             paranet_service_name,
             paranet_service_description,
             paranet_service_addresses,
@@ -234,11 +240,13 @@ class BlockchainService(Module):
         self,
         paranet_knowledge_collection_storage: str | Address,
         paranet_knowledge_collection_token_id: int,
+        paranet_knowledge_asset_token_id: int,
         services: list,
     ):
         return self._add_paranet_services(
             paranet_knowledge_collection_storage,
             paranet_knowledge_collection_token_id,
+            paranet_knowledge_asset_token_id,
             services,
         )
 
@@ -247,6 +255,7 @@ class BlockchainService(Module):
         is_native_reward: bool,
         paranet_knowledge_collection_storage: str | Address,
         paranet_knowledge_collection_token_id: int,
+        paranet_knowledge_asset_token_id: int,
         trac_to_neuro_emission_multiplier: float,
         paranet_operator_reward_percentage: float,
         paranet_incentivization_proposal_voters_reward_percentage: float,
@@ -255,6 +264,7 @@ class BlockchainService(Module):
             is_native_reward,
             paranet_knowledge_collection_storage,
             paranet_knowledge_collection_token_id,
+            paranet_knowledge_asset_token_id,
             trac_to_neuro_emission_multiplier,
             paranet_operator_reward_percentage,
             paranet_incentivization_proposal_voters_reward_percentage,
