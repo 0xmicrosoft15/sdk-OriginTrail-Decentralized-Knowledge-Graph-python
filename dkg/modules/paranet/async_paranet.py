@@ -29,7 +29,7 @@ from dkg.managers.async_manager import AsyncRequestManager
 from dkg.method import Method
 from dkg.modules.async_module import AsyncModule
 from dkg.types import Address, UAL, HexStr
-from dkg.utils.blockchain_request import BlockchainRequest
+from dkg.request_managers.blockchain_request import BlockchainRequest
 from dkg.utils.ual import parse_ual, get_paranet_id, get_paranet_ual_details
 from dkg.services.input_service import InputService
 from dkg.services.blockchain_services.async_blockchain_service import (
@@ -101,262 +101,262 @@ class AsyncParanet(AsyncModule):
             "operation": json.loads(Web3.to_json(receipt)),
         }
 
-    _add_paranet_curated_nodes = Method(BlockchainRequest.add_paranet_curated_nodes)
+    # _add_paranet_curated_nodes = Method(BlockchainRequest.add_paranet_curated_nodes)
 
-    def add_curated_nodes(
-        self, paranet_ual: UAL, identity_ids: list[int]
-    ) -> dict[str, str | HexStr | TxReceipt]:
-        (
-            paranet_knowledge_collection_storage,
-            paranet_knowledge_collection_token_id,
-            paranet_knowledge_asset_token_id,
-        ) = get_paranet_ual_details(paranet_ual)
+    # def add_curated_nodes(
+    #     self, paranet_ual: UAL, identity_ids: list[int]
+    # ) -> dict[str, str | HexStr | TxReceipt]:
+    #     (
+    #         paranet_knowledge_collection_storage,
+    #         paranet_knowledge_collection_token_id,
+    #         paranet_knowledge_asset_token_id,
+    #     ) = get_paranet_ual_details(paranet_ual)
 
-        receipt = self._add_paranet_curated_nodes(
-            paranet_knowledge_collection_storage,
-            paranet_knowledge_collection_token_id,
-            paranet_knowledge_asset_token_id,
-            identity_ids,
-        )
+    #     receipt = self._add_paranet_curated_nodes(
+    #         paranet_knowledge_collection_storage,
+    #         paranet_knowledge_collection_token_id,
+    #         paranet_knowledge_asset_token_id,
+    #         identity_ids,
+    #     )
 
-        return {
-            "paranetUAL": paranet_ual,
-            "paranetId": Web3.to_hex(get_paranet_id(paranet_ual)),
-            "operation": json.loads(Web3.to_json(receipt)),
-        }
+    #     return {
+    #         "paranetUAL": paranet_ual,
+    #         "paranetId": Web3.to_hex(get_paranet_id(paranet_ual)),
+    #         "operation": json.loads(Web3.to_json(receipt)),
+    #     }
 
-    _remove_paranet_curated_nodes = Method(
-        BlockchainRequest.remove_paranet_curated_nodes
-    )
+    # _remove_paranet_curated_nodes = Method(
+    #     BlockchainRequest.remove_paranet_curated_nodes
+    # )
 
-    def remove_curated_nodes(
-        self, paranet_ual: UAL, identity_ids: list[int]
-    ) -> dict[str, str | HexStr | TxReceipt]:
-        (
-            paranet_knowledge_collection_storage,
-            paranet_knowledge_collection_token_id,
-            paranet_knowledge_asset_token_id,
-        ) = get_paranet_ual_details(paranet_ual)
+    # def remove_curated_nodes(
+    #     self, paranet_ual: UAL, identity_ids: list[int]
+    # ) -> dict[str, str | HexStr | TxReceipt]:
+    #     (
+    #         paranet_knowledge_collection_storage,
+    #         paranet_knowledge_collection_token_id,
+    #         paranet_knowledge_asset_token_id,
+    #     ) = get_paranet_ual_details(paranet_ual)
 
-        receipt = self._remove_paranet_curated_nodes(
-            paranet_knowledge_collection_storage,
-            paranet_knowledge_collection_token_id,
-            paranet_knowledge_asset_token_id,
-            identity_ids,
-        )
+    #     receipt = self._remove_paranet_curated_nodes(
+    #         paranet_knowledge_collection_storage,
+    #         paranet_knowledge_collection_token_id,
+    #         paranet_knowledge_asset_token_id,
+    #         identity_ids,
+    #     )
 
-        return {
-            "paranetUAL": paranet_ual,
-            "paranetId": Web3.to_hex(get_paranet_id(paranet_ual)),
-            "operation": json.loads(Web3.to_json(receipt)),
-        }
+    #     return {
+    #         "paranetUAL": paranet_ual,
+    #         "paranetId": Web3.to_hex(get_paranet_id(paranet_ual)),
+    #         "operation": json.loads(Web3.to_json(receipt)),
+    #     }
 
-    _request_paranet_curated_node_access = Method(
-        BlockchainRequest.request_paranet_curated_node_access
-    )
+    # _request_paranet_curated_node_access = Method(
+    #     BlockchainRequest.request_paranet_curated_node_access
+    # )
 
-    def request_curated_node_access(
-        self, paranet_ual: UAL
-    ) -> dict[str, str | HexStr | TxReceipt]:
-        (
-            paranet_knowledge_collection_storage,
-            paranet_knowledge_collection_token_id,
-            paranet_knowledge_asset_token_id,
-        ) = get_paranet_ual_details(paranet_ual)
+    # def request_curated_node_access(
+    #     self, paranet_ual: UAL
+    # ) -> dict[str, str | HexStr | TxReceipt]:
+    #     (
+    #         paranet_knowledge_collection_storage,
+    #         paranet_knowledge_collection_token_id,
+    #         paranet_knowledge_asset_token_id,
+    #     ) = get_paranet_ual_details(paranet_ual)
 
-        receipt = self._request_paranet_curated_node_access(
-            paranet_knowledge_collection_storage,
-            paranet_knowledge_collection_token_id,
-            paranet_knowledge_asset_token_id,
-        )
+    #     receipt = self._request_paranet_curated_node_access(
+    #         paranet_knowledge_collection_storage,
+    #         paranet_knowledge_collection_token_id,
+    #         paranet_knowledge_asset_token_id,
+    #     )
 
-        return {
-            "paranetUAL": paranet_ual,
-            "paranetId": Web3.to_hex(get_paranet_id(paranet_ual)),
-            "operation": json.loads(Web3.to_json(receipt)),
-        }
+    #     return {
+    #         "paranetUAL": paranet_ual,
+    #         "paranetId": Web3.to_hex(get_paranet_id(paranet_ual)),
+    #         "operation": json.loads(Web3.to_json(receipt)),
+    #     }
 
-    _approve_curated_node = Method(BlockchainRequest.approve_curated_node)
+    # _approve_curated_node = Method(BlockchainRequest.approve_curated_node)
 
-    def approve_curated_node(
-        self, paranet_ual: UAL, identity_id: int
-    ) -> dict[str, str | HexStr | TxReceipt]:
-        (
-            paranet_knowledge_collection_storage,
-            paranet_knowledge_collection_token_id,
-            paranet_knowledge_asset_token_id,
-        ) = get_paranet_ual_details(paranet_ual)
+    # def approve_curated_node(
+    #     self, paranet_ual: UAL, identity_id: int
+    # ) -> dict[str, str | HexStr | TxReceipt]:
+    #     (
+    #         paranet_knowledge_collection_storage,
+    #         paranet_knowledge_collection_token_id,
+    #         paranet_knowledge_asset_token_id,
+    #     ) = get_paranet_ual_details(paranet_ual)
 
-        receipt = self._approve_curated_node(
-            paranet_knowledge_collection_storage,
-            paranet_knowledge_collection_token_id,
-            paranet_knowledge_asset_token_id,
-            identity_id,
-        )
+    #     receipt = self._approve_curated_node(
+    #         paranet_knowledge_collection_storage,
+    #         paranet_knowledge_collection_token_id,
+    #         paranet_knowledge_asset_token_id,
+    #         identity_id,
+    #     )
 
-        return {
-            "paranetUAL": paranet_ual,
-            "paranetId": Web3.to_hex(get_paranet_id(paranet_ual)),
-            "operation": json.loads(Web3.to_json(receipt)),
-        }
+    #     return {
+    #         "paranetUAL": paranet_ual,
+    #         "paranetId": Web3.to_hex(get_paranet_id(paranet_ual)),
+    #         "operation": json.loads(Web3.to_json(receipt)),
+    #     }
 
-    _reject_curated_node = Method(BlockchainRequest.reject_curated_node)
+    # _reject_curated_node = Method(BlockchainRequest.reject_curated_node)
 
-    def reject_curated_node(
-        self, paranet_ual: UAL, identity_id: int
-    ) -> dict[str, str | HexStr | TxReceipt]:
-        (
-            paranet_knowledge_collection_storage,
-            paranet_knowledge_collection_token_id,
-            paranet_knowledge_asset_token_id,
-        ) = get_paranet_ual_details(paranet_ual)
+    # def reject_curated_node(
+    #     self, paranet_ual: UAL, identity_id: int
+    # ) -> dict[str, str | HexStr | TxReceipt]:
+    #     (
+    #         paranet_knowledge_collection_storage,
+    #         paranet_knowledge_collection_token_id,
+    #         paranet_knowledge_asset_token_id,
+    #     ) = get_paranet_ual_details(paranet_ual)
 
-        receipt = self._reject_curated_node(
-            paranet_knowledge_collection_storage,
-            paranet_knowledge_collection_token_id,
-            paranet_knowledge_asset_token_id,
-            identity_id,
-        )
+    #     receipt = self._reject_curated_node(
+    #         paranet_knowledge_collection_storage,
+    #         paranet_knowledge_collection_token_id,
+    #         paranet_knowledge_asset_token_id,
+    #         identity_id,
+    #     )
 
-        return {
-            "paranetUAL": paranet_ual,
-            "paranetId": Web3.to_hex(get_paranet_id(paranet_ual)),
-            "operation": json.loads(Web3.to_json(receipt)),
-        }
+    #     return {
+    #         "paranetUAL": paranet_ual,
+    #         "paranetId": Web3.to_hex(get_paranet_id(paranet_ual)),
+    #         "operation": json.loads(Web3.to_json(receipt)),
+    #     }
 
-    _get_curated_nodes = Method(BlockchainRequest.get_curated_nodes)
+    # _get_curated_nodes = Method(BlockchainRequest.get_curated_nodes)
 
-    def get_curated_nodes(
-        self, paranet_ual: UAL
-    ) -> dict[str, str | HexStr | TxReceipt]:
-        paranet_id = get_paranet_id(paranet_ual)
+    # def get_curated_nodes(
+    #     self, paranet_ual: UAL
+    # ) -> dict[str, str | HexStr | TxReceipt]:
+    #     paranet_id = get_paranet_id(paranet_ual)
 
-        return self._get_curated_nodes(paranet_id)
+    #     return self._get_curated_nodes(paranet_id)
 
-    _add_paranet_curated_miners = Method(BlockchainRequest.add_paranet_curated_miners)
+    # _add_paranet_curated_miners = Method(BlockchainRequest.add_paranet_curated_miners)
 
-    def add_curated_miners(
-        self, paranet_ual: UAL, miner_addresses: list[Address]
-    ) -> dict[str, str | HexStr | TxReceipt]:
-        (
-            paranet_knowledge_collection_storage,
-            paranet_knowledge_collection_token_id,
-            paranet_knowledge_asset_token_id,
-        ) = get_paranet_ual_details(paranet_ual)
+    # def add_curated_miners(
+    #     self, paranet_ual: UAL, miner_addresses: list[Address]
+    # ) -> dict[str, str | HexStr | TxReceipt]:
+    #     (
+    #         paranet_knowledge_collection_storage,
+    #         paranet_knowledge_collection_token_id,
+    #         paranet_knowledge_asset_token_id,
+    #     ) = get_paranet_ual_details(paranet_ual)
 
-        receipt = self._add_paranet_curated_miners(
-            paranet_knowledge_collection_storage,
-            paranet_knowledge_collection_token_id,
-            paranet_knowledge_asset_token_id,
-            miner_addresses,
-        )
+    #     receipt = self._add_paranet_curated_miners(
+    #         paranet_knowledge_collection_storage,
+    #         paranet_knowledge_collection_token_id,
+    #         paranet_knowledge_asset_token_id,
+    #         miner_addresses,
+    #     )
 
-        return {
-            "paranetUAL": paranet_ual,
-            "paranetId": Web3.to_hex(get_paranet_id(paranet_ual)),
-            "operation": json.loads(Web3.to_json(receipt)),
-        }
+    #     return {
+    #         "paranetUAL": paranet_ual,
+    #         "paranetId": Web3.to_hex(get_paranet_id(paranet_ual)),
+    #         "operation": json.loads(Web3.to_json(receipt)),
+    #     }
 
-    _remove_paranet_curated_miners = Method(
-        BlockchainRequest.remove_paranet_curated_miners
-    )
+    # _remove_paranet_curated_miners = Method(
+    #     BlockchainRequest.remove_paranet_curated_miners
+    # )
 
-    def remove_curated_miners(
-        self, paranet_ual: UAL, miner_addresses: list[Address]
-    ) -> dict[str, str | HexStr | TxReceipt]:
-        (
-            paranet_knowledge_collection_storage,
-            paranet_knowledge_collection_token_id,
-            paranet_knowledge_asset_token_id,
-        ) = get_paranet_ual_details(paranet_ual)
+    # def remove_curated_miners(
+    #     self, paranet_ual: UAL, miner_addresses: list[Address]
+    # ) -> dict[str, str | HexStr | TxReceipt]:
+    #     (
+    #         paranet_knowledge_collection_storage,
+    #         paranet_knowledge_collection_token_id,
+    #         paranet_knowledge_asset_token_id,
+    #     ) = get_paranet_ual_details(paranet_ual)
 
-        receipt = self._remove_paranet_curated_miners(
-            paranet_knowledge_collection_storage,
-            paranet_knowledge_collection_token_id,
-            paranet_knowledge_asset_token_id,
-            miner_addresses,
-        )
+    #     receipt = self._remove_paranet_curated_miners(
+    #         paranet_knowledge_collection_storage,
+    #         paranet_knowledge_collection_token_id,
+    #         paranet_knowledge_asset_token_id,
+    #         miner_addresses,
+    #     )
 
-        return {
-            "paranetUAL": paranet_ual,
-            "paranetId": Web3.to_hex(get_paranet_id(paranet_ual)),
-            "operation": json.loads(Web3.to_json(receipt)),
-        }
+    #     return {
+    #         "paranetUAL": paranet_ual,
+    #         "paranetId": Web3.to_hex(get_paranet_id(paranet_ual)),
+    #         "operation": json.loads(Web3.to_json(receipt)),
+    #     }
 
-    _request_paranet_curated_miner_access = Method(
-        BlockchainRequest.request_paranet_curated_miner_access
-    )
+    # _request_paranet_curated_miner_access = Method(
+    #     BlockchainRequest.request_paranet_curated_miner_access
+    # )
 
-    def request_curated_miner_access(
-        self, paranet_ual: UAL
-    ) -> dict[str, str | HexStr | TxReceipt]:
-        (
-            paranet_knowledge_collection_storage,
-            paranet_knowledge_collection_token_id,
-            paranet_knowledge_asset_token_id,
-        ) = get_paranet_ual_details(paranet_ual)
+    # def request_curated_miner_access(
+    #     self, paranet_ual: UAL
+    # ) -> dict[str, str | HexStr | TxReceipt]:
+    #     (
+    #         paranet_knowledge_collection_storage,
+    #         paranet_knowledge_collection_token_id,
+    #         paranet_knowledge_asset_token_id,
+    #     ) = get_paranet_ual_details(paranet_ual)
 
-        receipt = self._request_paranet_curated_miner_access(
-            paranet_knowledge_collection_storage,
-            paranet_knowledge_collection_token_id,
-            paranet_knowledge_asset_token_id,
-        )
+    #     receipt = self._request_paranet_curated_miner_access(
+    #         paranet_knowledge_collection_storage,
+    #         paranet_knowledge_collection_token_id,
+    #         paranet_knowledge_asset_token_id,
+    #     )
 
-        return {
-            "paranetUAL": paranet_ual,
-            "paranetId": Web3.to_hex(get_paranet_id(paranet_ual)),
-            "operation": json.loads(Web3.to_json(receipt)),
-        }
+    #     return {
+    #         "paranetUAL": paranet_ual,
+    #         "paranetId": Web3.to_hex(get_paranet_id(paranet_ual)),
+    #         "operation": json.loads(Web3.to_json(receipt)),
+    #     }
 
-    _approve_curated_miner = Method(BlockchainRequest.approve_curated_miner)
+    # _approve_curated_miner = Method(BlockchainRequest.approve_curated_miner)
 
-    def approve_curated_miner(
-        self, paranet_ual: UAL, miner_address: Address
-    ) -> dict[str, str | HexStr | TxReceipt]:
-        (
-            paranet_knowledge_collection_storage,
-            paranet_knowledge_collection_token_id,
-            paranet_knowledge_asset_token_id,
-        ) = get_paranet_ual_details(paranet_ual)
+    # def approve_curated_miner(
+    #     self, paranet_ual: UAL, miner_address: Address
+    # ) -> dict[str, str | HexStr | TxReceipt]:
+    #     (
+    #         paranet_knowledge_collection_storage,
+    #         paranet_knowledge_collection_token_id,
+    #         paranet_knowledge_asset_token_id,
+    #     ) = get_paranet_ual_details(paranet_ual)
 
-        receipt = self._approve_curated_miner(
-            paranet_knowledge_collection_storage,
-            paranet_knowledge_collection_token_id,
-            paranet_knowledge_asset_token_id,
-            miner_address,
-        )
+    #     receipt = self._approve_curated_miner(
+    #         paranet_knowledge_collection_storage,
+    #         paranet_knowledge_collection_token_id,
+    #         paranet_knowledge_asset_token_id,
+    #         miner_address,
+    #     )
 
-        return {
-            "paranetUAL": paranet_ual,
-            "paranetId": Web3.to_hex(get_paranet_id(paranet_ual)),
-            "operation": json.loads(Web3.to_json(receipt)),
-        }
+    #     return {
+    #         "paranetUAL": paranet_ual,
+    #         "paranetId": Web3.to_hex(get_paranet_id(paranet_ual)),
+    #         "operation": json.loads(Web3.to_json(receipt)),
+    #     }
 
-    _reject_curated_miner = Method(BlockchainRequest.reject_curated_miner)
+    # _reject_curated_miner = Method(BlockchainRequest.reject_curated_miner)
 
-    def reject_curated_miner(
-        self, paranet_ual: UAL, miner_address: Address
-    ) -> dict[str, str | HexStr | TxReceipt]:
-        (
-            paranet_knowledge_collection_storage,
-            paranet_knowledge_collection_token_id,
-            paranet_knowledge_asset_token_id,
-        ) = get_paranet_ual_details(paranet_ual)
+    # def reject_curated_miner(
+    #     self, paranet_ual: UAL, miner_address: Address
+    # ) -> dict[str, str | HexStr | TxReceipt]:
+    #     (
+    #         paranet_knowledge_collection_storage,
+    #         paranet_knowledge_collection_token_id,
+    #         paranet_knowledge_asset_token_id,
+    #     ) = get_paranet_ual_details(paranet_ual)
 
-        receipt = self._reject_curated_miner(
-            paranet_knowledge_collection_storage,
-            paranet_knowledge_collection_token_id,
-            paranet_knowledge_asset_token_id,
-            miner_address,
-        )
+    #     receipt = self._reject_curated_miner(
+    #         paranet_knowledge_collection_storage,
+    #         paranet_knowledge_collection_token_id,
+    #         paranet_knowledge_asset_token_id,
+    #         miner_address,
+    #     )
 
-        return {
-            "paranetUAL": paranet_ual,
-            "paranetId": Web3.to_hex(get_paranet_id(paranet_ual)),
-            "operation": json.loads(Web3.to_json(receipt)),
-        }
+    #     return {
+    #         "paranetUAL": paranet_ual,
+    #         "paranetId": Web3.to_hex(get_paranet_id(paranet_ual)),
+    #         "operation": json.loads(Web3.to_json(receipt)),
+    #     }
 
-    _get_knowledge_miners = Method(BlockchainRequest.get_knowledge_miners)
+    # _get_knowledge_miners = Method(BlockchainRequest.get_knowledge_miners)
 
     def get_knowledge_miners(
         self, paranet_ual: UAL

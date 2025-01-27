@@ -15,47 +15,49 @@
 # specific language governing permissions and limitations
 # under the License.
 
-from dkg.constants import DefaultParameters
-from dkg.dataclasses import BidSuggestionRange
+# from dkg.constants import DefaultParameters
+# from dkg.dataclasses import BidSuggestionRange
 from dkg.managers.manager import DefaultRequestManager
-from dkg.method import Method
+
+# from dkg.method import Method
 from dkg.modules.module import Module
-from dkg.types import DataHexStr
-from dkg.utils.blockchain_request import BlockchainRequest
-from dkg.utils.node_request import NodeRequest
+
+# from dkg.types import DataHexStr
+# from dkg.request_managers.blockchain_request import BlockchainRequest
+# from dkg.utils.node_request import NodeRequest
 
 
 class Network(Module):
     def __init__(self, manager: DefaultRequestManager):
         self.manager = manager
 
-    _get_asset_storage_address = Method(BlockchainRequest.get_asset_storage_address)
+    # _get_asset_storage_address = Method(BlockchainRequest.get_asset_storage_address)
 
-    _get_bid_suggestion = Method(NodeRequest.bid_suggestion)
+    # _get_bid_suggestion = Method(NodeRequest.bid_suggestion)
 
-    def get_bid_suggestion(
-        self,
-        public_assertion_id: DataHexStr,
-        size_in_bytes: int,
-        epochs_number: int,
-        range: BidSuggestionRange = BidSuggestionRange.LOW,
-    ) -> int:
-        content_asset_storage_address = self._get_asset_storage_address(
-            "ContentAssetStorage"
-        )
+    # def get_bid_suggestion(
+    #     self,
+    #     public_assertion_id: DataHexStr,
+    #     size_in_bytes: int,
+    #     epochs_number: int,
+    #     range: BidSuggestionRange = BidSuggestionRange.LOW,
+    # ) -> int:
+    #     content_asset_storage_address = self._get_asset_storage_address(
+    #         "ContentAssetStorage"
+    #     )
 
-        response = self._get_bid_suggestion(
-            self.manager.blockchain_provider.blockchain_id,
-            epochs_number,
-            size_in_bytes,
-            content_asset_storage_address,
-            public_assertion_id,
-            DefaultParameters.HASH_FUNCTION_ID.value,
-            range,
-        )
+    #     response = self._get_bid_suggestion(
+    #         self.manager.blockchain_provider.blockchain_id,
+    #         epochs_number,
+    #         size_in_bytes,
+    #         content_asset_storage_address,
+    #         public_assertion_id,
+    #         DefaultParameters.HASH_FUNCTION_ID.value,
+    #         range,
+    #     )
 
-        return (
-            int(response["bidSuggestion"])
-            if range != BidSuggestionRange.ALL
-            else response
-        )
+    #     return (
+    #         int(response["bidSuggestion"])
+    #         if range != BidSuggestionRange.ALL
+    #         else response
+    #     )

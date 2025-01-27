@@ -17,7 +17,6 @@
 
 from functools import wraps
 
-from dkg.assertion import Assertion
 from dkg.modules.asset.asset import KnowledgeAsset
 from dkg.modules.graph.graph import Graph
 from dkg.managers.manager import DefaultRequestManager
@@ -34,7 +33,6 @@ from dkg.services.blockchain_services.blockchain_service import BlockchainServic
 
 
 class DKG(Module):
-    assertion: Assertion
     asset: KnowledgeAsset
     paranet: Paranet
     network: Network
@@ -52,7 +50,6 @@ class DKG(Module):
         self.initialize_services(config)
 
         modules = {
-            "assertion": Assertion(self.manager),
             "asset": KnowledgeAsset(
                 self.manager,
                 self.input_service,

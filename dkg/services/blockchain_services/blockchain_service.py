@@ -1,12 +1,15 @@
 from dkg.modules.module import Module
 from dkg.managers.manager import DefaultRequestManager
-from dkg.utils.blockchain_request import BlockchainRequest
+from dkg.request_managers.blockchain_request import BlockchainRequest
 from dkg.method import Method
 from dkg.constants import ZERO_ADDRESS
 from web3 import Web3
 from typing import Optional
 from dkg.types import Address, HexStr
-from dkg.utils.blockchain_request import KnowledgeCollectionResult, AllowanceResult
+from dkg.request_managers.blockchain_request import (
+    KnowledgeCollectionResult,
+    AllowanceResult,
+)
 from dkg.dataclasses import ParanetIncentivizationType
 
 
