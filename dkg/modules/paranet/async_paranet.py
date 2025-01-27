@@ -85,7 +85,7 @@ class AsyncParanet(AsyncModule):
             paranet_knowledge_asset_token_id,
         ) = get_paranet_ual_details(ual)
 
-        receipt: TxReceipt = self.blockchain_service.register_paranet(
+        receipt: TxReceipt = await self.blockchain_service.register_paranet(
             paranet_knowledge_collection_storage,
             paranet_knowledge_collection_token_id,
             paranet_knowledge_asset_token_id,

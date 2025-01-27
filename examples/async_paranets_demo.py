@@ -184,7 +184,8 @@ async def main():
     print_json(create_paranet_service_kc_result)
 
     divider()
-    paranet_service_ual = create_paranet_service_kc_result["UAL"]
+    # Paranet service UAL is a Knowledge Asset UAL (combination of Knowledge Collection UAL and Knowledge Asset token id)
+    paranet_service_ual = f"{create_paranet_service_kc_result['UAL']}/1"
 
     submit_to_paranet = await dkg.asset.submit_to_paranet(
         paranet_service_ual, paranet_ual

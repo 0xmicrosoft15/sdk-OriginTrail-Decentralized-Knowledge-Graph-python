@@ -503,7 +503,7 @@ class AsyncKnowledgeAsset(AsyncModule):
             paranet_knowledge_asset_token_id,
         ) = get_paranet_ual_details(paranet_ual)
 
-        receipt: TxReceipt = self.blockchain_service.submit_knowledge_collection(
+        receipt: TxReceipt = await self.blockchain_service.submit_knowledge_collection(
             paranet_knowledge_collection_storage,
             paranet_knowledge_collection_token_id,
             paranet_knowledge_asset_token_id,

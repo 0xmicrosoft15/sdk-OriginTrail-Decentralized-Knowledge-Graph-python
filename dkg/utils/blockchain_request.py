@@ -329,7 +329,7 @@ class BlockchainRequest:
         function="submitKnowledgeCollection",
         args={
             "paranetKCStorageContract": Address,
-            "paranetKnowledgeCollectionId": int,
+            "paranetKnowledgeCollectionTokenId": int,
             "paranetKnowledgeAssetTokenId": int,
             "knowledgeCollectionStorageContract": Address,
             "knowledgeCollectionTokenId": int,
