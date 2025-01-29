@@ -461,31 +461,38 @@ class KnowledgeAsset(Module):
 
     # _transfer = Method(BlockchainRequest.transfer_asset)
 
-    # def transfer(
-    #     self,
-    #     ual: UAL,
-    #     new_owner: Address,
-    # ) -> dict[str, UAL | Address | TxReceipt]:
-    #     token_id = parse_ual(ual)["token_id"]
+    def transfer(
+        self,
+        ual: UAL,
+        new_owner: Address,
+    ) -> dict[str, UAL | Address | TxReceipt]:
+        knowledge_collection_token_id = parse_ual(ual)["knowledge_collection_token_id"]
 
-    #     receipt: TxReceipt = self._transfer(
-    #         self.manager.blockchain_provider.account,
-    #         new_owner,
-    #         token_id,
+        asset_id = (
+            knowledge_collection_token_id - 1
+        ) * 1_000_000 + knowledge_collection_token_id
+
+        receipt: TxReceipt = self.blockchain_service.transfer_asset(
+            from_=self.manager.blockchain_provider.account.address,
+            to=new_owner,
+            token_id=asset_id,
+        )
+
+        return {
+            "UAL": ual,
+            "owner": new_owner,
+            "operation": json.loads(Web3.to_json(receipt)),
+        }
+
+    # def burn(self, ual: UAL, token_ids: list[int]) -> dict[str, UAL | TxReceipt]:
+    #     knowledge_collection_token_id = parse_ual(ual)["knowledge_collection_token_id"]
+
+    #     # TODO: Rename this in contracts to burnKnowledgeCollections
+    #     receipt: TxReceipt = self.blockchain_service.burn_knowledge_assets_tokens(
+    #         knowledge_collection_token_id,
+    #         self.manager.blockchain_provider.account.address,
+    #         token_ids,
     #     )
-
-    #     return {
-    #         "UAL": ual,
-    #         "owner": new_owner,
-    #         "operation": json.loads(Web3.to_json(receipt)),
-    #     }
-
-    # _burn_asset = Method(BlockchainRequest.burn_asset)
-
-    # def burn(self, ual: UAL) -> dict[str, UAL | TxReceipt]:
-    #     token_id = parse_ual(ual)["token_id"]
-
-    #     receipt: TxReceipt = self._burn_asset(token_id)
 
     #     return {"UAL": ual, "operation": json.loads(Web3.to_json(receipt))}
 

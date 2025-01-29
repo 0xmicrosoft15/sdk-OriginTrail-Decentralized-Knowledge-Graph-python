@@ -119,10 +119,10 @@ class BlockchainRequest:
         args={"spender": Address, "subtractedValue": Wei},
     )
 
-    burn_asset = ContractTransaction(
-        contract="ContentAsset",
-        function="burnAsset",
-        args={"tokenId": int},
+    burn_knowledge_assets_tokens = ContractTransaction(
+        contract="KnowledgeCollectionStorage",
+        function="burnKnowledgeAssetsTokens",
+        args={"id": int, "from": Address, "tokenIds": list[int]},
     )
     extend_asset_storing_period = ContractTransaction(
         contract="ContentAsset",
@@ -131,9 +131,9 @@ class BlockchainRequest:
     )
 
     transfer_asset = ContractTransaction(
-        contract="ContentAssetStorage",
-        function="transferFrom",
-        args={"from": Address, "to": Address, "tokenId": int},
+        contract="KnowledgeCollectionStorage",
+        function="safeTransferFrom",
+        args={"from": Address, "to": Address, "id": int, "amount": int, "data": bytes},
     )
 
     get_latest_assertion_id = ContractCall(

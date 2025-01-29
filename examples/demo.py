@@ -109,6 +109,27 @@ print_json(get_result)
 divider()
 
 start_time = time.perf_counter()
+transfer_result = dkg.asset.transfer(
+    create_asset_result.get("UAL"), "0x70997970C51812dc3A010C7d01b50e0d17dc79C8"
+)
+print(
+    f"======================== ASSET TRANSFER in {time.perf_counter() - start_time} seconds"
+)
+print_json(transfer_result)
+
+divider()
+
+# start_time = time.perf_counter()
+# # Burns knowledge collections
+# burn_result = dkg.asset.burn(create_asset_result["UAL"], [1])
+# print(
+#     f"======================== ASSET BURN in {time.perf_counter() - start_time} seconds"
+# )
+# print_json(burn_result)
+
+# divider()
+
+start_time = time.perf_counter()
 query_operation_result = dkg.graph.query(
     """
     PREFIX SCHEMA: <http://schema.org/>
