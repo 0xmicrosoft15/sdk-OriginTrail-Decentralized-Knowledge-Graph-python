@@ -26,10 +26,8 @@ from dkg.dataclasses import (
     ParanetIncentivizationType,
 )
 from dkg.managers.async_manager import AsyncRequestManager
-from dkg.method import Method
 from dkg.modules.async_module import AsyncModule
 from dkg.types import Address, UAL, HexStr
-from dkg.request_managers.blockchain_request import BlockchainRequest
 from dkg.utils.ual import parse_ual, get_paranet_id, get_paranet_ual_details
 from dkg.services.input_service import InputService
 from dkg.services.blockchain_services.async_blockchain_service import (
@@ -559,133 +557,133 @@ class AsyncParanet(AsyncModule):
             address=address or self.manager.blockchain_provider.account.address,
         )
 
-    _get_claimable_knowledge_miner_reward_amount = Method(
-        BlockchainRequest.get_claimable_knowledge_miner_reward_amount
-    )
+    # _get_claimable_knowledge_miner_reward_amount = Method(
+    #     BlockchainRequest.get_claimable_knowledge_miner_reward_amount
+    # )
 
-    def calculate_claimable_miner_reward_amount(
-        self,
-        ual: UAL,
-        incentives_type: ParanetIncentivizationType = ParanetIncentivizationType.NEUROWEB,
-    ) -> int:
-        return self._get_claimable_knowledge_miner_reward_amount(
-            contract=self._get_incentives_pool_contract(ual, incentives_type)
-        )
+    # def calculate_claimable_miner_reward_amount(
+    #     self,
+    #     ual: UAL,
+    #     incentives_type: ParanetIncentivizationType = ParanetIncentivizationType.NEUROWEB,
+    # ) -> int:
+    #     return self._get_claimable_knowledge_miner_reward_amount(
+    #         contract=self._get_incentives_pool_contract(ual, incentives_type)
+    #     )
 
-    _get_claimable_all_knowledge_miners_reward_amount = Method(
-        BlockchainRequest.get_claimable_all_knowledge_miners_reward_amount
-    )
+    # _get_claimable_all_knowledge_miners_reward_amount = Method(
+    #     BlockchainRequest.get_claimable_all_knowledge_miners_reward_amount
+    # )
 
-    def calculate_all_claimable_miner_rewards_amount(
-        self,
-        ual: UAL,
-        incentives_type: ParanetIncentivizationType = ParanetIncentivizationType.NEUROWEB,
-    ) -> int:
-        return self._get_claimable_all_knowledge_miners_reward_amount(
-            contract=self._get_incentives_pool_contract(ual, incentives_type)
-        )
+    # def calculate_all_claimable_miner_rewards_amount(
+    #     self,
+    #     ual: UAL,
+    #     incentives_type: ParanetIncentivizationType = ParanetIncentivizationType.NEUROWEB,
+    # ) -> int:
+    #     return self._get_claimable_all_knowledge_miners_reward_amount(
+    #         contract=self._get_incentives_pool_contract(ual, incentives_type)
+    #     )
 
-    _claim_knowledge_miner_reward = Method(
-        BlockchainRequest.claim_knowledge_miner_reward
-    )
+    # _claim_knowledge_miner_reward = Method(
+    #     BlockchainRequest.claim_knowledge_miner_reward
+    # )
 
-    def claim_miner_reward(
-        self,
-        ual: UAL,
-        incentives_type: ParanetIncentivizationType = ParanetIncentivizationType.NEUROWEB,
-    ) -> dict[str, str | HexStr | TxReceipt]:
-        receipt: TxReceipt = self._claim_knowledge_miner_reward(
-            contract=self._get_incentives_pool_contract(ual, incentives_type)
-        )
+    # def claim_miner_reward(
+    #     self,
+    #     ual: UAL,
+    #     incentives_type: ParanetIncentivizationType = ParanetIncentivizationType.NEUROWEB,
+    # ) -> dict[str, str | HexStr | TxReceipt]:
+    #     receipt: TxReceipt = self._claim_knowledge_miner_reward(
+    #         contract=self._get_incentives_pool_contract(ual, incentives_type)
+    #     )
 
-        paranet_id = get_paranet_id(ual)
+    #     paranet_id = get_paranet_id(ual)
 
-        return {
-            "paranetUAL": ual,
-            "paranetId": Web3.to_hex(paranet_id),
-            "operation": json.loads(Web3.to_json(receipt)),
-        }
+    #     return {
+    #         "paranetUAL": ual,
+    #         "paranetId": Web3.to_hex(paranet_id),
+    #         "operation": json.loads(Web3.to_json(receipt)),
+    #     }
 
-    _get_claimable_paranet_operator_reward_amount = Method(
-        BlockchainRequest.get_claimable_paranet_operator_reward_amount
-    )
+    # _get_claimable_paranet_operator_reward_amount = Method(
+    #     BlockchainRequest.get_claimable_paranet_operator_reward_amount
+    # )
 
-    def calculate_claimable_operator_reward_amount(
-        self,
-        ual: UAL,
-        incentives_type: ParanetIncentivizationType = ParanetIncentivizationType.NEUROWEB,
-    ) -> int:
-        return self._get_claimable_paranet_operator_reward_amount(
-            contract=self._get_incentives_pool_contract(ual, incentives_type)
-        )
+    # def calculate_claimable_operator_reward_amount(
+    #     self,
+    #     ual: UAL,
+    #     incentives_type: ParanetIncentivizationType = ParanetIncentivizationType.NEUROWEB,
+    # ) -> int:
+    #     return self._get_claimable_paranet_operator_reward_amount(
+    #         contract=self._get_incentives_pool_contract(ual, incentives_type)
+    #     )
 
-    _claim_paranet_operator_reward = Method(
-        BlockchainRequest.claim_paranet_operator_reward
-    )
+    # _claim_paranet_operator_reward = Method(
+    #     BlockchainRequest.claim_paranet_operator_reward
+    # )
 
-    def claim_operator_reward(
-        self,
-        ual: UAL,
-        incentives_type: ParanetIncentivizationType = ParanetIncentivizationType.NEUROWEB,
-    ) -> dict[str, str | HexStr | TxReceipt]:
-        receipt: TxReceipt = self._claim_paranet_operator_reward(
-            contract=self._get_incentives_pool_contract(ual, incentives_type)
-        )
+    # def claim_operator_reward(
+    #     self,
+    #     ual: UAL,
+    #     incentives_type: ParanetIncentivizationType = ParanetIncentivizationType.NEUROWEB,
+    # ) -> dict[str, str | HexStr | TxReceipt]:
+    #     receipt: TxReceipt = self._claim_paranet_operator_reward(
+    #         contract=self._get_incentives_pool_contract(ual, incentives_type)
+    #     )
 
-        paranet_id = get_paranet_id(ual)
+    #     paranet_id = get_paranet_id(ual)
 
-        return {
-            "paranetUAL": ual,
-            "paranetId": Web3.to_hex(paranet_id),
-            "operation": json.loads(Web3.to_json(receipt)),
-        }
+    #     return {
+    #         "paranetUAL": ual,
+    #         "paranetId": Web3.to_hex(paranet_id),
+    #         "operation": json.loads(Web3.to_json(receipt)),
+    #     }
 
-    _get_claimable_proposal_voter_reward_amount = Method(
-        BlockchainRequest.get_claimable_proposal_voter_reward_amount
-    )
+    # _get_claimable_proposal_voter_reward_amount = Method(
+    #     BlockchainRequest.get_claimable_proposal_voter_reward_amount
+    # )
 
-    def calculate_claimable_voter_reward_amount(
-        self,
-        ual: UAL,
-        incentives_type: ParanetIncentivizationType = ParanetIncentivizationType.NEUROWEB,
-    ) -> int:
-        return self._get_claimable_proposal_voter_reward_amount(
-            contract=self._get_incentives_pool_contract(ual, incentives_type)
-        )
+    # def calculate_claimable_voter_reward_amount(
+    #     self,
+    #     ual: UAL,
+    #     incentives_type: ParanetIncentivizationType = ParanetIncentivizationType.NEUROWEB,
+    # ) -> int:
+    #     return self._get_claimable_proposal_voter_reward_amount(
+    #         contract=self._get_incentives_pool_contract(ual, incentives_type)
+    #     )
 
-    _get_claimable_all_proposal_voters_reward_amount = Method(
-        BlockchainRequest.get_claimable_all_proposal_voters_reward_amount
-    )
+    # _get_claimable_all_proposal_voters_reward_amount = Method(
+    #     BlockchainRequest.get_claimable_all_proposal_voters_reward_amount
+    # )
 
-    def calculate_all_claimable_voters_reward_amount(
-        self,
-        ual: UAL,
-        incentives_type: ParanetIncentivizationType = ParanetIncentivizationType.NEUROWEB,
-    ) -> int:
-        return self._get_claimable_all_proposal_voters_reward_amount(
-            contract=self._get_incentives_pool_contract(ual, incentives_type)
-        )
+    # def calculate_all_claimable_voters_reward_amount(
+    #     self,
+    #     ual: UAL,
+    #     incentives_type: ParanetIncentivizationType = ParanetIncentivizationType.NEUROWEB,
+    # ) -> int:
+    #     return self._get_claimable_all_proposal_voters_reward_amount(
+    #         contract=self._get_incentives_pool_contract(ual, incentives_type)
+    #     )
 
-    _claim_incentivization_proposal_voter_reward = Method(
-        BlockchainRequest.claim_incentivization_proposal_voter_reward
-    )
+    # _claim_incentivization_proposal_voter_reward = Method(
+    #     BlockchainRequest.claim_incentivization_proposal_voter_reward
+    # )
 
-    def claim_voter_reward(
-        self,
-        ual: UAL,
-        incentives_type: ParanetIncentivizationType = ParanetIncentivizationType.NEUROWEB,
-    ) -> dict[str, str | HexStr | TxReceipt]:
-        receipt: TxReceipt = self._claim_incentivization_proposal_voter_reward(
-            contract=self._get_incentives_pool_contract(ual, incentives_type)
-        )
+    # def claim_voter_reward(
+    #     self,
+    #     ual: UAL,
+    #     incentives_type: ParanetIncentivizationType = ParanetIncentivizationType.NEUROWEB,
+    # ) -> dict[str, str | HexStr | TxReceipt]:
+    #     receipt: TxReceipt = self._claim_incentivization_proposal_voter_reward(
+    #         contract=self._get_incentives_pool_contract(ual, incentives_type)
+    #     )
 
-        paranet_id = get_paranet_id(ual)
+    #     paranet_id = get_paranet_id(ual)
 
-        return {
-            "paranetUAL": ual,
-            "paranetId": Web3.to_hex(paranet_id),
-            "operation": json.loads(Web3.to_json(receipt)),
-        }
+    #     return {
+    #         "paranetUAL": ual,
+    #         "paranetId": Web3.to_hex(paranet_id),
+    #         "operation": json.loads(Web3.to_json(receipt)),
+    #     }
 
     def _get_incentives_pool_contract(
         self,
