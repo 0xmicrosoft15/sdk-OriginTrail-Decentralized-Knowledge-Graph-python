@@ -21,7 +21,6 @@ from dkg.modules.asset.asset import KnowledgeAsset
 from dkg.modules.graph.graph import Graph
 from dkg.managers.manager import DefaultRequestManager
 from dkg.modules.module import Module
-from dkg.modules.network.network import Network
 from dkg.modules.node.node import Node
 from dkg.modules.paranet.paranet import Paranet
 from dkg.providers import BlockchainProvider, NodeHTTPProvider
@@ -35,7 +34,6 @@ from dkg.services.blockchain_services.blockchain_service import BlockchainServic
 class DKG(Module):
     asset: KnowledgeAsset
     paranet: Paranet
-    network: Network
     node: Node
     graph: Graph
 
@@ -59,7 +57,6 @@ class DKG(Module):
             "paranet": Paranet(
                 self.manager, self.input_service, self.blockchain_service
             ),
-            "network": Network(self.manager),
             "node": Node(self.manager),
             "graph": Graph(self.manager, self.input_service, self.node_service),
         }
