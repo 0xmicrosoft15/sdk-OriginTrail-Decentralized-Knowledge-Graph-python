@@ -119,39 +119,27 @@ class BlockchainRequest:
         args={"spender": Address, "subtractedValue": Wei},
     )
 
-    burn_asset = ContractTransaction(
-        contract="ContentAsset",
-        function="burnAsset",
-        args={"tokenId": int},
+    burn_knowledge_assets_tokens = ContractTransaction(
+        contract="KnowledgeCollectionStorage",
+        function="burnKnowledgeAssetsTokens",
+        args={"id": int, "from": Address, "tokenIds": list[int]},
     )
-    extend_asset_storing_period = ContractTransaction(
-        contract="ContentAsset",
-        function="extendAssetStoringPeriod",
-        args={"tokenId": int, "epochsNumber": int, "tokenAmount": int},
-    )
+    # extend_asset_storing_period = ContractTransaction(
+    #     contract="ContentAsset",
+    #     function="extendAssetStoringPeriod",
+    #     args={"tokenId": int, "epochsNumber": int, "tokenAmount": int},
+    # )
 
     transfer_asset = ContractTransaction(
-        contract="ContentAssetStorage",
-        function="transferFrom",
-        args={"from": Address, "to": Address, "tokenId": int},
-    )
-
-    get_latest_assertion_id = ContractCall(
-        contract="ContentAssetStorage",
-        function="getLatestAssertionId",
-        args={"tokenId": int},
+        contract="KnowledgeCollectionStorage",
+        function="safeTransferFrom",
+        args={"from": Address, "to": Address, "id": int, "amount": int, "data": bytes},
     )
 
     is_knowledge_collection_owner = ContractCall(
         contract="KnowledgeCollectionStorage",
         function="isKnowledgeCollectionOwner",
         args={"owner": Address, "id": int},
-    )
-
-    get_assertion_size = ContractCall(
-        contract="AssertionStorage",
-        function="getAssertionSize",
-        args={"assertionId": bytes | HexStr},
     )
 
     # Identity
@@ -355,15 +343,6 @@ class BlockchainRequest:
         args={
             "paranetId": HexStr,
             "incentivesPoolType": ParanetIncentivizationType,
-        },
-    )
-
-    get_updating_knowledge_collection_states = ContractCall(
-        contract="ParanetKnowledgeMinersRegistry",
-        function="getUpdatingKnowledgeCollectionStates",
-        args={
-            "miner": Address,
-            "paranetId": HexStr,
         },
     )
 

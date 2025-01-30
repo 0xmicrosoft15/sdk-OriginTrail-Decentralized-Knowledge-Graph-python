@@ -157,9 +157,6 @@ DEFAULT_PROXIMITY_SCORE_FUNCTIONS_PAIR_IDS = {
     },
 }
 
-PRIVATE_HISTORICAL_REPOSITORY = "privateHistory"
-PRIVATE_CURRENT_REPOSITORY = "privateCurrent"
-
 
 class Operations(Enum):
     PUBLISH = "publish"

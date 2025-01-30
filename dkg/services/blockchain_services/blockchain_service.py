@@ -1,49 +1,22 @@
 from dkg.modules.module import Module
 from dkg.managers.manager import DefaultRequestManager
-from dkg.utils.blockchain_request import BlockchainRequest
-from dkg.method import Method
 from dkg.constants import ZERO_ADDRESS
 from web3 import Web3
 from typing import Optional
 from dkg.types import Address, HexStr
-from dkg.utils.blockchain_request import KnowledgeCollectionResult, AllowanceResult
+from dkg.request_managers.blockchain_request import (
+    KnowledgeCollectionResult,
+    AllowanceResult,
+)
 from dkg.dataclasses import ParanetIncentivizationType
+from dkg.services.blockchain_services.base_blockchain_service import (
+    BaseBlockchainService,
+)
 
 
-class BlockchainService(Module):
+class BlockchainService(Module, BaseBlockchainService):
     def __init__(self, manager: DefaultRequestManager):
         self.manager = manager
-
-    _get_contract_address = Method(BlockchainRequest.get_contract_address)
-    _get_current_allowance = Method(BlockchainRequest.allowance)
-    _increase_allowance = Method(BlockchainRequest.increase_allowance)
-    _decrease_allowance = Method(BlockchainRequest.decrease_allowance)
-    _create_knowledge_collection = Method(BlockchainRequest.create_knowledge_collection)
-    _mint_knowledge_collection = Method(BlockchainRequest.mint_knowledge_collection)
-    _get_asset_storage_address = Method(BlockchainRequest.get_asset_storage_address)
-    _key_is_operational_wallet = Method(BlockchainRequest.key_is_operational_wallet)
-    _time_until_next_epoch = Method(BlockchainRequest.time_until_next_epoch)
-    _epoch_length = Method(BlockchainRequest.epoch_length)
-    _get_stake_weighted_average_ask = Method(
-        BlockchainRequest.get_stake_weighted_average_ask
-    )
-    _get_block = Method(BlockchainRequest.get_block)
-    _register_paranet = Method(BlockchainRequest.register_paranet)
-    _submit_knowledge_collection = Method(BlockchainRequest.submit_knowledge_collection)
-    _register_paranet_service = Method(BlockchainRequest.register_paranet_service)
-    _add_paranet_services = Method(BlockchainRequest.add_paranet_services)
-    _deploy_neuro_incentives_pool = Method(
-        BlockchainRequest.deploy_neuro_incentives_pool
-    )
-    _get_incentives_pool_address = Method(BlockchainRequest.get_incentives_pool_address)
-    _is_knowledge_miner_registered = Method(
-        BlockchainRequest.is_knowledge_miner_registered
-    )
-    _is_knowledge_collection_owner = Method(
-        BlockchainRequest.is_knowledge_collection_owner
-    )
-    _is_paranet_operator = Method(BlockchainRequest.is_paranet_operator)
-    _is_proposal_voter = Method(BlockchainRequest.is_proposal_voter)
 
     def decrease_knowledge_collection_allowance(
         self,
@@ -289,3 +262,11 @@ class BlockchainService(Module):
 
     def is_proposal_voter(self, address: Address):
         return self._is_proposal_voter(address)
+
+    def burn_knowledge_assets_tokens(
+        self, id: int, from_: Address, token_ids: list[int]
+    ):
+        return self._burn_knowledge_assets_tokens(id, from_, token_ids)
+
+    def transfer_asset(self, from_: Address, to: Address, token_id: int):
+        return self._transfer_asset(from_, to, token_id, 1, Web3.to_bytes(hexstr="0x"))

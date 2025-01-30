@@ -20,7 +20,7 @@ from enum import auto, Enum, IntEnum, StrEnum
 
 import pandas as pd
 
-from dkg.types import AutoStrEnum, AutoStrEnumUpperCase
+from dkg.types import AutoStrEnumUpperCase
 
 
 class BlockchainResponseDict(dict):
@@ -35,13 +35,6 @@ class HTTPRequestMethod(Enum):
 class NodeResponseDict(dict):
     def to_dataframe(self) -> pd.DataFrame:
         return pd.DataFrame(self)
-
-
-class BidSuggestionRange(AutoStrEnum):
-    LOW = auto()
-    MEDIUM = auto()
-    HIGH = auto()
-    ALL = auto()
 
 
 class KnowledgeAssetEnumStates(AutoStrEnumUpperCase):
