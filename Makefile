@@ -10,11 +10,11 @@ demo:
 async-demo:
 	python3 examples/async_demo.py
 
-paranet-demo:
-	python3 examples/paranet_demo.py
+paranets-demo:
+	python3 examples/paranets_demo.py
 
-async-paranet-demo:
-	python3 examples/async_paranet_demo.py
+async-paranets-demo:
+	python3 examples/async_paranets_demo.py
 
 ruff:
 	ruff check --fix
