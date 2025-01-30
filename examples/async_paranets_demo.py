@@ -23,10 +23,7 @@ from dkg.providers import AsyncBlockchainProvider, AsyncNodeHTTPProvider
 from dkg.dataclasses import (
     ParanetNodesAccessPolicy,
     ParanetMinersAccessPolicy,
-    ParanetIncentivizationType,
 )
-
-INCENTIVE_TYPE = ParanetIncentivizationType.NEUROWEB
 
 
 async def main():
@@ -85,8 +82,7 @@ async def main():
     }
 
     create_paranet_knowledge_collection_result = await dkg.asset.create(
-        content=paranet_content,
-        options={"epochs_num": 2},
+        content=paranet_content, options={"epochs_num": 2}
     )
 
     print("======================== PARANET KNOWLEDGE COLLECTION CREATED")
@@ -114,14 +110,10 @@ async def main():
     divider()
 
     incentives_pool_params = dkg.paranet.NeuroWebIncentivesPoolParams(
-        neuro_emission_multiplier=1.1,
-        operator_percentage=10.5,
-        voters_percentage=5.5,
+        neuro_emission_multiplier=1.1, operator_percentage=10.5, voters_percentage=5.5
     )
     deploy_incentives_contract_result = await dkg.paranet.deploy_incentives_contract(
-        paranet_ual,
-        incentives_pool_params,
-        INCENTIVE_TYPE,
+        paranet_ual, incentives_pool_params
     )
 
     print("======================== PARANET NEURO INCENTIVES POOL DEPLOYED")
@@ -129,9 +121,7 @@ async def main():
 
     divider()
 
-    incentives_pool_address = await dkg.paranet.get_incentives_pool_address(
-        paranet_ual, INCENTIVE_TYPE
-    )
+    incentives_pool_address = await dkg.paranet.get_incentives_pool_address(paranet_ual)
 
     print("======================== GOT PARANET NEURO INCENTIVES POOL ADDRESS")
     print(incentives_pool_address)
@@ -222,10 +212,10 @@ async def main():
     is_knowledge_miner = await dkg.paranet.is_knowledge_miner(paranet_ual)
     print(f"Is Knowledge Miner? {str(is_knowledge_miner)}")
 
-    is_operator = await dkg.paranet.is_operator(paranet_ual, INCENTIVE_TYPE)
+    is_operator = await dkg.paranet.is_operator(paranet_ual)
     print(f"Is Operator? {str(is_operator)}")
 
-    is_voter = await dkg.paranet.is_voter(paranet_ual, INCENTIVE_TYPE)
+    is_voter = await dkg.paranet.is_voter(paranet_ual)
     print(f"Is Voter? {str(is_voter)}")
 
     divider()
@@ -310,8 +300,7 @@ async def main():
     }
 
     create_collection_result = await dkg.asset.create(
-        content=denver_content,
-        options={"epochs_num": 2},
+        content=denver_content, options={"epochs_num": 2}
     )
 
     print("======================== KNOWLEDGE COLLECTION #1 CREATED")
@@ -353,8 +342,7 @@ async def main():
     }
 
     create_collection_result2 = await dkg.asset.create(
-        content=dallas_content,
-        options={"epochs_num": 2},
+        content=dallas_content, options={"epochs_num": 2}
     )
     print("======================== KNOWLEDGE COLLECTION #2 CREATED")
     print_json(create_collection_result2)
@@ -380,8 +368,7 @@ async def main():
     }
     """
     query_result = await dkg.graph.query(
-        query=query_where_denver,
-        options={"paranet_ual": paranet_ual},
+        query=query_where_denver, options={"paranet_ual": paranet_ual}
     )
 
     print("======================== QUERY PARANET REPOSITORY RESULT")
@@ -408,8 +395,7 @@ async def main():
     }}
     """
     query_result = await dkg.graph.query(
-        query=federated_query,
-        options={"paranet_ual": paranet_ual},
+        query=federated_query, options={"paranet_ual": paranet_ual}
     )
 
     print("======================== FEDERATED QUERY RESULT")

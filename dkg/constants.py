@@ -1,4 +1,4 @@
-from enum import Enum, auto
+from enum import Enum, auto, StrEnum
 from dkg.types import AutoStrEnumUpperCase
 
 # Licensed to the Apache Software Foundation (ASF) under one
@@ -58,30 +58,30 @@ class DefaultParameters(Enum):
     REPOSITORY: str = "dkg"
 
 
-class OutputTypes(Enum):
-    NQUADS: str = "N-QUADS"
-    JSONLD: str = "JSON-LD"
+class OutputTypes(StrEnum):
+    NQUADS = "N-QUADS"
+    JSONLD = "JSON-LD"
 
 
-class Environments(Enum):
-    DEVELOPMENT: str = "development"
-    DEVNET: str = "devnet"
-    TESTNET: str = "testnet"
-    MAINNET: str = "mainnet"
+class Environments(StrEnum):
+    DEVELOPMENT = "development"
+    DEVNET = "devnet"
+    TESTNET = "testnet"
+    MAINNET = "mainnet"
 
 
-class BlockchainIds(Enum):
-    HARDHAT_1: str = "hardhat1:31337"
-    HARDHAT_2: str = "hardhat2:31337"
-    BASE_DEVNET: str = "base:84532"
-    GNOSIS_DEVNET: str = "gnosis:10200"
-    NEUROWEB_DEVNET: str = "otp:2160"
-    BASE_TESTNET: str = "base:84532"
-    GNOSIS_TESTNET: str = "gnosis:10200"
-    NEUROWEB_TESTNET: str = "otp:20430"
-    BASE_MAINNET: str = "base:8453"
-    GNOSIS_MAINNET: str = "gnosis:100"
-    NEUROWEB_MAINNET: str = "otp:2043"
+class BlockchainIds(StrEnum):
+    HARDHAT_1 = "hardhat1:31337"
+    HARDHAT_2 = "hardhat2:31337"
+    BASE_DEVNET = "base:84532"
+    GNOSIS_DEVNET = "gnosis:10200"
+    NEUROWEB_DEVNET = "otp:2160"
+    BASE_TESTNET = "base:84532"
+    GNOSIS_TESTNET = "gnosis:10200"
+    NEUROWEB_TESTNET = "otp:20430"
+    BASE_MAINNET = "base:8453"
+    GNOSIS_MAINNET = "gnosis:100"
+    NEUROWEB_MAINNET = "otp:2043"
 
 
 class OperationStatuses(str, Enum):
