@@ -695,20 +695,20 @@ class AsyncParanet(AsyncModule):
     #         "operation": json.loads(Web3.to_json(receipt)),
     #     }
 
-    def _get_incentives_pool_contract(
-        self,
-        ual: UAL,
-    ) -> str | dict[str, str]:
-        incentives_pool_name = f"Paranet{str(self.incentive_type)}IncentivesPool"
-        is_incentives_pool_cached = (
-            incentives_pool_name in self.manager.blockchain_provider.contracts.keys()
-        )
+    # def _get_incentives_pool_contract(
+    #     self,
+    #     ual: UAL,
+    # ) -> str | dict[str, str]:
+    #     incentives_pool_name = f"Paranet{str(self.incentive_type)}IncentivesPool"
+    #     is_incentives_pool_cached = (
+    #         incentives_pool_name in self.manager.blockchain_provider.contracts.keys()
+    #     )
 
-        return (
-            incentives_pool_name
-            if is_incentives_pool_cached
-            else {
-                "name": incentives_pool_name,
-                "address": self.get_incentives_pool_address(ual),
-            }
-        )
+    #     return (
+    #         incentives_pool_name
+    #         if is_incentives_pool_cached
+    #         else {
+    #             "name": incentives_pool_name,
+    #             "address": self.get_incentives_pool_address(ual),
+    #         }
+    #     )
