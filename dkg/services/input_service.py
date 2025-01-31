@@ -198,11 +198,7 @@ class InputService:
         return DEFAULT_PROXIMITY_SCORE_FUNCTIONS_PAIR_IDS[environment][blockchain_name]
 
     def get_repository(self, options):
-        return (
-            options.get("repository")
-            or self.config.get("repository")
-            or DefaultParameters.REPOSITORY.value
-        )
+        return options.get("repository") or self.config.get("repository") or None
 
     def get_paranet_name(self, options):
         return options.get("paranet_name") or None

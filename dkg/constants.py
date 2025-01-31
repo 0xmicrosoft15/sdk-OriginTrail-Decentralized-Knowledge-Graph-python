@@ -55,7 +55,6 @@ class DefaultParameters(Enum):
     GAS_LIMIT_MULTIPLIER: int = 1
     PARANET_UAL: None = None
     GET_SUBJECT_UAL: bool = False
-    REPOSITORY: str = "dkg"
 
 
 class OutputTypes(StrEnum):
