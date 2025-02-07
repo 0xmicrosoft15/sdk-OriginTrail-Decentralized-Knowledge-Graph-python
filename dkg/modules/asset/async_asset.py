@@ -463,10 +463,10 @@ class AsyncKnowledgeAsset(AsyncModule):
                 frequency,
             )
 
-        local_store_result = {}
+        local_store_result = None
         if local_store:
             retry = 0
-            while (not local_store_result.get("status")) and retry < 6:
+            while (not (local_store_result or {}).get("status")) and retry < 6:
                 local_store_result = await self.node_service.local_store(
                     dataset_root, dataset, blockchain_id, ual
                 )
@@ -499,7 +499,7 @@ class AsyncKnowledgeAsset(AsyncModule):
             )
         )
 
-    _submit_knowledge_asset = Method(BlockchainRequest.submit_knowledge_asset)
+    _submit_knowledge_asset = Method(BlockchainRequest.submit_knowledge_collection)
 
     def submit_to_paranet(
         self, ual: UAL, paranet_ual: UAL
