@@ -103,6 +103,17 @@ class NodeRequest:
         },
     )
 
+    local_store = NodeCall(
+        method=HTTPRequestMethod.POST,
+        path="local-store",
+        data={
+            "datasetRoot": str,
+            "dataset": dict[str, list[str]],
+            "blockchain": str,
+            "ual": UAL,
+        },
+    )
+
 
 class LocalStoreOperationStatus(AutoStrEnumUpperCase):
     LOCAL_STORE_INIT_START = auto()

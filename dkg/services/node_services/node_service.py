@@ -22,6 +22,7 @@ class NodeService(Module):
     _publish = Method(NodeRequest.publish)
     _get = Method(NodeRequest.get)
     _query = Method(NodeRequest.query)
+    _local_store = Method(NodeRequest.local_store)
 
     def get_operation_result(
         self, operation_id: str, operation: str, max_retries: int, frequency: int
@@ -165,3 +166,10 @@ class NodeService(Module):
         paranet_ual,
     ):
         return self._query(query, query_type, repository, paranet_ual)
+
+    def local_store(self, dataset_root, dataset, blockchain_id, ual):
+        try:
+            result = self._local_store(dataset_root, dataset, blockchain_id, ual)
+            return result.get("data")
+        except Exception as e:
+            raise Exception(f"Unable to local store: {e}")

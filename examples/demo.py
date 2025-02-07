@@ -90,7 +90,7 @@ create_asset_result = dkg.asset.create(
         "epochs_num": 2,
         "minimum_number_of_finalization_confirmations": 3,
         "minimum_number_of_node_replications": 1,
-        "token_amount": 100,
+        "local_store": True,
     },
 )
 print(

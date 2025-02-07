@@ -21,6 +21,7 @@ class AsyncNodeService(AsyncModule):
     _publish = Method(NodeRequest.publish)
     _get = Method(NodeRequest.get)
     _query = Method(NodeRequest.query)
+    _local_store = Method(NodeRequest.local_store)
 
     async def info(self) -> NodeResponseDict:
         return await self._info()
@@ -182,3 +183,10 @@ class AsyncNodeService(AsyncModule):
         paranet_ual,
     ):
         return await self._query(query, query_type, repository, paranet_ual)
+
+    async def local_store(self, dataset_root, dataset, blockchain_id, ual):
+        try:
+            result = await self._local_store(dataset_root, dataset, blockchain_id, ual)
+            return result.get("data")
+        except Exception as e:
+            raise Exception(f"Unable to local store: {e}")

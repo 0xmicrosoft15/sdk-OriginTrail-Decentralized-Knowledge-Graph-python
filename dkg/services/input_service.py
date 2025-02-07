@@ -40,6 +40,7 @@ class InputService:
             "minimum_number_of_node_replications": self.get_minimum_number_of_node_replications(
                 options
             ),
+            "local_store": self.get_local_store(options),
         }
 
     def get_query_arguments(self, options):
@@ -181,3 +182,6 @@ class InputService:
             or self.config.get("repository")
             or DefaultParameters.REPOSITORY.value
         )
+
+    def get_local_store(self, options):
+        return options.get("local_store") or False

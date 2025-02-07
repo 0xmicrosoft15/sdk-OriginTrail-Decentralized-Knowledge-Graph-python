@@ -206,6 +206,7 @@ class KnowledgeAsset(Module):
         minimum_number_of_node_replications = arguments.get(
             "minimum_number_of_node_replications"
         )
+        local_store = arguments.get("local_store")
         blockchain_id = self.manager.blockchain_provider.blockchain_id
 
         dataset = {}
@@ -448,6 +449,15 @@ class KnowledgeAsset(Module):
                 frequency,
             )
 
+        local_store_result = {}
+        if local_store:
+            retry = 0
+            while (not local_store_result.get("status")) and retry < 6:
+                local_store_result = self.node_service.local_store(
+                    dataset_root, dataset, blockchain_id, ual
+                )
+                retry += 1
+
         return json.loads(
             Web3.to_json(
                 {
@@ -471,6 +481,7 @@ class KnowledgeAsset(Module):
                         },
                         "numberOfConfirmations": finality_status_result,
                         "requiredConfirmations": minimum_number_of_finalization_confirmations,
+                        **({"localStore": local_store_result} if local_store else {}),
                     },
                 }
             )
