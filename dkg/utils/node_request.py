@@ -110,7 +110,7 @@ class NodeRequest:
             "datasetRoot": str,
             "dataset": dict[str, list[str]],
             "blockchain": str,
-            "ual": UAL,
+            "UAL": UAL,
         },
     )
 
