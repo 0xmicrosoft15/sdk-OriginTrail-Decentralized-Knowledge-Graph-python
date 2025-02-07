@@ -21,7 +21,7 @@ from rdflib.plugins.sparql.parser import parseQuery
 from dkg.managers.async_manager import AsyncRequestManager
 from dkg.modules.async_module import AsyncModule
 from dkg.types import NQuads
-from dkg.constants import Operations, Status
+from dkg.constants import Status
 from dkg.services.input_service import InputService
 from dkg.services.node_services.async_node_service import AsyncNodeService
 from dkg.types import UAL
@@ -48,8 +48,6 @@ class AsyncGraph(AsyncModule):
 
         arguments = self.input_service.get_query_arguments(options)
 
-        max_number_of_retries = arguments.get("max_number_of_retries")
-        frequency = arguments.get("frequency")
         paranet_ual = arguments.get("paranet_ual")
         repository = arguments.get("repository")
 
@@ -59,12 +57,8 @@ class AsyncGraph(AsyncModule):
         result = await self.node_service.query(
             query, query_type, repository, paranet_ual
         )
-        operation_id = result.get("operationId")
-        operation_result = await self.node_service.get_operation_result(
-            operation_id, Operations.QUERY.value, max_number_of_retries, frequency
-        )
 
-        return operation_result["data"]
+        return result.get("data")
 
     async def publish_finality(self, UAL: UAL, options=None):
         if options is None:
