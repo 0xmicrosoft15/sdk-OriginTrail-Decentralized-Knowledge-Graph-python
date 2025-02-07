@@ -193,18 +193,24 @@ def group_nquads_by_subject(nquads_list: list[str], sort: bool = False):
         subject, predicate, obj = quad
 
         # Get subject key
-        subject_key = (
-            f"<<<{subject.subject}> <{subject.predicate}> <{subject.object}>>"
-            if hasattr(subject, "subject")
-            else f"<{subject}>"
-        )
+        if hasattr(subject, "subject"):
+            nested_subject = subject.subject
+            nested_predicate = subject.predicate
+            nested_object = (
+                f'"""{subject.object}"""'
+                if isinstance(subject.object, RDFLiteral)
+                else f"<{subject.object}>"
+            )
+            subject_key = f"<<<{nested_subject}> <{nested_predicate}> {nested_object}>>"
+        else:
+            subject_key = f"<{subject}>"
 
         # Initialize group if needed
         if subject_key not in grouped:
             grouped[subject_key] = []
 
         # Format object
-        object_value = f'"{obj}"' if isinstance(obj, RDFLiteral) else f"<{obj}>"
+        object_value = f'"""{obj}"""' if isinstance(obj, RDFLiteral) else f"<{obj}>"
 
         # Add quad to group
         quad_string = f"{subject_key} <{predicate}> {object_value} ."
