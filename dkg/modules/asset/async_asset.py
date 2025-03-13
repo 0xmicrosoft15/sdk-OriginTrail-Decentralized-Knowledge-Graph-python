@@ -476,10 +476,12 @@ class AsyncKnowledgeAsset(AsyncModule):
                             publish_operation_result, publish_operation_id
                         ),
                         "finality": {
-                            "status": "FINALIZED"
-                            if finality_status_result
-                            >= minimum_number_of_finalization_confirmations
-                            else "NOT FINALIZED"
+                            "status": (
+                                "FINALIZED"
+                                if finality_status_result
+                                >= minimum_number_of_finalization_confirmations
+                                else "NOT FINALIZED"
+                            )
                         },
                         "numberOfConfirmations": finality_status_result,
                         "requiredConfirmations": minimum_number_of_finalization_confirmations,
@@ -488,7 +490,7 @@ class AsyncKnowledgeAsset(AsyncModule):
             )
         )
 
-    _submit_knowledge_asset = Method(BlockchainRequest.submit_knowledge_asset)
+    _submit_knowledge_asset = Method(BlockchainRequest.submit_knowledge_collection)
 
     def submit_to_paranet(
         self, ual: UAL, paranet_ual: UAL

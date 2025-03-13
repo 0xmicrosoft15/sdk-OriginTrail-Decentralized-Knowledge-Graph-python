@@ -94,7 +94,7 @@ class NodeRequest:
 
     query = NodeCall(
         method=HTTPRequestMethod.POST,
-        path="query",
+        path="direct-query",
         data={
             "query": str,
             "type": str,

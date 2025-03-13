@@ -476,7 +476,7 @@ class KnowledgeAsset(Module):
             )
         )
 
-    _submit_knowledge_asset = Method(BlockchainRequest.submit_knowledge_asset)
+    _submit_knowledge_asset = Method(BlockchainRequest.submit_knowledge_collection)
 
     def submit_to_paranet(
         self, ual: UAL, paranet_ual: UAL
