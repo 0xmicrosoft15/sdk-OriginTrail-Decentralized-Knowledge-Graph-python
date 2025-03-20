@@ -755,8 +755,6 @@ class Paranet(Module):
             "operation": json.loads(Web3.to_json(receipt)),
         }
 
-
-
     def _get_incentives_pool_contract(
         self,
         ual: UAL,
