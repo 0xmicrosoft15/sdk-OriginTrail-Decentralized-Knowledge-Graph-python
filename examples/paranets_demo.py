@@ -27,9 +27,9 @@ from dkg.constants import Environments, BlockchainIds
 node_provider = NodeHTTPProvider("http://localhost:8900")
 
 blockchain_provider = BlockchainProvider(
-        Environments.DEVELOPMENT.value,
-        BlockchainIds.HARDHAT_1.value,
-    )
+    Environments.DEVELOPMENT.value,
+    BlockchainIds.HARDHAT_1.value,
+)
 
 dkg = DKG(node_provider, blockchain_provider)
 
@@ -107,7 +107,7 @@ divider()
 paranet_service_ual = create_paranet_service_knowledge_collection_result["UAL"]
 
 
-submit_to_paranet =  dkg.asset.submit_to_paranet(paranet_service_ual, paranet_ual)
+submit_to_paranet = dkg.asset.submit_to_paranet(paranet_service_ual, paranet_ual)
 
 print("======================== SUBMITED TO PARANET")
 print_json(submit_to_paranet)
@@ -240,7 +240,9 @@ print_json(create_submit_kc1_result)
 
 divider()
 
-submit_to_paranet_result2 =  dkg.asset.submit_to_paranet(create_submit_kc1_result["UAL"], paranet_ual)
+submit_to_paranet_result2 = dkg.asset.submit_to_paranet(
+    create_submit_kc1_result["UAL"], paranet_ual
+)
 
 print("======================== SUBMITED TO PARANET")
 print_json(submit_to_paranet_result2)

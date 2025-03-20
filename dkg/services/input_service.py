@@ -44,8 +44,6 @@ class InputService:
 
     def get_query_arguments(self, options):
         return {
-            "max_number_of_retries": self.get_max_number_of_retries(options),
-            "frequency": self.get_frequency(options),
             "paranet_ual": self.get_paranet_ual(options),
             "repository": self.get_repository(options),
         }
