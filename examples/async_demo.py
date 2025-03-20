@@ -95,7 +95,7 @@ async def main():
     start_time = time.perf_counter()
     query_operation_result = await dkg.graph.query(
         """
-        PREFIX SCHEMA: <http://schema.org/>
+        PREFIX schema: <http://schema.org/>
         SELECT ?s ?modelName
         WHERE {
             ?s schema:model ?modelName .
