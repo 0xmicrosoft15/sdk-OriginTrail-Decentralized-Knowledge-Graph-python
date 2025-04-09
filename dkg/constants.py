@@ -118,7 +118,7 @@ BLOCKCHAINS = {
             "rpc": "https://rpc.chiadochain.net",
         },
         "otp:20430": {
-            "hub": "0xd7d073b560412c6A7F33dD670d323D01061E5DEb",
+            "hub": "0xE233B5b78853A62B1E11eBe88bF083e25b0a57a6",
             "rpc": "https://lofar-testnet.origin-trail.network",
         },
     },
