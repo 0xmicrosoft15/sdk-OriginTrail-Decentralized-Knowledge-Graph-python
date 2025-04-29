@@ -209,6 +209,7 @@ class KnowledgeAsset(Module):
         blockchain_id = self.manager.blockchain_provider.blockchain_id
 
         dataset = {}
+        content = kc_tools.escape_literal_dict(content)
         public_content = dataset.get("public")
         private_content = dataset.get("private")
         if isinstance(content, str):

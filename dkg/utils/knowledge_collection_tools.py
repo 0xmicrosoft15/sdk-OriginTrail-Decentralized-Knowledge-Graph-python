@@ -246,3 +246,29 @@ def solidity_packed_sha256(types: list[str], values: list) -> str:
     sha256_hash = hashlib.sha256(packed_data).hexdigest()
 
     return f"0x{sha256_hash}"
+
+
+def escape_literal_string(s):
+    escape_map = {
+        "\b": r"\b",
+        "\f": r"\f",
+        "\n": r"\n",
+        "\r": r"\r",
+        "\t": r"\t",
+        '"': r"\"",
+        "'": r"\'",
+    }
+    for char, replacement in escape_map.items():
+        s = s.replace(char, replacement)
+    return s
+
+
+def escape_literal_dict(obj):
+    if isinstance(obj, dict):
+        return {k: escape_literal_dict(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [escape_literal_dict(i) for i in obj]
+    elif isinstance(obj, str):
+        return escape_literal_string(s=obj)
+    else:
+        return obj
