@@ -46,7 +46,7 @@ def divider():
 
 
 def print_json(json_dict: dict):
-    print(json.dumps(json_dict, indent=4))
+    print(json.dumps(json_dict, indent=4, ensure_ascii=False))
 
 
 content = {
