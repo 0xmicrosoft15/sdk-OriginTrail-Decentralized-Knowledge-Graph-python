@@ -259,7 +259,7 @@ def escape_literal_string(s):
         "\r": r"\r",
         "\t": r"\t",
         '"': r"\"",
-        "'": r"\'",
+        "'": r"'",
     }
     for char, replacement in escape_map.items():
         s = s.replace(char, replacement)
