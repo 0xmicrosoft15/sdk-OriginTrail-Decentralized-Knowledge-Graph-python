@@ -1,4 +1,5 @@
 from typing import Literal
+import codecs
 from dkg.constants import CHUNK_BYTE_SIZE
 from dkg.exceptions import DatasetInputFormatNotSupported, InvalidDataset
 from dkg.types import JSONLD, NQuads
@@ -96,7 +97,9 @@ def split_into_chunks(quads, chunk_size_bytes=32):
     while start < len(encoded_bytes):
         end = min(start + chunk_size_bytes, len(encoded_bytes))
         chunk = encoded_bytes[start:end]
-        chunks.append(chunk.decode("utf-8"))  # Decode bytes back to string
+        chunks.append(
+            codecs.decode(chunk, "utf-8", errors="replace")
+        )  # Decode bytes back to string
         start = end
 
     return chunks
