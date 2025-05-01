@@ -253,11 +253,13 @@ def solidity_packed_sha256(types: list[str], values: list) -> str:
 
 def escape_literal_string(s):
     escape_map = {
+        "\a": r"\a",
         "\b": r"\b",
         "\f": r"\f",
         "\n": r"\n",
         "\r": r"\r",
         "\t": r"\t",
+        "\v": r"\v",
         '"': r"\"",
         "'": r"'",
     }
