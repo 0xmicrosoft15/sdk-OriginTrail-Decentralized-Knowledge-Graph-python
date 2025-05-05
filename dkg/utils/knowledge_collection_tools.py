@@ -4,7 +4,7 @@ from dkg.constants import CHUNK_BYTE_SIZE
 from dkg.exceptions import DatasetInputFormatNotSupported, InvalidDataset
 from dkg.types import JSONLD, NQuads
 from pyld import jsonld
-from dkg.constants import DEFAULT_RDF_FORMAT, DEFAULT_CANON_ALGORITHM
+from dkg.constants import DEFAULT_RDF_FORMAT, DEFAULT_CANON_ALGORITHM, ESCAPE_MAP
 from rdflib import Graph, BNode, URIRef, Literal as RDFLiteral
 from uuid import uuid4
 from web3 import Web3
@@ -252,18 +252,7 @@ def solidity_packed_sha256(types: list[str], values: list) -> str:
 
 
 def escape_literal_string(s):
-    escape_map = {
-        "\a": r"\a",
-        "\b": r"\b",
-        "\f": r"\f",
-        "\n": r"\n",
-        "\r": r"\r",
-        "\t": r"\t",
-        "\v": r"\v",
-        '"': r"\"",
-        "'": r"'",
-    }
-    for char, replacement in escape_map.items():
+    for char, replacement in ESCAPE_MAP.items():
         s = s.replace(char, replacement)
     return s
 

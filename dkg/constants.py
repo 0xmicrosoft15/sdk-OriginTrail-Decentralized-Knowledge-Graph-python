@@ -35,6 +35,18 @@ CHUNK_BYTE_SIZE = 32
 
 MAX_FILE_SIZE = 10000000
 
+ESCAPE_MAP = {
+    "\a": r"\a",
+    "\b": r"\b",
+    "\f": r"\f",
+    "\n": r"\n",
+    "\r": r"\r",
+    "\t": r"\t",
+    "\v": r"\v",
+    '"': r"\"",
+    "'": r"'",
+}
+
 
 class DefaultParameters(Enum):
     ENVIRONMENT: str = "mainnet"
