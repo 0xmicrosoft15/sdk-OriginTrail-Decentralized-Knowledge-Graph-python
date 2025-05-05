@@ -57,6 +57,7 @@ class AsyncGraph(AsyncModule):
         result = await self.node_service.query(
             query, query_type, repository, paranet_ual
         )
+        result.encoding = "utf-8"
 
         return result.get("data")
 
