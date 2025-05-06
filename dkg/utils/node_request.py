@@ -63,7 +63,6 @@ class NodeRequest:
             "minimumNumberOfNodeReplications": int,
         },
     )
-    publish.headers = "Content-Type: x-nquads"
 
     ask = NodeCall(
         method=HTTPRequestMethod.POST,
