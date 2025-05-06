@@ -1,9 +1,10 @@
 from typing import Literal
+import codecs
 from dkg.constants import CHUNK_BYTE_SIZE
 from dkg.exceptions import DatasetInputFormatNotSupported, InvalidDataset
 from dkg.types import JSONLD, NQuads
 from pyld import jsonld
-from dkg.constants import DEFAULT_RDF_FORMAT, DEFAULT_CANON_ALGORITHM
+from dkg.constants import DEFAULT_RDF_FORMAT, DEFAULT_CANON_ALGORITHM, ESCAPE_MAP
 from rdflib import Graph, BNode, URIRef, Literal as RDFLiteral
 from uuid import uuid4
 from web3 import Web3
@@ -96,7 +97,9 @@ def split_into_chunks(quads, chunk_size_bytes=32):
     while start < len(encoded_bytes):
         end = min(start + chunk_size_bytes, len(encoded_bytes))
         chunk = encoded_bytes[start:end]
-        chunks.append(chunk.decode("utf-8"))  # Decode bytes back to string
+        chunks.append(
+            codecs.decode(chunk, "utf-8", errors="replace")
+        )  # Decode bytes back to string
         start = end
 
     return chunks
@@ -246,3 +249,20 @@ def solidity_packed_sha256(types: list[str], values: list) -> str:
     sha256_hash = hashlib.sha256(packed_data).hexdigest()
 
     return f"0x{sha256_hash}"
+
+
+def escape_literal_string(s):
+    for char, replacement in ESCAPE_MAP.items():
+        s = s.replace(char, replacement)
+    return s
+
+
+def escape_literal_dict(obj):
+    if isinstance(obj, dict):
+        return {k: escape_literal_dict(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [escape_literal_dict(i) for i in obj]
+    elif isinstance(obj, str):
+        return escape_literal_string(s=obj)
+    else:
+        return obj
