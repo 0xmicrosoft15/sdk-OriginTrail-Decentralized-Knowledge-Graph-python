@@ -75,19 +75,9 @@ class OutputTypes(Enum):
     JSONLD: str = "JSON-LD"
 
 
-class Environments(Enum):
-    DEVELOPMENT: str = "development"
-    DEVNET: str = "devnet"
-    TESTNET: str = "testnet"
-    MAINNET: str = "mainnet"
-
-
 class BlockchainIds(Enum):
     HARDHAT_1: str = "hardhat1:31337"
     HARDHAT_2: str = "hardhat2:31337"
-    BASE_DEVNET: str = "base:84532"
-    GNOSIS_DEVNET: str = "gnosis:10200"
-    NEUROWEB_DEVNET: str = "otp:2160"
     BASE_TESTNET: str = "base:84532"
     GNOSIS_TESTNET: str = "gnosis:10200"
     NEUROWEB_TESTNET: str = "otp:20430"
@@ -113,12 +103,6 @@ BLOCKCHAINS = {
             "hub": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
             "rpc": "http://localhost:9545",
         },
-    },
-    "devnet": {
-        "base:84532": {
-            "hub": "0xE043daF4cC8ae2c720ef95fc82574a37a429c40A",
-            "rpc": "https://sepolia.base.org",
-        }
     },
     "testnet": {
         "base:84532": {
@@ -152,11 +136,6 @@ BLOCKCHAINS = {
 
 DEFAULT_PROXIMITY_SCORE_FUNCTIONS_PAIR_IDS = {
     "development": {"hardhat1:31337": 2, "hardhat2:31337": 2, "otp:2043": 2},
-    "devnet": {
-        "otp:2160": 2,
-        "gnosis:10200": 2,
-        "base:84532": 2,
-    },
     "testnet": {
         "otp:20430": 2,
         "gnosis:10200": 2,
