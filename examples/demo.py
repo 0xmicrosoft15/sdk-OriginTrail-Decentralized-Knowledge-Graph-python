@@ -20,17 +20,14 @@ import time
 
 from dkg import DKG
 from dkg.providers import BlockchainProvider, NodeHTTPProvider
-from dkg.constants import Environments, BlockchainIds
+from dkg.constants import BlockchainIds
 
 node_provider = NodeHTTPProvider(
     endpoint_uri="http://localhost:8900",
     api_version="v1",
 )
 # make sure that you have PRIVATE_KEY in .env so the blockchain provider can load it
-blockchain_provider = BlockchainProvider(
-    Environments.DEVELOPMENT.value,
-    BlockchainIds.HARDHAT_1.value,
-)
+blockchain_provider = BlockchainProvider(BlockchainIds.HARDHAT_1.value)
 # here you can create your own custom values that will be applied to all the functions
 config = {
     "max_number_of_retries": 300,

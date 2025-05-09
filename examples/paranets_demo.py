@@ -22,14 +22,11 @@ from hexbytes import HexBytes
 from dkg import DKG
 from dkg.providers import BlockchainProvider, NodeHTTPProvider
 from dkg.dataclasses import ParanetNodesAccessPolicy, ParanetMinersAccessPolicy
-from dkg.constants import Environments, BlockchainIds
+from dkg.constants import BlockchainIds
 
 node_provider = NodeHTTPProvider("http://localhost:8900")
 
-blockchain_provider = BlockchainProvider(
-    Environments.DEVELOPMENT.value,
-    BlockchainIds.HARDHAT_1.value,
-)
+blockchain_provider = BlockchainProvider(BlockchainIds.HARDHAT_1.value)
 
 dkg = DKG(node_provider, blockchain_provider)
 
@@ -66,7 +63,10 @@ paranet_data = {
     }
 }
 
-create_paranet_knowledge_collection_result = dkg.asset.create(paranet_data, 1)
+create_paranet_knowledge_collection_result = dkg.asset.create(
+    paranet_data,
+    options={"epochs_num": 2},
+)
 
 print("======================== PARANET KNOWLEDGE COLLECTION CREATED")
 print_json(create_paranet_knowledge_collection_result)

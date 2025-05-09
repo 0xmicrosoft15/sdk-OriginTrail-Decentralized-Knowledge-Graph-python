@@ -2,7 +2,7 @@ import asyncio
 import json
 import time
 from dkg import AsyncDKG
-from dkg.constants import Environments, BlockchainIds
+from dkg.constants import BlockchainIds
 from dkg.providers import AsyncBlockchainProvider, AsyncNodeHTTPProvider
 
 
@@ -13,10 +13,7 @@ async def main():
     )
 
     # make sure that you have PRIVATE_KEY in .env so the blockchain provider can load it
-    blockchain_provider = AsyncBlockchainProvider(
-        Environments.DEVELOPMENT.value,
-        BlockchainIds.HARDHAT_1.value,
-    )
+    blockchain_provider = AsyncBlockchainProvider(BlockchainIds.HARDHAT_1.value)
 
     dkg = AsyncDKG(
         node_provider,

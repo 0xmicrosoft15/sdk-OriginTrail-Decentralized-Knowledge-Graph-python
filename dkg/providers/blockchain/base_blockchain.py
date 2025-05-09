@@ -8,7 +8,7 @@ from dkg.exceptions import (
     EnvironmentNotSupported,
     RPCURINotDefined,
 )
-from dkg.types import URI, DataHexStr, Environment, Wei
+from dkg.types import URI, DataHexStr, Wei
 from eth_account.signers.local import LocalAccount
 from eth_typing import ABI, ABIFunction
 from web3.logs import DISCARD
@@ -21,27 +21,26 @@ class BaseBlockchainProvider:
 
     def __init__(
         self,
-        environment: Environment,
         blockchain_id: str,
         rpc_uri: URI | None = None,
         gas_price: Wei | None = None,
     ):
-        if environment not in BLOCKCHAINS.keys():
-            raise EnvironmentNotSupported(f"Environment {environment} isn't supported!")
+        self.environment = None
+        for env_name, chains_in_env in BLOCKCHAINS.items():
+            if blockchain_id in chains_in_env:
+                self.environment = env_name
+                break
 
-        self.environment = environment
-        self.rpc_uri = rpc_uri
-        self.blockchain_id = (
-            blockchain_id
-            if blockchain_id in BLOCKCHAINS[self.environment].keys()
-            else None
+        if self.environment is None:
+            raise EnvironmentNotSupported(
+                f"Could not derive environment for blockchain_id: {blockchain_id}. "
+                "Ensure it's defined in BLOCKCHAINS constant."
+            )
+
+        self.blockchain_id = blockchain_id
+        self.rpc_uri = rpc_uri or BLOCKCHAINS[self.environment][self.blockchain_id].get(
+            "rpc", None
         )
-
-        if self.rpc_uri is None and self.blockchain_id is not None:
-            self.blockchain_id = blockchain_id
-            self.rpc_uri = self.rpc_uri or BLOCKCHAINS[self.environment][
-                self.blockchain_id
-            ].get("rpc", None)
 
         if self.rpc_uri is None:
             raise RPCURINotDefined(
