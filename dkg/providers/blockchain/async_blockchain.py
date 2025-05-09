@@ -27,7 +27,7 @@ from dkg.exceptions import (
     AccountMissing,
     NetworkNotSupported,
 )
-from dkg.types import URI, Address, Environment, Wei
+from dkg.types import URI, Address, Wei
 from web3.contract import Contract
 from web3.contract.contract import ContractFunction
 from web3.types import TxReceipt
@@ -39,13 +39,12 @@ from dkg.providers.blockchain.base_blockchain import BaseBlockchainProvider
 class AsyncBlockchainProvider(BaseBlockchainProvider):
     def __init__(
         self,
-        environment: Environment,
         blockchain_id: str,
         rpc_uri: URI | None = None,
         gas_price: Wei | None = None,
         verify: bool = True,
     ):
-        super().__init__(environment, blockchain_id, rpc_uri, gas_price)
+        super().__init__(blockchain_id, rpc_uri, gas_price)
 
         ssl_context = None if verify else False
         self.w3 = AsyncWeb3(

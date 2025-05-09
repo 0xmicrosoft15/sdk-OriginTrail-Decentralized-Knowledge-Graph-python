@@ -50,7 +50,7 @@ ABIElement = ABIFunction | ABIEvent | ABIError
 ABI = list[ABIElement]
 
 
-Environment = Literal["development", "devnet", "testnet", "mainnet"]
+Environment = Literal["development", "testnet", "mainnet"]
 
 
 class AgreementData(NamedTuple):

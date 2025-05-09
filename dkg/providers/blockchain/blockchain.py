@@ -26,7 +26,7 @@ from dkg.exceptions import (
     AccountMissing,
     NetworkNotSupported,
 )
-from dkg.types import URI, Address, Environment, Wei
+from dkg.types import URI, Address, Wei
 from web3 import Web3
 from web3.contract import Contract
 from web3.contract.contract import ContractFunction
@@ -37,13 +37,12 @@ from dkg.providers.blockchain.base_blockchain import BaseBlockchainProvider
 class BlockchainProvider(BaseBlockchainProvider):
     def __init__(
         self,
-        environment: Environment,
         blockchain_id: str,
         rpc_uri: URI | None = None,
         gas_price: Wei | None = None,
         verify: bool = True,
     ):
-        super().__init__(environment, blockchain_id, rpc_uri, gas_price)
+        super().__init__(blockchain_id, rpc_uri, gas_price)
 
         self.w3 = Web3(
             Web3.HTTPProvider(self.rpc_uri, request_kwargs={"verify": verify})
