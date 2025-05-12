@@ -24,3 +24,12 @@ help:
 	@echo "  demo      - Run /examples/demo.py file"
 	@echo "  async-demo - Run /examples/async_demo.py file"
 	@echo "  paranet-demo - Run /examples/paranets_demo.py file"
+
+test-neuroweb-testnet:
+	pytest tests/testnet/Neuroweb_Testnet.py -s
+
+test-base-testnet:
+	pytest tests/testnet/Base_Testnet.py -s
+
+test-gnosis-testnet:
+	pytest tests/testnet/Gnosis_Testnet.py -s
