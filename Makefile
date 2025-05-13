@@ -33,3 +33,12 @@ test-base-testnet:
 
 test-gnosis-testnet:
 	pytest tests/testnet/Gnosis_Testnet.py -s
+
+test-mainnet-neuroweb:
+	pytest tests/mainnet/Neuroweb_Mainnet.py -s
+
+test-mainnet-base:
+	pytest tests/mainnet/Base_Mainnet.py -s
+
+test-mainnet-gnosis:
+	pytest tests/mainnet/Gnosis_Mainnet.py -s

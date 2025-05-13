@@ -1,9 +1,10 @@
 import json
 import time
 import pytest
-from dotenv import load_dotenv
-from uuid import uuid4
 import random
+import os
+from uuid import uuid4
+from dotenv import load_dotenv
 
 from dkg import DKG
 from dkg.providers import BlockchainProvider, NodeHTTPProvider
@@ -11,11 +12,20 @@ from dkg.constants import BlockchainIds
 
 load_dotenv()
 
-OT_NODE_PORT = 8900
+# Testnet configuration only
 BLOCKCHAIN = BlockchainIds.NEUROWEB_TESTNET.value
+PRIVATE_KEY = os.getenv("TESTNET_PRIVATE_KEY")
+PUBLIC_KEY = os.getenv("TESTNET_PUBLIC_KEY")
+
+assert PRIVATE_KEY, "TESTNET_PRIVATE_KEY is missing in .env"
+assert PUBLIC_KEY, "TESTNET_PUBLIC_KEY is missing in .env"
+
+# Expose private key to be used internally by BlockchainProvider
+os.environ["PRIVATE_KEY"] = PRIVATE_KEY
+
+OT_NODE_PORT = 8900
 TOTAL_NODES = 3
 
-# Automatically generate node hostnames
 nodes = [
     {
         "name": f"Node {str(i+1).zfill(2)}",
@@ -49,7 +59,6 @@ def test_asset_lifecycle(node):
     dkg = DKG(node_provider, blockchain_provider, config)
 
     print(f"======================== NODE INFO for {node['name']}")
-    #print(json.dumps(dkg.node.info, indent=4))
 
     word = random.choice(words)
     template = random.choice(descriptions)
@@ -72,17 +81,14 @@ def test_asset_lifecycle(node):
             "minimum_number_of_node_replications": 1,
         },
     )
-    print(f"======================== ASSET CREATED on {node['name']} in {time.perf_counter() - start:.2f}s")
-    #print(json.dumps(create_asset_result, indent=4))
-
+    print(f"ASSET CREATED on {node['name']} in {time.perf_counter() - start:.2f}s")
     ual = create_asset_result.get("UAL")
     assert ual, f"UAL missing after publish on {node['name']}"
     print(f"Successfully published asset on {node['name']}")
 
     start = time.perf_counter()
     get_result = dkg.asset.get(ual)
-    print(f"======================== GET in {time.perf_counter() - start:.2f}s")
-    #print(json.dumps(get_result, indent=4))
+    print(f"GET in {time.perf_counter() - start:.2f}s")
     assert get_result.get("assertion"), f"Get returned no assertion on {node['name']}"
     print(f"Successfully retrieved asset on {node['name']}")
 
@@ -97,16 +103,12 @@ def test_asset_lifecycle(node):
         }
         """
     )
-    print(f"======================== QUERY in {time.perf_counter() - start:.2f}s")
-    #print(json.dumps(query_result, indent=4))
+    print(f"QUERY in {time.perf_counter() - start:.2f}s")
     assert query_result, f"Query returned no results on {node['name']}"
     print(f"Successfully queried graph on {node['name']}")
 
     start = time.perf_counter()
     finality_result = dkg.graph.publish_finality(ual)
-    print(f"======================== FINALITY in {time.perf_counter() - start:.2f}s")
-    #print(json.dumps(finality_result, indent=4))
+    print(f"FINALITY in {time.perf_counter() - start:.2f}s")
     assert finality_result.get("status") == "FINALIZED", f"Finality not FINALIZED on {node['name']}"
-
-
-
+    print(f"Finality status is FINALIZED on {node['name']}")

@@ -12,27 +12,23 @@ from dkg.constants import BlockchainIds
 
 load_dotenv()
 
-# Testnet configuration only
-BLOCKCHAIN = BlockchainIds.GNOSIS_TESTNET.value
-PRIVATE_KEY = os.getenv("TESTNET_PRIVATE_KEY")
-PUBLIC_KEY = os.getenv("TESTNET_PUBLIC_KEY")
+# Mainnet configuration only
+BLOCKCHAIN = BlockchainIds.NEUROWEB_MAINNET.value
+PRIVATE_KEY = os.getenv("MAINNET_PRIVATE_KEY")
+PUBLIC_KEY = os.getenv("MAINNET_PUBLIC_KEY")
 
-assert PRIVATE_KEY, "TESTNET_PRIVATE_KEY is missing in .env"
-assert PUBLIC_KEY, "TESTNET_PUBLIC_KEY is missing in .env"
+assert PRIVATE_KEY, "MAINNET_PRIVATE_KEY is missing in .env"
+assert PUBLIC_KEY, "MAINNET_PUBLIC_KEY is missing in .env"
 
 # Expose private key to be used internally by BlockchainProvider
 os.environ["PRIVATE_KEY"] = PRIVATE_KEY
 
 OT_NODE_PORT = 8900
-TOTAL_NODES = 3
 
-nodes = [
-    {
-        "name": f"Node {str(i+1).zfill(2)}",
-        "hostname": f"https://v6-pegasus-node-{str(i+1).zfill(2)}.origin-trail.network"
-    }
-    for i in range(TOTAL_NODES)
-]
+node = {
+    "name": "Mainnet Node",
+    "hostname": "https://positron.origin-trail.network"
+}
 
 words = ['Galaxy', 'Nebula', 'Orbit', 'Quantum', 'Pixel', 'Velocity', 'Echo', 'Nova']
 descriptions = [
@@ -43,9 +39,8 @@ descriptions = [
     'A fresh perspective on {} innovation.',
 ]
 
-@pytest.mark.parametrize("node", nodes)
 @pytest.mark.flaky(reruns=2, reruns_delay=5)
-def test_asset_lifecycle(node):
+def test_asset_lifecycle_mainnet():
     node_provider = NodeHTTPProvider(
         endpoint_uri=f"{node['hostname']}:{OT_NODE_PORT}",
         api_version="v1",
