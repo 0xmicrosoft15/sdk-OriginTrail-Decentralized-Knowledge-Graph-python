@@ -76,15 +76,15 @@ def test_asset_lifecycle(node):
     #print(json.dumps(create_asset_result, indent=4))
 
     ual = create_asset_result.get("UAL")
-    assert ual, f"❌ UAL missing after publish on {node['name']}"
-    print(f"✅ Successfully published asset on {node['name']}")
+    assert ual, f"UAL missing after publish on {node['name']}"
+    print(f"Successfully published asset on {node['name']}")
 
     start = time.perf_counter()
     get_result = dkg.asset.get(ual)
     print(f"======================== GET in {time.perf_counter() - start:.2f}s")
     #print(json.dumps(get_result, indent=4))
-    assert get_result.get("assertion"), f"❌ Get returned no assertion on {node['name']}"
-    print(f"✅ Successfully retrieved asset on {node['name']}")
+    assert get_result.get("assertion"), f"Get returned no assertion on {node['name']}"
+    print(f"Successfully retrieved asset on {node['name']}")
 
     start = time.perf_counter()
     query_result = dkg.graph.query(
@@ -99,14 +99,14 @@ def test_asset_lifecycle(node):
     )
     print(f"======================== QUERY in {time.perf_counter() - start:.2f}s")
     #print(json.dumps(query_result, indent=4))
-    assert query_result, f"❌ Query returned no results on {node['name']}"
-    print(f"✅ Successfully queried graph on {node['name']}")
+    assert query_result, f"Query returned no results on {node['name']}"
+    print(f"Successfully queried graph on {node['name']}")
 
     start = time.perf_counter()
     finality_result = dkg.graph.publish_finality(ual)
     print(f"======================== FINALITY in {time.perf_counter() - start:.2f}s")
     #print(json.dumps(finality_result, indent=4))
-    assert finality_result.get("status") == "FINALIZED", f"❌ Finality not FINALIZED on {node['name']}"
+    assert finality_result.get("status") == "FINALIZED", f"Finality not FINALIZED on {node['name']}"
 
 
 
