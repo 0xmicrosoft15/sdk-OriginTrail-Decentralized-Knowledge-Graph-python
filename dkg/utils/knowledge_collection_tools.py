@@ -5,7 +5,7 @@ from dkg.exceptions import DatasetInputFormatNotSupported, InvalidDataset
 from dkg.types import JSONLD, NQuads
 from pyld import jsonld
 from dkg.constants import DEFAULT_RDF_FORMAT, DEFAULT_CANON_ALGORITHM, ESCAPE_MAP
-from rdflib import Graph, BNode, URIRef, Literal as RDFLiteral
+from rdflib import Graph, Dataset, BNode, URIRef, Literal as RDFLiteral
 from uuid import uuid4
 from web3 import Web3
 import math
@@ -154,29 +154,23 @@ def generate_missing_ids_for_blank_nodes(nquads_list: list[str] | None) -> list[
 
         return term  # Return IRIs or Literals unchanged
 
-    # Create a temporary graph for parsing individual quads
+    all_nquads = "\n".join(nquad.strip() for nquad in nquads_list if nquad.strip())
+
+    # Create a single Dataset
+    ds = Dataset()
+    ds.parse(data=all_nquads, format="nquads")
+
+    # Process all quads
     result = []
-
-    # Process each N-Quad string individually to maintain order
-    for nquad in nquads_list:
-        if not nquad.strip():
-            continue
-
-        # Parse single N-Quad
-        g = Graph()
-        g.parse(data=nquad, format="nquads")
-
-        # Get the triple and replace blank nodes
-        for s, p, o in g:
-            updated_quad = (
-                replace_blank_node(s),
-                replace_blank_node(p),
-                replace_blank_node(o),
-            )
-            # Format as N-Quad string
-            result.append(
-                f"{updated_quad[0].n3()} {updated_quad[1].n3()} {updated_quad[2].n3()} ."
-            )
+    for s, p, o, g in ds.quads((None, None, None, None)):
+        updated_quad = (
+            replace_blank_node(s),
+            replace_blank_node(p),
+            replace_blank_node(o),
+        )
+        result.append(
+            f"{updated_quad[0].n3()} {updated_quad[1].n3()} {updated_quad[2].n3()} ."
+        )
 
     return result
 
