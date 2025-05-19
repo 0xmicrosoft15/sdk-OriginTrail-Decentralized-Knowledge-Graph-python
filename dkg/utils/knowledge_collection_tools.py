@@ -5,7 +5,8 @@ from dkg.exceptions import DatasetInputFormatNotSupported, InvalidDataset
 from dkg.types import JSONLD, NQuads
 from pyld import jsonld
 from dkg.constants import DEFAULT_RDF_FORMAT, DEFAULT_CANON_ALGORITHM, ESCAPE_MAP
-from rdflib import Graph, Dataset, BNode, URIRef, Literal as RDFLiteral
+from rdflib import Graph, BNode, URIRef, Literal as RDFLiteral
+from rdflib.exceptions import ParserError as RDFParserError
 from uuid import uuid4
 from web3 import Web3
 import math
@@ -157,12 +158,15 @@ def generate_missing_ids_for_blank_nodes(nquads_list: list[str] | None) -> list[
     all_nquads = "\n".join(nquad.strip() for nquad in nquads_list if nquad.strip())
 
     # Create a single Dataset
-    ds = Dataset()
-    ds.parse(data=all_nquads, format="nquads")
+    g = Graph()
+    try:
+        g.parse(data=all_nquads, format="nt")
+    except RDFParserError:
+        raise UnsupportedJSON_LD(nquads_list)
 
     # Process all quads
     result = []
-    for s, p, o, g in ds.quads((None, None, None, None)):
+    for s, p, o in g:
         updated_quad = (
             replace_blank_node(s),
             replace_blank_node(p),
@@ -260,3 +264,43 @@ def escape_literal_dict(obj):
         return escape_literal_string(s=obj)
     else:
         return obj
+
+
+class UnsupportedJSON_LD(Exception):
+    def __init__(self, nquads_list):
+        self.nquads_list = nquads_list
+        self.message = f"""
+Unsupported JSON-LD input detected
+
+After parsing the JSON-LD input, the parser detected creation of new named graphs.
+The DKG does not support custom named graphs.
+
+Problematic Quads:
+
+{self.find_problematic_quads()}
+
+Full Parsed N-Quads Array:
+
+{self.format_nquads_list()}
+
+"""
+        super().__init__(self.message)
+
+    def __str__(self):
+        return f"{self.__class__.__name__}: {self.message}"
+
+    def format_nquads_list(self):
+        return "\n".join(nquad.strip() for nquad in self.nquads_list)
+
+    def find_problematic_quads(self):
+        problematic = []
+        g = Graph()
+        for quad in self.nquads_list:
+            if not quad.strip():
+                continue
+            try:
+                g.parse(data=quad, format="nt")
+            except RDFParserError:
+                problematic.append(quad)
+
+        return "\n".join(f"{i + 1}. {quad}" for i, quad in enumerate(problematic))
