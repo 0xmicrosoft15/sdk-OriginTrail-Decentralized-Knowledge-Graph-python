@@ -162,7 +162,7 @@ def generate_missing_ids_for_blank_nodes(nquads_list: list[str] | None) -> list[
     try:
         g.parse(data=all_nquads, format="nt")
     except RDFParserError:
-        raise UnsupportedJSON_LD(nquads_list)
+        raise UnsupportedJSONLD(nquads_list)
 
     # Process all quads
     result = []
@@ -266,7 +266,8 @@ def escape_literal_dict(obj):
         return obj
 
 
-class UnsupportedJSON_LD(Exception):
+# Used when JSON-LD parsing fails due to quads being passed instead of triples
+class UnsupportedJSONLD(Exception):
     def __init__(self, nquads_list):
         self.nquads_list = nquads_list
         self.message = f"""
