@@ -155,7 +155,7 @@ def generate_missing_ids_for_blank_nodes(nquads_list: list[str] | None) -> list[
 
         return term  # Return IRIs or Literals unchanged
 
-    all_nquads = "\n".join(nquad.strip() for nquad in nquads_list if nquad.strip())
+    all_nquads = "\n".join(nquad for nquad in nquads_list if nquad.strip())
 
     # Create a single Dataset
     g = Graph()
