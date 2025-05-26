@@ -13,9 +13,6 @@ from dkg.providers import BlockchainProvider, NodeHTTPProvider
 from dkg.constants import BlockchainIds
 from web3.exceptions import ContractCustomError
 
-# 👇 Toggle this to enable/disable full error details
-SHOW_FULL_TRACEBACK = False
-
 # Load .env values
 load_dotenv()
 
@@ -27,12 +24,13 @@ PUBLIC_KEY = os.getenv("TESTNET_PUBLIC_KEY")
 assert PRIVATE_KEY, "TESTNET_PRIVATE_KEY is missing in .env"
 assert PUBLIC_KEY, "TESTNET_PUBLIC_KEY is missing in .env"
 
-# Set env variable for BlockchainProvider
+# Set env variable for BlockchainProvider to pick up
 os.environ["PRIVATE_KEY"] = PRIVATE_KEY
 
 # Constants
 OT_NODE_PORT = 8900
 TOTAL_NODES = 3
+SHOW_FULL_TRACEBACK = False
 
 # Node definitions
 nodes = [
@@ -116,13 +114,6 @@ def test_asset_lifecycle(node):
         assert ual, f"UAL missing after publish on {node['name']}"
         print(f"Successfully published asset on {node['name']}")
 
-        # Get
-        start = time.perf_counter()
-        get_result = dkg.asset.get(ual)
-        print(f"GET in {time.perf_counter() - start:.2f}s")
-        assert get_result.get("assertion"), f"Get returned no assertion on {node['name']}"
-        print(f"Successfully retrieved asset on {node['name']}")
-
         # Query
         start = time.perf_counter()
         query_result = dkg.graph.query(
@@ -139,6 +130,13 @@ def test_asset_lifecycle(node):
         assert query_result, f"Query returned no results on {node['name']}"
         print(f"Successfully queried graph on {node['name']}")
 
+        # Get
+        start = time.perf_counter()
+        get_result = dkg.asset.get(ual)
+        print(f"GET in {time.perf_counter() - start:.2f}s")
+        assert get_result.get("assertion"), f"Get returned no assertion on {node['name']}"
+        print(f"Successfully retrieved asset on {node['name']}")
+
         # Finality
         start = time.perf_counter()
         finality_result = dkg.graph.publish_finality(ual)
@@ -146,16 +144,6 @@ def test_asset_lifecycle(node):
         assert finality_result.get("status") == "FINALIZED", f"Finality not FINALIZED on {node['name']}"
         print(f"Finality status is FINALIZED on {node['name']}")
 
-    except ContractCustomError as e:
-        print(f"\n🚨 ContractCustomError while publishing on {node['name']}")
-        print(f"Error data (hex): {e.data}")
-        if e.data.startswith("0x") and len(e.data) >= 74:
-            address_hex = e.data[10+24:10+64]
-            sender = f"0x{address_hex[-40:]}"
-            print(f"👤 Possibly involved address: {sender}")
-        print_exception(e, node["name"])
-        raise
-
     except Exception as e:
         print_exception(e, node["name"])
-        raise
+        pytest.fail(str(e), pytrace=False)
