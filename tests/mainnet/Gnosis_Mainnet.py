@@ -136,5 +136,5 @@ def test_asset_lifecycle_mainnet():
         print(f"✅Finality status is FINALIZED on {node['name']}")
 
     except Exception as e:
-    print_exception(e, node["name"])
-    pytest.fail(str(e), pytrace=False)
+        print_exception(e, node["name"])
+        pytest.fail(str(e), pytrace=False)
