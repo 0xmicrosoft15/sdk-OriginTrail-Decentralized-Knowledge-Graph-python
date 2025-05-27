@@ -62,7 +62,7 @@ def print_exception(e, node_name="Unknown"):
         print("🧱 Full Traceback:")
         traceback.print_exc()
 
-@pytest.mark.flaky(reruns=2, reruns_delay=5)
+@pytest.mark.flaky(reruns=0, reruns_delay=5)
 def test_asset_lifecycle_mainnet():
     try:
         node_provider = NodeHTTPProvider(

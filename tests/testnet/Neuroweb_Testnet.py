@@ -70,7 +70,7 @@ def print_exception(e, node_name="Unknown"):
         traceback.print_exc()
 
 @pytest.mark.parametrize("node", nodes)
-@pytest.mark.flaky(reruns=2, reruns_delay=5)
+@pytest.mark.flaky(reruns=0, reruns_delay=5)
 def test_asset_lifecycle(node):
     try:
         node_provider = NodeHTTPProvider(
