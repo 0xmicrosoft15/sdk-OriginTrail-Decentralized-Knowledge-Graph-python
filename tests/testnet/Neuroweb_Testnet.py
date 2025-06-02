@@ -29,16 +29,13 @@ os.environ["PRIVATE_KEY"] = PRIVATE_KEY
 
 # Constants
 OT_NODE_PORT = 8900
-TOTAL_NODES = 3
 SHOW_FULL_TRACEBACK = False
 
-# Node definitions
+# Fixed nodes
 nodes = [
-    {
-        "name": f"Node {str(i+1).zfill(2)}",
-        "hostname": f"https://v6-pegasus-node-{str(i+1).zfill(2)}.origin-trail.network"
-    }
-    for i in range(TOTAL_NODES)
+    {"name": "Node 01", "hostname": "https://v6-pegasus-node-01.origin-trail.network"},
+    {"name": "Node 08", "hostname": "https://v6-pegasus-node-08.origin-trail.network"},
+    {"name": "Node 09", "hostname": "https://v6-pegasus-node-09.origin-trail.network"},
 ]
 
 # Helpers
@@ -55,23 +52,21 @@ def print_exception(e, node_name="Unknown"):
     print(f"\n❌ Error on {node_name}")
     print(f"🔺 Type: {type(e).__name__}")
     print(f"🧵 Message: {str(e)}")
-
     tb = traceback.extract_tb(sys.exc_info()[2])
     user_tb = [entry for entry in tb if "site-packages" not in entry.filename]
-
     if user_tb:
         last = user_tb[-1]
         print(f"📍 Location: {last.filename}, line {last.lineno}, in {last.name}")
     else:
         print("📍 Location: (inside dependency)")
-
     if SHOW_FULL_TRACEBACK:
         print("🧱 Full Traceback:")
         traceback.print_exc()
 
-@pytest.mark.parametrize("node", nodes)
+@pytest.mark.parametrize("node_index", range(len(nodes)))
 @pytest.mark.flaky(reruns=0, reruns_delay=5)
-def test_asset_lifecycle(node):
+def test_asset_lifecycle(node_index):
+    node = nodes[node_index]
     try:
         node_provider = NodeHTTPProvider(
             endpoint_uri=f"{node['hostname']}:{OT_NODE_PORT}",
@@ -106,7 +101,7 @@ def test_asset_lifecycle(node):
             options={
                 "epochs_num": 2,
                 "minimum_number_of_finalization_confirmations": 3,
-                "minimum_number_of_node_replications": 1,
+                "minimum_number_of_node_replications": 3,
             },
         )
         print(f"ASSET CREATED on {node['name']} in {time.perf_counter() - start:.2f}s")
@@ -130,12 +125,29 @@ def test_asset_lifecycle(node):
         assert query_result, f"Query returned no results on {node['name']}"
         print(f"✅Successfully queried graph on {node['name']}")
 
-        # Get
+        # Get on same node
         start = time.perf_counter()
         get_result = dkg.asset.get(ual)
         print(f"GET in {time.perf_counter() - start:.2f}s")
         assert get_result.get("assertion"), f"Get returned no assertion on {node['name']}"
-        print(f"✅Successfully retrieved asset on {node['name']}")
+        print(f"✅Successfully got asset on {node['name']}")
+
+        # Get on different random node (sync)
+        other_indexes = [i for i in range(len(nodes)) if i != node_index]
+        other_index = random.choice(other_indexes)
+        other_node = nodes[other_index]
+
+        other_provider = NodeHTTPProvider(
+            endpoint_uri=f"{other_node['hostname']}:{OT_NODE_PORT}",
+            api_version="v1",
+        )
+        other_dkg = DKG(other_provider, blockchain_provider, config)
+
+        start = time.perf_counter()
+        other_get = other_dkg.asset.get(ual)
+        print(f"GET from {other_node['name']} in {time.perf_counter() - start:.2f}s")
+        assert other_get.get("assertion"), f"Get failed from {other_node['name']}"
+        print(f"✅Successfully Synced asset on {other_node['name']}")
 
         # Finality
         start = time.perf_counter()
