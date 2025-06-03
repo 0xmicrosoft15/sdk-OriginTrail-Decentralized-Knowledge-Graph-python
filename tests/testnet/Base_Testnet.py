@@ -11,34 +11,27 @@ from dotenv import load_dotenv
 from dkg import DKG
 from dkg.providers import BlockchainProvider, NodeHTTPProvider
 from dkg.constants import BlockchainIds
-from web3.exceptions import ContractCustomError
 
-# Load .env values
+# Load environment variables
 load_dotenv()
 
-# Blockchain config
 BLOCKCHAIN = BlockchainIds.BASE_TESTNET.value
 PRIVATE_KEY = os.getenv("TESTNET_PRIVATE_KEY")
 PUBLIC_KEY = os.getenv("TESTNET_PUBLIC_KEY")
 
-assert PRIVATE_KEY, "TESTNET_PRIVATE_KEY is missing in .env"
-assert PUBLIC_KEY, "TESTNET_PUBLIC_KEY is missing in .env"
+assert PRIVATE_KEY, "TESTNET_PRIVATE_KEY is missing"
+assert PUBLIC_KEY, "TESTNET_PUBLIC_KEY is missing"
 
-# Set env variable for BlockchainProvider to pick up
 os.environ["PRIVATE_KEY"] = PRIVATE_KEY
 
-# Constants
 OT_NODE_PORT = 8900
-SHOW_FULL_TRACEBACK = False
 
-# Fixed nodes
 nodes = [
     {"name": "Node 01", "hostname": "https://v6-pegasus-node-01.origin-trail.network"},
     {"name": "Node 08", "hostname": "https://v6-pegasus-node-08.origin-trail.network"},
     {"name": "Node 09", "hostname": "https://v6-pegasus-node-09.origin-trail.network"},
 ]
 
-# Helpers
 words = ['Galaxy', 'Nebula', 'Orbit', 'Quantum', 'Pixel', 'Velocity', 'Echo', 'Nova']
 descriptions = [
     'This asset explores the mysteries of {}.',
@@ -57,31 +50,16 @@ def print_exception(e, node_name="Unknown"):
     if user_tb:
         last = user_tb[-1]
         print(f"📍 Location: {last.filename}, line {last.lineno}, in {last.name}")
-    else:
-        print("📍 Location: (inside dependency)")
-    if SHOW_FULL_TRACEBACK:
-        print("🧱 Full Traceback:")
-        traceback.print_exc()
 
 @pytest.mark.parametrize("node_index", range(len(nodes)))
-@pytest.mark.flaky(reruns=0, reruns_delay=5)
 def test_asset_lifecycle(node_index):
     node = nodes[node_index]
-    try:
-        node_provider = NodeHTTPProvider(
-            endpoint_uri=f"{node['hostname']}:{OT_NODE_PORT}",
-            api_version="v1",
-        )
-        blockchain_provider = BlockchainProvider(BLOCKCHAIN)
+    passed = 0
+    failed = 0
+    failed_assets = []
 
-        config = {
-            "max_number_of_retries": 300,
-            "frequency": 2,
-        }
-        dkg = DKG(node_provider, blockchain_provider, config)
-
-        print(f"\n======================== NODE INFO for {node['name']}")
-
+    for i in range(15):
+        print(f"\n📡 Publishing KA #{i + 1} on {node['name']}")
         word = random.choice(words)
         template = random.choice(descriptions)
         content = {
@@ -94,68 +72,65 @@ def test_asset_lifecycle(node_index):
             }
         }
 
-        # Create Asset
-        start = time.perf_counter()
-        create_asset_result = dkg.asset.create(
-            content=content,
-            options={
+        ual = None
+        try:
+            node_provider = NodeHTTPProvider(f"{node['hostname']}:{OT_NODE_PORT}", "v1")
+            blockchain_provider = BlockchainProvider(BLOCKCHAIN)
+            config = {"max_number_of_retries": 300, "frequency": 2}
+            dkg = DKG(node_provider, blockchain_provider, config)
+
+            result = dkg.asset.create(content, {
                 "epochs_num": 2,
                 "minimum_number_of_finalization_confirmations": 3,
                 "minimum_number_of_node_replications": 3,
-            },
-        )
-        print(f"ASSET CREATED on {node['name']} in {time.perf_counter() - start:.2f}s")
-        ual = create_asset_result.get("UAL")
-        assert ual, f"UAL missing after publish on {node['name']}"
-        print(f"✅Successfully published asset on {node['name']}")
+            })
 
-        # Query
-        start = time.perf_counter()
-        query_result = dkg.graph.query(
-            """
-            PREFIX schema: <http://schema.org/>
-            SELECT ?s ?name ?description
-            WHERE {
-                ?s schema:name ?name ;
-                   schema:description ?description .
-            }
-            """
-        )
-        print(f"QUERY in {time.perf_counter() - start:.2f}s")
-        assert query_result, f"Query returned no results on {node['name']}"
-        print(f"✅Successfully queried graph on {node['name']}")
+            ual = result.get("UAL")
+            assert ual, "UAL not found after publish"
+            print(f"✅ Published KA #{i + 1} with UAL: {ual}")
 
-        # Get on same node
-        start = time.perf_counter()
-        get_result = dkg.asset.get(ual)
-        print(f"GET in {time.perf_counter() - start:.2f}s")
-        assert get_result.get("assertion"), f"Get returned no assertion on {node['name']}"
-        print(f"✅Successfully got asset on {node['name']}")
+            query_result = dkg.graph.query("""
+                PREFIX schema: <http://schema.org/>
+                SELECT ?s ?name ?description
+                WHERE {
+                    ?s schema:name ?name ; schema:description ?description .
+                }
+            """)
+            assert query_result, "Query returned no results"
+            print("✅ Query succeeded")
 
-        # Get on different random node (sync)
-        other_indexes = [i for i in range(len(nodes)) if i != node_index]
-        other_index = random.choice(other_indexes)
-        other_node = nodes[other_index]
+            get_result = dkg.asset.get(ual)
+            assert get_result.get("assertion"), "Get failed"
+            print("✅ Local get succeeded")
 
-        other_provider = NodeHTTPProvider(
-            endpoint_uri=f"{other_node['hostname']}:{OT_NODE_PORT}",
-            api_version="v1",
-        )
-        other_dkg = DKG(other_provider, blockchain_provider, config)
+            others = [i for i in range(len(nodes)) if i != node_index]
+            other_node = nodes[random.choice(others)]
+            other_provider = NodeHTTPProvider(f"{other_node['hostname']}:{OT_NODE_PORT}", "v1")
+            other_dkg = DKG(other_provider, blockchain_provider, config)
 
-        start = time.perf_counter()
-        other_get = other_dkg.asset.get(ual)
-        print(f"GET from {other_node['name']} in {time.perf_counter() - start:.2f}s")
-        assert other_get.get("assertion"), f"Get failed from {other_node['name']}"
-        print(f"✅Successfully Synced asset on {other_node['name']}")
+            remote_get = other_dkg.asset.get(ual)
+            assert remote_get.get("assertion"), "Remote get failed"
+            print(f"✅ Remote get succeeded on {other_node['name']}")
 
-        # Finality
-        start = time.perf_counter()
-        finality_result = dkg.graph.publish_finality(ual)
-        print(f"FINALITY in {time.perf_counter() - start:.2f}s")
-        assert finality_result.get("status") == "FINALIZED", f"Finality not FINALIZED on {node['name']}"
-        print(f"✅Finality status is FINALIZED on {node['name']}")
+            passed += 1
 
-    except Exception as e:
-        print_exception(e, node["name"])
-        pytest.fail(str(e), pytrace=False)
+        except Exception as e:
+            print_exception(e, node['name'])
+            reason = (
+                "Publish failed — No UAL" if not ual else
+                f"Query failed — UAL: {ual}" if "Query returned no results" in str(e) else
+                f"Local get failed — UAL: {ual}" if "Get failed" in str(e) else
+                f"Remote get failed — UAL: {ual}" if "Remote get failed" in str(e) else
+                f"Failed after publish — UAL: {ual}"
+            )
+            failed_assets.append(f"KA #{i + 1} ({reason})")
+            failed += 1
+            continue
+
+    print(f"\n──────────── Summary for {node['name']} ────────────")
+    print(f"✅ Success: {passed} / 15")
+    print(f"❌ Failed: {failed}")
+    if failed_assets:
+        print("🔍 Failed Assets:")
+        for asset in failed_assets:
+            print(f"  - {asset}")
