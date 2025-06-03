@@ -85,50 +85,42 @@ def test_asset_lifecycle(node_index):
                 "minimum_number_of_node_replications": 3,
             })
             ual = result.get("UAL")
-            if not ual:
-                raise ValueError("UAL not found after publish")
+            assert ual, "Publish failed — No UAL"
             print(f"✅ Published KA #{i + 1} with UAL: {ual}")
 
-            try:
-                query_result = dkg.graph.query("""
-                    PREFIX schema: <http://schema.org/>
-                    SELECT ?s ?name ?description
-                    WHERE {
-                        ?s schema:name ?name ; schema:description ?description .
-                    }
-                """)
-                if not query_result:
-                    raise ValueError("Query returned no results")
-                print("✅ Query succeeded")
-            except Exception as e:
-                raise RuntimeError(f"Query failed — UAL: {ual}") from e
+            query_result = dkg.graph.query("""
+                PREFIX schema: <http://schema.org/>
+                SELECT ?s ?name ?description
+                WHERE {
+                    ?s schema:name ?name ; schema:description ?description .
+                }
+            """)
+            assert query_result, f"Query failed — UAL: {ual}"
+            print("✅ Query succeeded")
 
-            try:
-                get_result = dkg.asset.get(ual)
-                if not get_result.get("assertion"):
-                    raise ValueError("Local get failed")
-                print("✅ Local get succeeded")
-            except Exception as e:
-                raise RuntimeError(f"Local get failed — UAL: {ual}") from e
+            get_result = dkg.asset.get(ual)
+            assert get_result.get("assertion"), f"Local get failed — UAL: {ual}"
+            print("✅ Local get succeeded")
 
-            try:
-                others = [i for i in range(len(nodes)) if i != node_index]
-                other_node = nodes[random.choice(others)]
-                other_provider = NodeHTTPProvider(f"{other_node['hostname']}:{OT_NODE_PORT}", "v1")
-                other_dkg = DKG(other_provider, blockchain_provider, config)
+            others = [i for i in range(len(nodes)) if i != node_index]
+            other_node = nodes[random.choice(others)]
+            other_provider = NodeHTTPProvider(f"{other_node['hostname']}:{OT_NODE_PORT}", "v1")
+            other_dkg = DKG(other_provider, blockchain_provider, config)
 
-                remote_get = other_dkg.asset.get(ual)
-                if not remote_get.get("assertion"):
-                    raise ValueError("Remote get failed")
-                print(f"✅ Remote get succeeded on {other_node['name']}")
-            except Exception as e:
-                raise RuntimeError(f"Remote get failed — UAL: {ual}") from e
+            remote_get = other_dkg.asset.get(ual)
+            assert remote_get.get("assertion"), f"Remote get failed — UAL: {ual}"
+            print(f"✅ Remote get succeeded on {other_node['name']}")
 
             passed += 1
 
         except Exception as e:
             print_exception(e, node['name'])
-            failed_assets.append(f"KA #{i + 1} ({str(e)})")
+            msg = str(e)
+            if 'UAL' in msg:
+                failed_assets.append(f"KA #{i + 1} ({msg})")
+            else:
+                reason = "Publish failed — No UAL" if not ual else f"Failed after publish — UAL: {ual}"
+                failed_assets.append(f"KA #{i + 1} ({reason})")
             failed += 1
             continue
 
