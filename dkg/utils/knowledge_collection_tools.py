@@ -5,7 +5,7 @@ from dkg.exceptions import DatasetInputFormatNotSupported, InvalidDataset
 from dkg.types import JSONLD, NQuads
 from pyld import jsonld
 from dkg.constants import DEFAULT_RDF_FORMAT, DEFAULT_CANON_ALGORITHM, ESCAPE_MAP
-from rdflib import Graph, BNode, URIRef, Literal as RDFLiteral
+from rdflib import Graph, BNode, URIRef, Dataset
 from rdflib.exceptions import ParserError as RDFParserError
 from uuid import uuid4
 from web3 import Web3
@@ -182,16 +182,13 @@ def generate_missing_ids_for_blank_nodes(nquads_list: list[str] | None) -> list[
 def group_nquads_by_subject(nquads_list: list[str], sort: bool = False):
     grouped = {}
 
-    # Process each quad in original order
-    for nquad in nquads_list:
-        if not nquad.strip():  # Skip empty lines
-            continue
+    all_nquads = "\n".join(nquad for nquad in nquads_list if nquad.strip())
 
-        # Parse single quad
-        g = Graph()
-        g.parse(data=nquad, format="nquads")
-        quad = next(iter(g))
-        subject, predicate, obj = quad
+    d = Dataset()
+    d.parse(data=all_nquads, format="nquads")
+
+    for quad in d:
+        subject, predicate, obj, graph = quad
 
         # Get subject key
         subject_key = (
@@ -204,11 +201,8 @@ def group_nquads_by_subject(nquads_list: list[str], sort: bool = False):
         if subject_key not in grouped:
             grouped[subject_key] = []
 
-        # Format object
-        object_value = f'"{obj}"' if isinstance(obj, RDFLiteral) else f"<{obj}>"
-
         # Add quad to group
-        quad_string = f"{subject_key} <{predicate}> {object_value} ."
+        quad_string = f"{subject.n3()} {predicate.n3()} {obj.n3()} ."
         grouped[subject_key].append(quad_string)
 
     # Return grouped quads (sorted if requested)
