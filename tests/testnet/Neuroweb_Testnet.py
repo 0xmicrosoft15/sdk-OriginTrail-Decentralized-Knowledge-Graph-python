@@ -116,11 +116,12 @@ def test_asset_lifecycle(node_index):
 
         except Exception as e:
             print_exception(e, node['name'])
+            err_msg = str(e)
             reason = (
                 "Publish failed — No UAL" if not ual else
-                f"Query failed — UAL: {ual}" if "Query returned no results" in str(e) else
-                f"Local get failed — UAL: {ual}" if "Get failed" in str(e) else
-                f"Remote get failed — UAL: {ual}" if "Remote get failed" in str(e) else
+                f"Query failed — UAL: {ual}" if "Query returned no results" in err_msg else
+                f"Local get failed — UAL: {ual}" if "Get failed" in err_msg else
+                f"Remote get failed — UAL: {ual}" if "Remote get failed" in err_msg else
                 f"Failed after publish — UAL: {ual}"
             )
             failed_assets.append(f"KA #{i + 1} ({reason})")
