@@ -47,7 +47,6 @@ global_stats = {
 }
 
 error_stats = {}
-node_error_summary = {}
 
 def print_exception(e, node_name="Unknown"):
     print(f"\n❌ Error on {node_name}")
@@ -62,18 +61,10 @@ def print_exception(e, node_name="Unknown"):
     # Collect error stats
     msg = str(e).split("\n")[0]
     error_key = f"{type(e).__name__}: {msg}"
-
     if node_name not in error_stats:
         error_stats[node_name] = {}
     error_stats[node_name][error_key] = error_stats[node_name].get(error_key, 0) + 1
 
-<<<<<<< HEAD
-=======
-    if node_name not in node_error_summary:
-        node_error_summary[node_name] = []
-    node_error_summary[node_name].append(error_key)
-
->>>>>>> 6525797 (Test)
 @pytest.mark.parametrize("node_index", range(len(nodes)))
 def test_asset_lifecycle(node_index):
     node = nodes[node_index]
@@ -82,11 +73,7 @@ def test_asset_lifecycle(node_index):
     failed_assets = []
 
     for i in range(1):
-<<<<<<< HEAD
         print(f"\n📡 Publishing KA #{i + 1} on {node['name']}")
-=======
-        print(f"\n📱 Publishing KA #{i + 1} on {node['name']}")
->>>>>>> 6525797 (Test)
         word = random.choice(words)
         template = random.choice(descriptions)
         content = {
@@ -152,22 +139,13 @@ def test_asset_lifecycle(node_index):
             continue
 
     print(f"\n──────────── Summary for {node['name']} ────────────")
-<<<<<<< HEAD
     print(f"✅ Success: {passed} / 1 -> {round(passed / 15 * 100, 2)}%")
-=======
-    print(f"✅ Success: {passed} / 2 -> {round(passed / 15 * 100, 2)}%")
->>>>>>> 6525797 (Test)
     print(f"❌ Failed: {failed}")
     if failed_assets:
         print("🔍 Failed Assets:")
         for asset in failed_assets:
             print(f"  - {asset}")
-    if node_error_summary.get(node["name"]):
-        print("🔎 Error Types:")
-        for err in set(node_error_summary[node["name"]]):
-            print(f"  - {err}")
 
-<<<<<<< HEAD
     # Save to global stats
     global_stats[BLOCKCHAIN][node['name']] = {"success": passed, "failed": failed}
 
@@ -195,6 +173,3 @@ def pytest_sessionfinish(session, exitstatus):
         print(f"\n🔧 {node_name}")
         for message, count in errors.items():
             print(f"  • {count}x {message}")
-=======
-    global_stats[BLOCKCHAIN][node['name']] = {"success": passed, "failed": failed}
->>>>>>> 6525797 (Test)

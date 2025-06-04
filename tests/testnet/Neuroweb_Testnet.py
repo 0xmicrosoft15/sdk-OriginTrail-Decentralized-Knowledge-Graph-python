@@ -73,11 +73,7 @@ def test_asset_lifecycle(node_index):
     failed_assets = []
 
     for i in range(1):
-<<<<<<< HEAD
         print(f"\n📡 Publishing KA #{i + 1} on {node['name']}")
-=======
-        print(f"\n📱 Publishing KA #{i + 1} on {node['name']}")
->>>>>>> 6525797 (Test)
         word = random.choice(words)
         template = random.choice(descriptions)
         content = {
