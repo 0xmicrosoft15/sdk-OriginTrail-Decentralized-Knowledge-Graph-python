@@ -148,3 +148,4 @@ def test_asset_lifecycle(node_index):
             print(f"  - {asset}")
 
     global_stats[BLOCKCHAIN][node['name']] = {"success": passed, "failed": failed}
+    __all__ = ["global_stats", "error_stats"]

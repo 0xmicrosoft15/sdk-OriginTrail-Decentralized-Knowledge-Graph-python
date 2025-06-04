@@ -1,7 +1,19 @@
-# conftest.py
-from .Neuroweb_Testnet import error_stats, global_stats
+# tests/testnet/conftest.py
+
+import sys
+import importlib
 
 def pytest_sessionfinish(session, exitstatus):
+    # Dynamically import the module to avoid relative import issues
+    try:
+        neuroweb_testnet = importlib.import_module("tests.testnet.Neuroweb_Testnet")
+    except ModuleNotFoundError:
+        print("❌ Could not import Neuroweb_Testnet.py")
+        return
+
+    error_stats = getattr(neuroweb_testnet, "error_stats", {})
+    global_stats = getattr(neuroweb_testnet, "global_stats", {})
+
     print("\n\n📊 Global Publish Summary:")
 
     for blockchain, node_data in global_stats.items():
@@ -12,7 +24,7 @@ def pytest_sessionfinish(session, exitstatus):
             s, f = results["success"], results["failed"]
             total_success += s
             total_failed += f
-            rate = round(s / (s + f) * 100, 2) if (s + f) > 0 else 0.0
+            rate = round(s / (s + f) * 100, 2)
             print(f"  • {node_name}: ✅ {s} / ❌ {f} ({rate}%)")
 
         total = total_success + total_failed
@@ -27,4 +39,5 @@ def pytest_sessionfinish(session, exitstatus):
             print(f"\n🔧 {node_name}")
             for message, count in errors.items():
                 print(f"  • {count}x {message}")
+
 
