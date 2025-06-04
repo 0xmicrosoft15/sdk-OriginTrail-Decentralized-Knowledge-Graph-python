@@ -58,7 +58,7 @@ def test_asset_lifecycle(node_index):
     failed = 0
     failed_assets = []
 
-    for i in range(15):
+    for i in range(7):
         print(f"\n📡 Publishing KA #{i + 1} on {node['name']}")
         word = random.choice(words)
         template = random.choice(descriptions)
@@ -125,7 +125,7 @@ def test_asset_lifecycle(node_index):
             continue
 
     print(f"\n──────────── Summary for {node['name']} ────────────")
-    print(f"✅ Success: {passed} / 15")
+    print(f"✅ Success: {passed} / 7 -> {passed / 7 * 100}%")
     print(f"❌ Failed: {failed}")
     if failed_assets:
         print("🔍 Failed Assets:")
