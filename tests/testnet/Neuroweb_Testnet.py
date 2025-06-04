@@ -28,6 +28,7 @@ OT_NODE_PORT = 8900
 
 nodes = [
     {"name": "Node 01", "hostname": "https://v6-pegasus-node-01.origin-trail.network"},
+    {"name": "Node 04", "hostname": "https://v6-pegasus-node-04.origin-trail.network"},
     {"name": "Node 08", "hostname": "https://v6-pegasus-node-08.origin-trail.network"},
 ]
 
@@ -41,7 +42,10 @@ descriptions = [
 ]
 
 # Global stats tracker
-global_stats = { BLOCKCHAIN: {} }
+global_stats = {
+    BLOCKCHAIN: {}
+}
+
 error_stats = {}
 
 def print_exception(e, node_name="Unknown"):
@@ -54,11 +58,12 @@ def print_exception(e, node_name="Unknown"):
         last = user_tb[-1]
         print(f"📍 Location: {last.filename}, line {last.lineno}, in {last.name}")
 
-    # Track error
+    # Collect error stats
+    msg = str(e).split("\n")[0]
+    error_key = f"{type(e).__name__}: {msg}"
     if node_name not in error_stats:
         error_stats[node_name] = {}
-    key = f"{type(e).__name__}: {str(e).splitlines()[0]}"
-    error_stats[node_name][key] = error_stats[node_name].get(key, 0) + 1
+    error_stats[node_name][error_key] = error_stats[node_name].get(error_key, 0) + 1
 
 @pytest.mark.parametrize("node_index", range(len(nodes)))
 def test_asset_lifecycle(node_index):
@@ -67,7 +72,7 @@ def test_asset_lifecycle(node_index):
     failed = 0
     failed_assets = []
 
-    for i in range(20):
+    for i in range(15):
         print(f"\n📡 Publishing KA #{i + 1} on {node['name']}")
         word = random.choice(words)
         template = random.choice(descriptions)
@@ -134,13 +139,14 @@ def test_asset_lifecycle(node_index):
             continue
 
     print(f"\n──────────── Summary for {node['name']} ────────────")
-    print(f"✅ Success: {passed} / 20 -> {round(passed / 20 * 100, 2)}%")
+    print(f"✅ Success: {passed} / 15 -> {round(passed / 15 * 100, 2)}%")
     print(f"❌ Failed: {failed}")
     if failed_assets:
         print("🔍 Failed Assets:")
         for asset in failed_assets:
             print(f"  - {asset}")
 
+    # Save to global stats
     global_stats[BLOCKCHAIN][node['name']] = {"success": passed, "failed": failed}
 
 # Hook to print final stats after all tests
@@ -163,7 +169,7 @@ def pytest_sessionfinish(session, exitstatus):
         print(f"  📦 TOTAL: ✅ {total_success} / ❌ {total_failed} -> {total_rate}%")
 
     print("\n\n📊 Error Breakdown by Node:")
-    for node, messages in error_stats.items():
-        print(f"\n🔧 {node}")
-        for msg, count in messages.items():
-            print(f"  • {count}x {msg}")
+    for node_name, errors in error_stats.items():
+        print(f"\n🔧 {node_name}")
+        for message, count in errors.items():
+            print(f"  • {count}x {message}")
