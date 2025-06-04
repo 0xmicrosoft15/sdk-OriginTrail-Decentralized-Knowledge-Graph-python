@@ -1,5 +1,5 @@
 # conftest.py
-from Neuroweb_Testnet import error_stats, global_stats  # adjust import if needed
+from .Neuroweb_Testnet import error_stats, global_stats
 
 def pytest_sessionfinish(session, exitstatus):
     print("\n\n📊 Global Publish Summary:")
