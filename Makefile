@@ -26,14 +26,11 @@ help:
 	@echo "  paranet-demo - Run /examples/paranets_demo.py file"
 
 test-neuroweb-testnet:
-	pytest tests/testnet/Neuroweb_Testnet.py -s --json-report --json-report-file=.report/testnet_neuroweb.json --html=.report/testnet_neuroweb.html --self-contained-html
-test-neuroweb-testnet:
 	pytest tests/testnet/Neuroweb_Testnet.py -s
 
 report-neuroweb-testnet:
 	python report_Testnet_Neuroweb.py
 
-test-base-testnet:
 test-base-testnet:
 	pytest tests/testnet/Base_Testnet.py -s --json-report --json-report-file=.report/testnet_base.json --html=.report/testnet_base.html --self-contained-html
 
