@@ -1,10 +1,15 @@
 # tests/testnet/conftest.py
-
 import importlib
 import os
 
 def pytest_sessionfinish(session, exitstatus):
-    test_file = os.getenv("PYTEST_CURRENT_TEST", "").split("::")[0]
+    # Try to get the test module path from any collected test item
+    test_file = None
+    for item in session.items:
+        if item.location:
+            test_file = item.location[0]  # Get the filename of the test
+            break
+
     if not test_file:
         print("❌ Could not determine which test file ran.")
         return
