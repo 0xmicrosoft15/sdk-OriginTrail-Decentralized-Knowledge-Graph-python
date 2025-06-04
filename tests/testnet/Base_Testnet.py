@@ -28,7 +28,6 @@ OT_NODE_PORT = 8900
 
 nodes = [
     {"name": "Node 01", "hostname": "https://v6-pegasus-node-01.origin-trail.network"},
-    {"name": "Node 04", "hostname": "https://v6-pegasus-node-04.origin-trail.network"},
     {"name": "Node 08", "hostname": "https://v6-pegasus-node-08.origin-trail.network"},
 ]
 
@@ -68,7 +67,7 @@ def test_asset_lifecycle(node_index):
     failed = 0
     failed_assets = []
 
-    for i in range(15):
+    for i in range(20):
         print(f"\n📡 Publishing KA #{i + 1} on {node['name']}")
         word = random.choice(words)
         template = random.choice(descriptions)
@@ -135,7 +134,7 @@ def test_asset_lifecycle(node_index):
             continue
 
     print(f"\n──────────── Summary for {node['name']} ────────────")
-    print(f"✅ Success: {passed} / 15 -> {round(passed / 15 * 100, 2)}%")
+    print(f"✅ Success: {passed} / 20 -> {round(passed / 20 * 100, 2)}%")
     print(f"❌ Failed: {failed}")
     if failed_assets:
         print("🔍 Failed Assets:")
