@@ -25,7 +25,7 @@ help:
 	@echo "  async-demo - Run /examples/async_demo.py file"
 	@echo "  paranet-demo - Run /examples/paranets_demo.py file"
 
-test-basee-testnet:
+test-base-testnet:
 	pytest tests/testnet/Neuroweb_Testnet.py -s --json-report --json-report-file=.report/testnet_neuroweb.json --html=.report/testnet_neuroweb.html --self-contained-html
 
 report-neuroweb-testnet:
