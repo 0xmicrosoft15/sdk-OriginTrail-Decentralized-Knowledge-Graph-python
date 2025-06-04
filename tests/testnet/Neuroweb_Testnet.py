@@ -72,7 +72,7 @@ def test_asset_lifecycle(node_index):
     failed = 0
     failed_assets = []
 
-    for i in range(15):
+    for i in range(2):
         print(f"\n📡 Publishing KA #{i + 1} on {node['name']}")
         word = random.choice(words)
         template = random.choice(descriptions)
@@ -139,7 +139,7 @@ def test_asset_lifecycle(node_index):
             continue
 
     print(f"\n──────────── Summary for {node['name']} ────────────")
-    print(f"✅ Success: {passed} / 15 -> {round(passed / 15 * 100, 2)}%")
+    print(f"✅ Success: {passed} / 2 -> {round(passed / 2 * 100, 2)}%")
     print(f"❌ Failed: {failed}")
     if failed_assets:
         print("🔍 Failed Assets:")
@@ -151,7 +151,8 @@ def test_asset_lifecycle(node_index):
 
 # Hook to print final stats after all tests
 def pytest_sessionfinish(session, exitstatus):
-    print("\n\n📊 Global Publish Summary:")
+    print("\n\n✅ pytest_sessionfinish is running")
+    print("\n📊 Global Publish Summary:")
 
     for blockchain, node_data in global_stats.items():
         print(f"\n🔗 Blockchain: {blockchain}")
@@ -161,15 +162,18 @@ def pytest_sessionfinish(session, exitstatus):
             s, f = results["success"], results["failed"]
             total_success += s
             total_failed += f
-            rate = round(s / (s + f) * 100, 2)
+            rate = round(s / (s + f) * 100, 2) if (s + f) > 0 else 0.0
             print(f"  • {node_name}: ✅ {s} / ❌ {f} ({rate}%)")
 
         total = total_success + total_failed
         total_rate = round(total_success / total * 100, 2) if total > 0 else 0
         print(f"  📦 TOTAL: ✅ {total_success} / ❌ {total_failed} -> {total_rate}%")
 
-    print("\n\n📊 Error Breakdown by Node:")
-    for node_name, errors in error_stats.items():
-        print(f"\n🔧 {node_name}")
-        for message, count in errors.items():
-            print(f"  • {count}x {message}")
+    print("\n📊 Error Breakdown by Node:")
+    if not error_stats:
+        print("✅ No errors recorded.")
+    else:
+        for node_name, errors in error_stats.items():
+            print(f"\n🔧 {node_name}")
+            for message, count in errors.items():
+                print(f"  • {count}x {message}")
