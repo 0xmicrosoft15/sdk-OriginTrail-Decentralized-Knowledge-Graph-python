@@ -42,9 +42,8 @@ descriptions = [
 ]
 
 # Global stats tracker
-global_stats = {
-    BLOCKCHAIN: {}
-}
+global_stats = { BLOCKCHAIN: {} }
+error_stats = {}  # New error tracking dict
 
 def print_exception(e, node_name="Unknown"):
     print(f"\n❌ Error on {node_name}")
@@ -55,6 +54,12 @@ def print_exception(e, node_name="Unknown"):
     if user_tb:
         last = user_tb[-1]
         print(f"📍 Location: {last.filename}, line {last.lineno}, in {last.name}")
+
+    # Track error
+    if node_name not in error_stats:
+        error_stats[node_name] = {}
+    key = f"{type(e).__name__}: {str(e).splitlines()[0]}"
+    error_stats[node_name][key] = error_stats[node_name].get(key, 0) + 1
 
 @pytest.mark.parametrize("node_index", range(len(nodes)))
 def test_asset_lifecycle(node_index):
@@ -137,7 +142,6 @@ def test_asset_lifecycle(node_index):
         for asset in failed_assets:
             print(f"  - {asset}")
 
-    # Save to global stats
     global_stats[BLOCKCHAIN][node['name']] = {"success": passed, "failed": failed}
 
 # Hook to print final stats after all tests
@@ -158,3 +162,9 @@ def pytest_sessionfinish(session, exitstatus):
         total = total_success + total_failed
         total_rate = round(total_success / total * 100, 2) if total > 0 else 0
         print(f"  📦 TOTAL: ✅ {total_success} / ❌ {total_failed} -> {total_rate}%")
+
+    print("\n\n📊 Error Breakdown by Node:")
+    for node, messages in error_stats.items():
+        print(f"\n🔧 {node}")
+        for msg, count in messages.items():
+            print(f"  • {count}x {msg}")
