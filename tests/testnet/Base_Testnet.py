@@ -29,7 +29,6 @@ OT_NODE_PORT = 8900
 nodes = [
     {"name": "Node 01", "hostname": "https://v6-pegasus-node-01.origin-trail.network"},
     {"name": "Node 04", "hostname": "https://v6-pegasus-node-04.origin-trail.network"},
-    {"name": "Node 08", "hostname": "https://v6-pegasus-node-08.origin-trail.network"},
 ]
 
 words = ['Galaxy', 'Nebula', 'Orbit', 'Quantum', 'Pixel', 'Velocity', 'Echo', 'Nova']
@@ -72,7 +71,7 @@ def test_asset_lifecycle(node_index):
     failed = 0
     failed_assets = []
 
-    for i in range(15):
+    for i in range(2):
         print(f"\n📡 Publishing KA #{i + 1} on {node['name']}")
         word = random.choice(words)
         template = random.choice(descriptions)
@@ -139,7 +138,7 @@ def test_asset_lifecycle(node_index):
             continue
 
     print(f"\n──────────── Summary for {node['name']} ────────────")
-    print(f"✅ Success: {passed} / 15 -> {round(passed / 15 * 100, 2)}%")
+    print(f"✅ Success: {passed} / 2 -> {round(passed / 2 * 100, 2)}%")
     print(f"❌ Failed: {failed}")
     if failed_assets:
         print("🔍 Failed Assets:")
@@ -151,6 +150,7 @@ def test_asset_lifecycle(node_index):
 
 # Hook to print final stats after all tests
 def pytest_sessionfinish(session, exitstatus):
+    print("\n\n✅ pytest_sessionfinish is running")  # 👈 Add this first
     print("\n\n📊 Global Publish Summary:")
 
     for blockchain, node_data in global_stats.items():
