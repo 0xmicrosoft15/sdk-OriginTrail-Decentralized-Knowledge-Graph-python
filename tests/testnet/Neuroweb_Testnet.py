@@ -46,8 +46,8 @@ global_stats = {
     BLOCKCHAIN: {}
 }
 
-# Export error stats so conftest.py can access them
 error_stats = {}
+node_error_summary = {}
 
 def print_exception(e, node_name="Unknown"):
     print(f"\n❌ Error on {node_name}")
@@ -59,12 +59,16 @@ def print_exception(e, node_name="Unknown"):
         last = user_tb[-1]
         print(f"📍 Location: {last.filename}, line {last.lineno}, in {last.name}")
 
-    # Collect error stats
     msg = str(e).split("\n")[0]
     error_key = f"{type(e).__name__}: {msg}"
+
     if node_name not in error_stats:
         error_stats[node_name] = {}
     error_stats[node_name][error_key] = error_stats[node_name].get(error_key, 0) + 1
+
+    if node_name not in node_error_summary:
+        node_error_summary[node_name] = []
+    node_error_summary[node_name].append(error_key)
 
 @pytest.mark.parametrize("node_index", range(len(nodes)))
 def test_asset_lifecycle(node_index):
@@ -73,8 +77,8 @@ def test_asset_lifecycle(node_index):
     failed = 0
     failed_assets = []
 
-    for i in range(2):
-        print(f"\n📡 Publishing KA #{i + 1} on {node['name']}")
+    for i in range(15):
+        print(f"\n📱 Publishing KA #{i + 1} on {node['name']}")
         word = random.choice(words)
         template = random.choice(descriptions)
         content = {
@@ -140,12 +144,15 @@ def test_asset_lifecycle(node_index):
             continue
 
     print(f"\n──────────── Summary for {node['name']} ────────────")
-    print(f"✅ Success: {passed} / 2 -> {round(passed / 2 * 100, 2)}%")
+    print(f"✅ Success: {passed} / 15 -> {round(passed / 15 * 100, 2)}%")
     print(f"❌ Failed: {failed}")
     if failed_assets:
         print("🔍 Failed Assets:")
         for asset in failed_assets:
             print(f"  - {asset}")
+    if node_error_summary.get(node["name"]):
+        print("🔎 Error Types:")
+        for err in set(node_error_summary[node["name"]]):
+            print(f"  - {err}")
 
     global_stats[BLOCKCHAIN][node['name']] = {"success": passed, "failed": failed}
-    __all__ = ["global_stats", "error_stats"]
