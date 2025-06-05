@@ -137,7 +137,7 @@ def test_asset_lifecycle(node_index):
             continue
 
     print(f"\n──────────── Summary for {node['name']} ────────────")
-    print(f"✅ Success: {passed} / 1 -> {round(passed / 15 * 100, 2)}%")
+    print(f"✅ Success: {passed} / 15 -> {round(passed / 15 * 100, 2)}%")
     print(f"❌ Failed: {failed}")
     if failed_assets:
         print("🔍 Failed Assets:")
