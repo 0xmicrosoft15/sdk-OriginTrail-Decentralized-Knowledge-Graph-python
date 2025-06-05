@@ -69,10 +69,9 @@ def test_asset_lifecycle(node_index):
 
     for i in range(10):
         print(f"\n📱 Publishing KA #{i + 1} on {node['name']}")
-        step = "unknown"
+        context = {"step": "initializing"}
 
         def run_full_lifecycle(i_local):
-            nonlocal step
             word = random.choice(words)
             template = random.choice(descriptions)
             content = {
@@ -90,7 +89,7 @@ def test_asset_lifecycle(node_index):
             config = {"max_number_of_retries": 300, "frequency": 2}
             dkg = DKG(node_provider, blockchain_provider, config)
 
-            step = "publish"
+            context["step"] = "publish"
             result = dkg.asset.create(content, {
                 "epochs_num": 2,
                 "minimum_number_of_finalization_confirmations": 3,
@@ -100,7 +99,7 @@ def test_asset_lifecycle(node_index):
             assert ual, "Publish failed — No UAL"
             print(f"✅ Published KA #{i_local + 1} with UAL: {ual}")
 
-            step = "query"
+            context["step"] = "query"
             query_result = dkg.graph.query("""
                 PREFIX schema: <http://schema.org/>
                 SELECT ?s ?name ?description
@@ -111,12 +110,12 @@ def test_asset_lifecycle(node_index):
             assert query_result, f"Query failed — UAL: {ual}"
             print("✅ Query succeeded")
 
-            step = "get"
+            context["step"] = "get"
             get_result = dkg.asset.get(ual)
             assert get_result.get("assertion"), f"Local get failed — UAL: {ual}"
             print("✅ Local get succeeded")
 
-            step = "remote get"
+            context["step"] = "remote get"
             others = [i for i in range(len(nodes)) if i != node_index]
             other_node = nodes[random.choice(others)]
             other_provider = NodeHTTPProvider(f"{other_node['hostname']}:{OT_NODE_PORT}", "v1")
@@ -131,8 +130,8 @@ def test_asset_lifecycle(node_index):
                 future.result(timeout=120)
             passed += 1
         except concurrent.futures.TimeoutError:
-            print(f"⏱️ Timeout: KA #{i + 1} on {node['name']} timed out during '{step}' step after 2 minutes.")
-            failed_assets.append(f"KA #{i + 1} (timeout during {step})")
+            print(f"⏱️ Timeout: KA #{i + 1} on {node['name']} timed out during '{context['step']}' step after 2 minutes.")
+            failed_assets.append(f"KA #{i + 1} (timeout during {context['step']})")
             failed += 1
         except Exception as e:
             print_exception(e, node['name'])
@@ -140,7 +139,7 @@ def test_asset_lifecycle(node_index):
             failed += 1
 
     print(f"\n────────── Summary for {node['name']} ──────────")
-    print(f"✅ Success: {passed} / 15 -> {round(passed / 15 * 100, 2)}%")
+    print(f"✅ Success: {passed} / 10 -> {round(passed / 10 * 100, 2)}%")
     print(f"❌ Failed: {failed}")
     if failed_assets:
         print("🔍 Failed Assets:")
