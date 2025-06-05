@@ -173,3 +173,4 @@ def pytest_sessionfinish(session, exitstatus):
         print(f"\n🔧 {node_name}")
         for message, count in errors.items():
             print(f"  • {count}x {message}")
+__all__ = ["error_stats", "global_stats"]
