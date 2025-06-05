@@ -32,7 +32,7 @@ report-neuroweb-testnet:
 	python report_Testnet_Neuroweb.py
 
 test-base-testnet:
-	PYTHONPATH=$(shell pwd) pytest tests/testnet/Base_Testnet.py -s
+	pytest tests/testnet/Base_Testnet.py -s --json-report --json-report-file=.report/testnet_base.json --html=.report/testnet_base.html --self-contained-html
 
 report-base-testnet:
 	python report_Testnet_Base.py
