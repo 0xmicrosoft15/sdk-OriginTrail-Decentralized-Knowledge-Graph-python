@@ -136,7 +136,7 @@ def test_asset_lifecycle(node_index):
         if process.is_alive():
             process.terminate()
             process.join()
-            print(f"⏱️ Timeout: KA #{i + 1} on {node['name']} exceeded 2 minutes.")
+            print(f"⏱️ Timeout: KA #{i + 1} on {node['name']} timed out after 2 minutes.")
             failed_assets.append(f"KA #{i + 1} (timeout after 2 min)")
             failed += 1
         else:
