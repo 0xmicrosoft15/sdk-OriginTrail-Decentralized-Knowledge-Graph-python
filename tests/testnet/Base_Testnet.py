@@ -7,6 +7,7 @@ import traceback
 import sys
 from uuid import uuid4
 from dotenv import load_dotenv
+import concurrent.futures
 
 from dkg import DKG
 from dkg.providers import BlockchainProvider, NodeHTTPProvider
@@ -14,7 +15,6 @@ from dkg.constants import BlockchainIds
 
 from tests.testnet.stats_tracker import global_stats, error_stats
 
-# Load environment variables
 load_dotenv()
 
 BLOCKCHAIN = BlockchainIds.BASE_TESTNET.value
@@ -43,7 +43,6 @@ descriptions = [
     'A fresh perspective on {} innovation.',
 ]
 
-# Initialize stats storage
 global_stats[BLOCKCHAIN] = {}
 
 def print_exception(e, node_name="Unknown"):
@@ -55,8 +54,6 @@ def print_exception(e, node_name="Unknown"):
     if user_tb:
         last = user_tb[-1]
         print(f"📍 Location: {last.filename}, line {last.lineno}, in {last.name}")
-
-    # Collect error stats
     msg = str(e).split("\n")[0]
     error_key = f"{type(e).__name__}: {msg}"
     if node_name not in error_stats:
@@ -70,8 +67,7 @@ def test_asset_lifecycle(node_index):
     failed = 0
     failed_assets = []
 
-    for i in range(15):
-        print(f"\n📡 Publishing KA #{i + 1} on {node['name']}")
+    def run_full_lifecycle(i):
         word = random.choice(words)
         template = random.choice(descriptions)
         content = {
@@ -84,57 +80,63 @@ def test_asset_lifecycle(node_index):
             }
         }
 
+        node_provider = NodeHTTPProvider(f"{node['hostname']}:{OT_NODE_PORT}", "v1")
+        blockchain_provider = BlockchainProvider(BLOCKCHAIN)
+        config = {"max_number_of_retries": 300, "frequency": 2}
+        dkg = DKG(node_provider, blockchain_provider, config)
+
+        step = "publish"
         ual = None
+
+        result = dkg.asset.create(content, {
+            "epochs_num": 2,
+            "minimum_number_of_finalization_confirmations": 3,
+            "minimum_number_of_node_replications": 3,
+        })
+        ual = result.get("UAL")
+        assert ual, "Publish failed — No UAL"
+        print(f"✅ Published KA #{i + 1} with UAL: {ual}")
+
+        step = "query"
+        query_result = dkg.graph.query("""
+            PREFIX schema: <http://schema.org/>
+            SELECT ?s ?name ?description
+            WHERE {
+                ?s schema:name ?name ; schema:description ?description .
+            }
+        """)
+        assert query_result, f"Query failed — UAL: {ual}"
+        print("✅ Query succeeded")
+
+        step = "get"
+        get_result = dkg.asset.get(ual)
+        assert get_result.get("assertion"), f"Local get failed — UAL: {ual}"
+        print("✅ Local get succeeded")
+
+        step = "remote get"
+        others = [i for i in range(len(nodes)) if i != node_index]
+        other_node = nodes[random.choice(others)]
+        other_provider = NodeHTTPProvider(f"{other_node['hostname']}:{OT_NODE_PORT}", "v1")
+        other_dkg = DKG(other_provider, blockchain_provider, config)
+        remote_get = other_dkg.asset.get(ual)
+        assert remote_get.get("assertion"), f"Remote get failed — UAL: {ual}"
+        print(f"✅ Remote get succeeded on {other_node['name']}")
+
+    for i in range(15):
+        print(f"\n📡 Publishing KA #{i + 1} on {node['name']}")
         try:
-            node_provider = NodeHTTPProvider(f"{node['hostname']}:{OT_NODE_PORT}", "v1")
-            blockchain_provider = BlockchainProvider(BLOCKCHAIN)
-            config = {"max_number_of_retries": 300, "frequency": 2}
-            dkg = DKG(node_provider, blockchain_provider, config)
-
-            result = dkg.asset.create(content, {
-                "epochs_num": 2,
-                "minimum_number_of_finalization_confirmations": 3,
-                "minimum_number_of_node_replications": 3,
-            })
-            ual = result.get("UAL")
-            assert ual, "Publish failed — No UAL"
-            print(f"✅ Published KA #{i + 1} with UAL: {ual}")
-
-            query_result = dkg.graph.query("""
-                PREFIX schema: <http://schema.org/>
-                SELECT ?s ?name ?description
-                WHERE {
-                    ?s schema:name ?name ; schema:description ?description .
-                }
-            """)
-            assert query_result, f"Query failed — UAL: {ual}"
-            print("✅ Query succeeded")
-
-            get_result = dkg.asset.get(ual)
-            assert get_result.get("assertion"), f"Local get failed — UAL: {ual}"
-            print("✅ Local get succeeded")
-
-            others = [i for i in range(len(nodes)) if i != node_index]
-            other_node = nodes[random.choice(others)]
-            other_provider = NodeHTTPProvider(f"{other_node['hostname']}:{OT_NODE_PORT}", "v1")
-            other_dkg = DKG(other_provider, blockchain_provider, config)
-
-            remote_get = other_dkg.asset.get(ual)
-            assert remote_get.get("assertion"), f"Remote get failed — UAL: {ual}"
-            print(f"✅ Remote get succeeded on {other_node['name']}")
-
+            with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+                future = executor.submit(run_full_lifecycle, i)
+                future.result(timeout=120)
             passed += 1
-
+        except concurrent.futures.TimeoutError:
+            print(f"⏱️ Timeout: KA #{i + 1} on {node['name']} timed out after 2 minutes.")
+            failed_assets.append(f"KA #{i + 1} (timeout)")
+            failed += 1
         except Exception as e:
             print_exception(e, node['name'])
-            msg = str(e)
-            if 'UAL' in msg:
-                failed_assets.append(f"KA #{i + 1} ({msg})")
-            else:
-                reason = "Publish failed — No UAL" if not ual else f"Failed after publish — UAL: {ual}"
-                failed_assets.append(f"KA #{i + 1} ({reason})")
+            failed_assets.append(f"KA #{i + 1} ({str(e).splitlines()[0]})")
             failed += 1
-            continue
 
     print(f"\n──────────── Summary for {node['name']} ────────────")
     print(f"✅ Success: {passed} / 15 -> {round(passed / 15 * 100, 2)}%")
@@ -144,5 +146,4 @@ def test_asset_lifecycle(node_index):
         for asset in failed_assets:
             print(f"  - {asset}")
 
-    # Save to shared global stats
     global_stats[BLOCKCHAIN][node['name']] = {"success": passed, "failed": failed}
