@@ -90,7 +90,7 @@ def test_asset_lifecycle(node_index):
         try:
             node_provider = NodeHTTPProvider(f"{node['hostname']}:{OT_NODE_PORT}", "v1")
             blockchain_provider = BlockchainProvider(BLOCKCHAIN)
-            config = {"max_number_of_retries": 300, "frequency": 2}
+            config = {"max_number_of_retries": 5, "frequency": 2}
             dkg = DKG(node_provider, blockchain_provider, config)
 
             result = dkg.asset.create(content, {
