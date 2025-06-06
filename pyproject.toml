@@ -1,10 +1,11 @@
 [tool.poetry]
 name = "dkg"
-version = "8.0.13"
+version = "8.0.14"
 description = "Python library for interacting with the OriginTrail Decentralized Knowledge Graph"
 authors = ["Uladzislau Hubar <hubar.uladzislau@gmail.com>, Zvonimir Sculac <zvonimir.sculac@origin-trail.com>"]
 license = "Apache-2.0"
 readme = "README.md"
+
 
 [tool.poetry.dependencies]
 python = "^3.10"
@@ -23,10 +24,28 @@ python-dotenv = "^1.0.1"
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.8.4"
 pre-commit = "^4.0.1"
+pytest = "^8.0"
+pytest-cov = "^4.0"
+
 
 [tools.setuptools]
 packages = ["dkg"]
 
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+addopts = "-ra"
+testpaths = [
+    "test"
+]
+
+
+python_files = [
+    "test_*.py",
+    "*_test.py"
+]

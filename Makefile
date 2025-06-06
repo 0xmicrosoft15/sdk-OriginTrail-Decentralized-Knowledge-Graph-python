@@ -17,10 +17,14 @@ ruff:
 	ruff check --fix
 	ruff format
 
+run-test:
+	pytest
+
 help:
 	@echo "Available commands:"
 	@echo "  install   - Install dependencies and set up pre-commit hooks"
 	@echo "  ruff      - Format code and fix linting issues using ruff"
+	@echo "  run-test  - Run tests"
 	@echo "  demo      - Run /examples/demo.py file"
 	@echo "  async-demo - Run /examples/async_demo.py file"
 	@echo "  paranet-demo - Run /examples/paranets_demo.py file"
