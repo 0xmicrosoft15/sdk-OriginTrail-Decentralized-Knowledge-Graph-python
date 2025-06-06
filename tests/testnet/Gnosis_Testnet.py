@@ -117,7 +117,7 @@ def lifecycle_worker(node, node_index, i, result_queue):
 
         result_queue.put(("success", None))
     except Exception as e:
-        result_queue.put(("failuree", str(e)))
+        result_queue.put(("failure", str(e)))
 
 @pytest.mark.parametrize("node_index", range(len(nodes)))
 def test_asset_lifecycle(node_index):
