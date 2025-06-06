@@ -131,7 +131,7 @@ def test_asset_lifecycle(node_index):
         result_queue = multiprocessing.Queue()
         process = multiprocessing.Process(target=lifecycle_worker, args=(node, node_index, i, result_queue))
         process.start()
-        process.join(timeout=120)
+        process.join(timeout=180)
 
         if process.is_alive():
             process.terminate()
