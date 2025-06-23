@@ -1,4 +1,4 @@
-# tests/testnet/conftest.py
+# tests/mainnet/conftest.py
 
 import os
 import json
@@ -109,4 +109,4 @@ def pytest_sessionfinish(session, exitstatus):
     if os.path.exists(error_file):
         os.remove(error_file)
     if os.path.exists(stats_file):
-        os.remove(stats_file)
+        os.remove(stats_file) 

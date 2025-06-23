@@ -1,0 +1,13 @@
+{
+  "blockchain_name": "otp:20430",
+  "node_name": "Node 01",
+  "publish_success_rate": 0.0,
+  "query_success_rate": 0.0,
+  "publisher_get_success_rate": 0.0,
+  "non_publisher_get_success_rate": 0.0,
+  "average_publish_time": 0.0,
+  "average_query_time": 0.0,
+  "average_publisher_get_time": 0.0,
+  "average_non_publisher_get_time": 0.0,
+  "time_stamp": "2025-06-23T14:26:09.903365"
+}
