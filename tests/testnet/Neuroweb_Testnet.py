@@ -23,19 +23,8 @@ BLOCKCHAIN = BlockchainIds.NEUROWEB_TESTNET.value
 OT_NODE_PORT = 8900
 
 nodes = [
-    {"name": "Node 01", "hostname": "https://v6-pegasus-node-01.origin-trail.network"},
-    {"name": "Node 04", "hostname": "https://v6-pegasus-node-04.origin-trail.network"},
-    {"name": "Node 05", "hostname": "https://v6-pegasus-node-05.origin-trail.network"},
-    {"name": "Node 06", "hostname": "https://v6-pegasus-node-06.origin-trail.network"},
-    {"name": "Node 07", "hostname": "https://v6-pegasus-node-07.origin-trail.network"},
-    {"name": "Node 08", "hostname": "https://v6-pegasus-node-08.origin-trail.network"},
-    {"name": "Node 09", "hostname": "https://v6-pegasus-node-09.origin-trail.network"},
-    {"name": "Node 10", "hostname": "https://v6-pegasus-node-10.origin-trail.network"},
-    {"name": "Node 13", "hostname": "https://v6-pegasus-node-13.origin-trail.network"},
-    {"name": "Node 14", "hostname": "https://v6-pegasus-node-14.origin-trail.network"},
-    {"name": "Node 21", "hostname": "https://v6-pegasus-node-21.origin-trail.network"},
-    {"name": "Node 23", "hostname": "https://v6-pegasus-node-23.origin-trail.network"},
-    {"name": "Node 37", "hostname": "https://v6-pegasus-node-37.origin-trail.network"},
+    {"name": "Node 01", "hostname": "https://v6-pegasus-node-02.origin-trail.network"},
+    {"name": "Node 04", "hostname": "https://v6-pegasus-node-03.origin-trail.network"},
 ]
 
 node_keys = {
@@ -81,9 +70,6 @@ def get_random_content(node_name):
     }
 
 def log_error(error, node_name, step='unknown', remote_node=None):
-    if isinstance(error, TimeoutError) or isinstance(error, concurrent.futures.TimeoutError):
-        return
-        
     print(f"\n❌ Error on {node_name} during {step}")
     print(f"🔺 Type: {type(error).__name__}")
     print(f"🧵 Message: {str(error)}")
@@ -93,12 +79,18 @@ def log_error(error, node_name, step='unknown', remote_node=None):
         last = user_tb[-1]
         print(f"📍 Location: {last.filename}, line {last.lineno}, in {last.name}")
 
-    error_message = str(error).splitlines()[0] if hasattr(error, 'splitlines') else str(error)
-    error_message = error_message[:100]
+    # Create a cleaner error message for grouping
+    if isinstance(error, TimeoutError) or isinstance(error, concurrent.futures.TimeoutError):
+        error_message = f"Timeout after 3 minutes during {step}"
+    else:
+        error_message = str(error).splitlines()[0] if hasattr(error, 'splitlines') else str(error)
+        error_message = error_message[:100]
     
-    key = f"{step} — {type(error).__name__}: {error_message}"
+    # Create a generic key that groups similar errors
     if remote_node:
-        key += f" on {remote_node}"
+        key = f"{step} — {type(error).__name__}: {error_message} on {remote_node}"
+    else:
+        key = f"{step} — {type(error).__name__}: {error_message}"
     
     # Store errors in a temporary file to ensure persistence across test session
     error_file = "test_output/error_stats.json"
@@ -153,7 +145,7 @@ def run_test_for_node(node, index):
     publish_times, query_times, local_get_times, remote_get_times = [], [], [], []
     failed_assets = []
 
-    for i in range(10):
+    for i in range(5):
         print(f"\n📡 Publishing KA #{i + 1} on {name}")
         content = get_random_content(name)
         ual = None

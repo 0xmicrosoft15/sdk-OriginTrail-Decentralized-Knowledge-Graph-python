@@ -81,9 +81,6 @@ def get_random_content(node_name):
     }
 
 def log_error(error, node_name, step='unknown', remote_node=None):
-    if isinstance(error, TimeoutError) or isinstance(error, concurrent.futures.TimeoutError):
-        return
-        
     print(f"\n❌ Error on {node_name} during {step}")
     print(f"🔺 Type: {type(error).__name__}")
     print(f"🧵 Message: {str(error)}")
@@ -93,12 +90,18 @@ def log_error(error, node_name, step='unknown', remote_node=None):
         last = user_tb[-1]
         print(f"📍 Location: {last.filename}, line {last.lineno}, in {last.name}")
 
-    error_message = str(error).splitlines()[0] if hasattr(error, 'splitlines') else str(error)
-    error_message = error_message[:100]
+    # Create a cleaner error message for grouping
+    if isinstance(error, TimeoutError) or isinstance(error, concurrent.futures.TimeoutError):
+        error_message = f"Timeout after 3 minutes during {step}"
+    else:
+        error_message = str(error).splitlines()[0] if hasattr(error, 'splitlines') else str(error)
+        error_message = error_message[:100]
     
-    key = f"{step} — {type(error).__name__}: {error_message}"
+    # Create a generic key that groups similar errors
     if remote_node:
-        key += f" on {remote_node}"
+        key = f"{step} — {type(error).__name__}: {error_message} on {remote_node}"
+    else:
+        key = f"{step} — {type(error).__name__}: {error_message}"
     
     # Store errors in a temporary file to ensure persistence across test session
     error_file = "test_output/error_stats.json"
@@ -126,7 +129,6 @@ def log_error(error, node_name, step='unknown', remote_node=None):
     # Save back to file
     with open(error_file, 'w') as f:
         json.dump(error_data, f, indent=2)
-    
 
 def safe_rate(success, fail):
     total = success + fail

@@ -7,11 +7,11 @@ BLOCKCHAIN_RPC_CONFIG = {
     # Mainnet
     'base:8453':      ("BASE_MAINNET_RPC",    ["mainnet", "base:8453"]),
     'gnosis:100':     ("GNOSIS_MAINNET_RPC",   ["mainnet", "gnosis:100"]),
-    'neuroweb:20430': ("NEUROWEB_MAINNET_RPC", ["mainnet", "neuroweb:20430"]),
+    'otp:2043':       ("NEUROWEB_MAINNET_RPC", ["mainnet", "otp:2043"]),
     # Testnet
     'base:84532':      ("BASE_TESTNET_RPC",    ["testnet", "base:84532"]),
     'gnosis:10200':    ("GNOSIS_TESTNET_RPC",  ["testnet", "gnosis:10200"]),
-    'neuroweb:20430t': ("NEUROWEB_TESTNET_RPC", ["testnet", "neuroweb:20430t"]),
+    'otp:20430':       ("NEUROWEB_TESTNET_RPC", ["testnet", "otp:20430"]),
 }
 
 class BlockchainProvider(OriginalBlockchainProvider):
