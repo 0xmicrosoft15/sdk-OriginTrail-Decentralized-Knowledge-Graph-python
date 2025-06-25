@@ -1,5 +1,6 @@
 import os
 import json
+import sys
 
 ERROR_DIR = "test_output"  # Directory where error files are stored
 
@@ -28,13 +29,22 @@ def load_aggregated_error_file():
     return {}
 
 def print_error_summary():
-    print("\n\n📊 Global Error Summary:\n")
+    print("\n\n📊 Error Breakdown by Node:\n")
 
+    # Check if a specific node is being tested
+    node_to_test = os.getenv("NODE_TO_TEST")
+    
     # Try individual files first (preferred method)
     error_files = load_error_files()
     
     if error_files:
         print("📁 Using individual node error files:")
+        
+        # If a specific node is being tested, only show that node's errors
+        if node_to_test:
+            target_filename = f"errors_{node_to_test.replace(' ', '_')}.json"
+            error_files = [f for f in error_files if f == target_filename]
+        
         for filename in sorted(error_files):
             node_name = filename.replace("errors_", "").replace(".json", "").replace("_", " ")
             print(f"🔧 {node_name}")
@@ -63,18 +73,36 @@ def print_error_summary():
             print("✅ No error data found")
             return
 
-        for node_name in sorted(error_data.keys()):
-            print(f"🔧 {node_name}")
-
-            node_errors = error_data[node_name]
-            
-            if not node_errors:
-                print("  ✅ No errors")
+        # If a specific node is being tested, only show that node's errors
+        if node_to_test:
+            if node_to_test in error_data:
+                print(f"🔧 {node_to_test}")
+                node_errors = error_data[node_to_test]
+                
+                if not node_errors:
+                    print("  ✅ No errors")
+                else:
+                    for error_key, count in node_errors.items():
+                        print(f"  • {count}x {error_key}")
+                print()
             else:
-                for error_key, count in node_errors.items():
-                    print(f"  • {count}x {error_key}")
+                print(f"🔧 {node_to_test}")
+                print("  ✅ No errors")
+                print()
+        else:
+            # Show all nodes
+            for node_name in sorted(error_data.keys()):
+                print(f"🔧 {node_name}")
 
-            print()
+                node_errors = error_data[node_name]
+                
+                if not node_errors:
+                    print("  ✅ No errors")
+                else:
+                    for error_key, count in node_errors.items():
+                        print(f"  • {count}x {error_key}")
+
+                print()
 
 if __name__ == "__main__":
     print_error_summary()

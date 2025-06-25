@@ -105,7 +105,16 @@ def log_error(error, node_name, step='unknown', remote_node=None):
     else:
         key = f"{step} — {type(error).__name__}: {error_message}"
     
-    # Store errors in a temporary file to ensure persistence across test session
+    # Store errors in the global error_stats for this node
+    if node_name not in error_stats:
+        error_stats[node_name] = {}
+    
+    if key in error_stats[node_name]:
+        error_stats[node_name][key] += 1
+    else:
+        error_stats[node_name][key] = 1
+    
+    # Also store in a temporary file to ensure persistence across test session
     error_file = "test_output/error_stats.json"
     os.makedirs("test_output", exist_ok=True)
     
@@ -266,8 +275,21 @@ def run_test_for_node(node, index):
     os.makedirs("test_output", exist_ok=True)
     with open(f"test_output/summary_{name.replace(' ', '_')}.json", "w") as f:
         json.dump(summary, f, indent=2)
+    
+    # Write error file by merging with existing errors from the aggregated file
+    error_file = "test_output/error_stats.json"
+    if os.path.exists(error_file):
+        with open(error_file, 'r') as f:
+            try:
+                all_errors = json.load(f)
+                node_errors = all_errors.get(name, {})
+            except:
+                node_errors = {}
+    else:
+        node_errors = {}
+    
     with open(f"test_output/errors_{name.replace(' ', '_')}.json", "w") as f:
-        json.dump(error_stats.get(name, {}), f, indent=2)
+        json.dump(node_errors, f, indent=2)
 
     print(f"\n──────────── Summary for {name} ────────────")
     if failed_assets:
