@@ -94,9 +94,18 @@ def log_error(error, node_name, step='unknown', remote_node=None):
     if isinstance(error, TimeoutError) or isinstance(error, concurrent.futures.TimeoutError):
         error_message = f"Timeout after 3 minutes during {step}"
     else:
-        error_message = str(error).splitlines()[0] if hasattr(error, 'splitlines') else str(error)
-        error_message = error_message[:100]
-    
+        try:
+            if isinstance(error, dict):
+                error_message = error.get("errorType") or str(error)
+            elif hasattr(error, "args") and isinstance(error.args[0], dict):
+                error_message = error.args[0].get("errorType", str(error))
+            else:
+                error_message = str(error)
+        except Exception:
+            error_message = str(error)
+
+    error_message = error_message.splitlines()[0][:100]
+
     # Create a generic key that groups similar errors
     if remote_node:
         key = f"{step} — {type(error).__name__}: {error_message} on {remote_node}"
