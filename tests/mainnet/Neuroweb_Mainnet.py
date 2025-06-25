@@ -33,8 +33,8 @@ nodes = [
 
 node_keys = {
     name: {
-        "publicKey": os.getenv(f"MAINNET_NEUROWEB_{name.replace(' ', '_').upper()}_PUBLIC_KEY"),
-        "privateKey": os.getenv(f"MAINNET_NEUROWEB_{name.replace(' ', '_').upper()}_PRIVATE_KEY"),
+        "publicKey": os.getenv(f"PY_MAINNET_NEUROWEB_{name.replace(' ', '_').upper()}_PUBLIC_KEY"),
+        "privateKey": os.getenv(f"PY_MAINNET_NEUROWEB_{name.replace(' ', '_').upper()}_PRIVATE_KEY"),
     }
     for name in [n["name"] for n in nodes]
 }
