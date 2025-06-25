@@ -40,8 +40,8 @@ nodes = [
 
 node_keys = {
     name: {
-        "publicKey": os.getenv(f"PY_TESTNET_BASE_{name.replace(' ', '_').upper()}_PUBLIC_KEY"),
-        "privateKey": os.getenv(f"PY_TESTNET_BASE_{name.replace(' ', '_').upper()}_PRIVATE_KEY"),
+        "publicKey": os.getenv(f"PY_TESTNET_BASE_{name.replace(' ', '').upper()}_PUBLIC_KEY"),
+        "privateKey": os.getenv(f"PY_TESTNET_BASE_{name.replace(' ', '').upper()}_PRIVATE_KEY"),
     }
     for name in [n["name"] for n in nodes]
 }
