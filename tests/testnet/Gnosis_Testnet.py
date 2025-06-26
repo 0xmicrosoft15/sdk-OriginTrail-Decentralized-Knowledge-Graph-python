@@ -112,6 +112,8 @@ def log_error(error, node_name, step='unknown', remote_node=None):
     else:
         key = f"{step} — {type(error).__name__}: {error_message}"
     
+    print(f"DEBUG: Generated error key: '{key}' for {node_name}")
+    
     # Store errors in the global error_stats for this node
     if node_name not in error_stats:
         error_stats[node_name] = {}
@@ -120,6 +122,8 @@ def log_error(error, node_name, step='unknown', remote_node=None):
         error_stats[node_name][key] += 1
     else:
         error_stats[node_name][key] = 1
+    
+    print(f"DEBUG: Stored error in memory for {node_name}: {key}")
     
     # Also store in a temporary file to ensure persistence across test session
     error_file = "test_output/error_stats.json"
@@ -143,6 +147,8 @@ def log_error(error, node_name, step='unknown', remote_node=None):
         error_data[node_name][key] += 1
     else:
         error_data[node_name][key] = 1
+    
+    print(f"DEBUG: Stored error in file for {node_name}: {key}")
     
     # Save back to file
     with open(error_file, 'w') as f:
