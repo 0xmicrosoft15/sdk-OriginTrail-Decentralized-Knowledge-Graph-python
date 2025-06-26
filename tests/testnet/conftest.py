@@ -73,7 +73,7 @@ def pytest_sessionfinish(session, exitstatus):
 
     node_to_test = os.getenv("NODE_TO_TEST")
     if node_to_test:
-        print(f"\n📊 Error Breakdown for {node_to_test}:\n")
+        print(f"\n🔧 {node_to_test}:\n")
         node_file = f"test_output/errors_{node_to_test.replace(' ', '_')}.json"
         if os.path.exists(node_file):
             with open(node_file, "r") as f:
