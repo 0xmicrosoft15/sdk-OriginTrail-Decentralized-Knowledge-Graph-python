@@ -1,183 +1,82 @@
 import os
 import json
-import sys
 import glob
 
-ERROR_DIR = "test_output"  # Directory where error files are stored
+ERROR_DIR = "test_output"
 
-def load_error_files():
-    """Load individual error files for each node"""
-    if not os.path.exists(ERROR_DIR):
-        print(f"⚠️ Error directory not found: {ERROR_DIR}")
-        return []
-    
-    return [
-        f for f in os.listdir(ERROR_DIR)
-        if f.startswith("errors_Node_") and f.endswith(".json")
-    ]
 
-def load_aggregated_error_file():
-    """Load the aggregated error file if it exists"""
-    error_file_path = os.path.join(ERROR_DIR, "error_stats.json")
-    
-    if os.path.exists(error_file_path):
-        try:
-            with open(error_file_path, "r") as f:
-                return json.load(f)
-        except Exception as e:
-            print(f"⚠️ Failed to read aggregated error file: {str(e)}")
-    
-    return {}
+def safe_rate(success, fail):
+    total = success + fail
+    return round((success / total) * 100, 2) if total > 0 else 0.0
 
-def combine_error_files():
-    """Combine all error files from parallel Jenkins stages"""
-    combined_errors = {}
-    
-    # Look for error files in the current directory and subdirectories
-    error_patterns = [
-        "test_output/errors_*.json",
-        "*/test_output/errors_*.json",  # For archived workspaces
-        "**/test_output/errors_*.json"  # For nested archived workspaces
-    ]
-    
-    for pattern in error_patterns:
-        for error_file in glob.glob(pattern, recursive=True):
-            try:
-                with open(error_file, 'r') as f:
-                    node_errors = json.load(f)
-                    
-                # Extract node name from filename
-                filename = os.path.basename(error_file)
-                node_name = filename.replace("errors_", "").replace(".json", "").replace("_", " ")
-                
-                if node_name not in combined_errors:
-                    combined_errors[node_name] = {}
-                
-                # Merge errors
-                for error_key, count in node_errors.items():
-                    if error_key in combined_errors[node_name]:
-                        combined_errors[node_name][error_key] += count
-                    else:
-                        combined_errors[node_name][error_key] = count
-                        
-            except Exception as e:
-                print(f"⚠️ Failed to read {error_file}: {str(e)}")
-    
-    return combined_errors
 
-def print_error_summary():
-    print("\n\n📊 Error Breakdown by Node:\n")
+def avg(times):
+    return round(sum(times) / len(times), 2) if times else 0.0
 
-    # Check if a specific node is being tested
+
+def print_summary_for_node():
+    summary_file = os.path.join(ERROR_DIR, "global_stats.json")
     node_to_test = os.getenv("NODE_TO_TEST")
-    
-    # First try to combine all error files from parallel execution
-    combined_errors = combine_error_files()
-    
-    if combined_errors:
-        print("📁 Using combined error files from parallel execution:")
-        
-        # If a specific node is being tested, only show that node's errors
-        if node_to_test:
-            if node_to_test in combined_errors:
-                print(f"🔧 {node_to_test}")
-                node_errors = combined_errors[node_to_test]
-                
-                if not node_errors:
-                    print("  ✅ No errors")
-                else:
-                    for error_key, count in node_errors.items():
-                        print(f"  • {count}x {error_key}")
-                print()
-            else:
-                print(f"🔧 {node_to_test}")
-                print("  ✅ No errors")
-                print()
-        else:
-            # Show all nodes
-            for node_name in sorted(combined_errors.keys()):
-                print(f"🔧 {node_name}")
 
-                node_errors = combined_errors[node_name]
-                
-                if not node_errors:
-                    print("  ✅ No errors")
-                else:
-                    for error_key, count in node_errors.items():
-                        print(f"  • {count}x {error_key}")
-
-                print()
+    if not os.path.exists(summary_file):
+        print("⚠️ global_stats.json not found.")
         return
-    
-    # Fallback to original logic
-    error_files = load_error_files()
-    
-    if error_files:
-        print("📁 Using individual node error files:")
-        
-        # If a specific node is being tested, only show that node's errors
-        if node_to_test:
-            target_filename = f"errors_{node_to_test.replace(' ', '_')}.json"
-            error_files = [f for f in error_files if f == target_filename]
-        
-        for filename in sorted(error_files):
-            node_name = filename.replace("errors_", "").replace(".json", "").replace("_", " ")
-            print(f"🔧 {node_name}")
 
-            try:
-                with open(os.path.join(ERROR_DIR, filename), "r") as f:
-                    errors = json.load(f)
+    try:
+        with open(summary_file, "r") as f:
+            summary_data = json.load(f)
+    except Exception as e:
+        print(f"⚠️ Failed to read global_stats.json: {str(e)}")
+        return
 
-                if not errors:
-                    print("  ✅ No errors")
-                else:
-                    for message, count in errors.items():
-                        print(f"  • {count}x {message}")
+    if not node_to_test:
+        print("⚠️ NODE_TO_TEST not defined in environment.")
+        return
 
-            except Exception as e:
-                print(f"  ⚠️ Failed to read or parse {filename}: {str(e)}")
+    for blockchain, nodes in summary_data.items():
+        if node_to_test not in nodes:
+            continue
+        node = nodes[node_to_test]
+        print("\n\n📊 Global Publish Summary:\n")
+        print(f"🔗 Blockchain: {blockchain}")
+        print(f"  • {node_to_test}:")
+        print(f"    🔸 Publish: ✅ {node['publish_success']} / ❌ {node['publish_failed']} -> {safe_rate(node['publish_success'], node['publish_failed'])}%")
+        print(f"    🔸 Query:   ✅ {node['query_success']} / ❌ {node['query_failed']} -> {safe_rate(node['query_success'], node['query_failed'])}%")
+        print(f"    🔸 Local Get: ✅ {node['local_get_success']} / ❌ {node['local_get_failed']} -> {safe_rate(node['local_get_success'], node['local_get_failed'])}%")
+        print(f"    🔸 Get: ✅ {node['remote_get_success']} / ❌ {node['remote_get_failed']} -> {safe_rate(node['remote_get_success'], node['remote_get_failed'])}%")
+        print(f"    ⏱️ Avg Publish Time: {avg(node['publish_times'])} seconds")
+        print(f"    ⏱️ Avg Query Time: {avg(node['query_times'])} seconds")
+        print(f"    ⏱️ Avg Local Get Time: {avg(node['local_get_times'])} seconds")
+        print(f"    ⏱️ Avg Get Time: {avg(node['remote_get_times'])} seconds")
 
-            print()
-    
-    else:
-        # Fallback to aggregated file
-        print("📁 Using aggregated error file:")
-        error_data = load_aggregated_error_file()
-        
-        if not error_data:
-            print("✅ No error data found")
-            return
 
-        # If a specific node is being tested, only show that node's errors
-        if node_to_test:
-            if node_to_test in error_data:
-                print(f"🔧 {node_to_test}")
-                node_errors = error_data[node_to_test]
-                
-                if not node_errors:
-                    print("  ✅ No errors")
-                else:
-                    for error_key, count in node_errors.items():
-                        print(f"  • {count}x {error_key}")
-                print()
-            else:
-                print(f"🔧 {node_to_test}")
-                print("  ✅ No errors")
-                print()
+def print_error_for_node():
+    print("\n📊 Error Breakdown by Node:\n")
+    node_to_test = os.getenv("NODE_TO_TEST")
+    if not node_to_test:
+        print("⚠️ NODE_TO_TEST not defined in environment.")
+        return
+
+    error_file = os.path.join(ERROR_DIR, f"errors_{node_to_test.replace(' ', '_')}.json")
+    if not os.path.exists(error_file):
+        print(f"🔧 {node_to_test}\n  ✅ No errors\n")
+        return
+
+    try:
+        with open(error_file, 'r') as f:
+            node_errors = json.load(f)
+
+        print(f"🔧 {node_to_test}")
+        if not node_errors:
+            print("  ✅ No errors\n")
         else:
-            # Show all nodes
-            for node_name in sorted(error_data.keys()):
-                print(f"🔧 {node_name}")
+            for error_key, count in node_errors.items():
+                print(f"  • {count}x {error_key}")
+        print()
+    except Exception as e:
+        print(f"⚠️ Failed to read or parse {error_file}: {str(e)}")
 
-                node_errors = error_data[node_name]
-                
-                if not node_errors:
-                    print("  ✅ No errors")
-                else:
-                    for error_key, count in node_errors.items():
-                        print(f"  • {count}x {error_key}")
-
-                print()
 
 if __name__ == "__main__":
-    print_error_summary()
+    print_summary_for_node()
+    print_error_for_node()
