@@ -71,7 +71,7 @@ def pytest_sessionfinish(session, exitstatus):
 
     print("\n📊 Error Breakdown by Node:")
 
-        node_to_test = os.getenv("NODE_TO_TEST")
+    node_to_test = os.getenv("NODE_TO_TEST")
     if node_to_test:
         print(f"\n📊 Error Breakdown for {node_to_test}:\n")
         node_file = f"test_output/errors_{node_to_test.replace(' ', '_')}.json"
@@ -107,3 +107,9 @@ def pytest_sessionfinish(session, exitstatus):
                         print(f"  • {count}x {message}")
                 else:
                     print(f"✅ {node_name}: No errors")
+
+    # Clean up after printing
+    if os.path.exists(error_file):
+        os.remove(error_file)
+    if os.path.exists(stats_file):
+        os.remove(stats_file)
