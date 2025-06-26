@@ -1,3 +1,5 @@
+# scripts/print_aggregated_errors.py
+
 import os
 import json
 
@@ -46,24 +48,26 @@ def print_error_for_node():
         print("⚠️ NODE_TO_TEST not defined in environment.")
         return
 
-    error_file = os.path.join(ERROR_DIR, f"errors_{node_to_test.replace(' ', '_')}.json")
+    error_file = os.path.join(ERROR_DIR, "error_stats.json")
     if not os.path.exists(error_file):
         print(f"🔧 {node_to_test}\n  ✅ No errors\n")
         return
 
     try:
         with open(error_file, 'r') as f:
-            node_errors = json.load(f)
-
-        print(f"🔧 {node_to_test}")
-        if not node_errors:
-            print("  ✅ No errors\n")
-        else:
-            for error_key, count in node_errors.items():
-                print(f"  • {count}x {error_key}")
-        print()
+            error_data = json.load(f)
     except Exception as e:
-        print(f"⚠️ Failed to read or parse {error_file}: {str(e)}")
+        print(f"⚠️ Failed to read error_stats.json: {str(e)}")
+        return
+
+    node_errors = error_data.get(node_to_test)
+    if not node_errors:
+        print(f"🔧 {node_to_test}\n  ✅ No errors\n")
+    else:
+        print(f"🔧 {node_to_test}")
+        for error_key, count in node_errors.items():
+            print(f"  • {count}x {error_key}")
+        print()
 
 def print_all_errors():
     print("\n📊 Error Breakdown by Node:\n")
