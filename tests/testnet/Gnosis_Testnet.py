@@ -200,6 +200,7 @@ def run_test_for_node(node, index):
             publish_success += 1
             publish_times.append(end - start)
         except Exception as e:
+            print(f"DEBUG: Publish exception caught: {type(e).__name__}: {str(e)}")
             log_error(e, name, "publishing")
             ual = "did:dkg:otp:20430/0xcdb28e93ed340ec10a71bba00a31dbfcf1bd5d37/179542"
             print(f"⚠️ Using fallback UAL: {ual}")
