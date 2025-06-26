@@ -144,9 +144,13 @@ def log_error(error, node_name, step='unknown', remote_node=None):
     else:
         error_data[node_name][key] = 1
     
-    # Save back to file
+    # Save back to file immediately
     with open(error_file, 'w') as f:
         json.dump(error_data, f, indent=2)
+    
+    # Force flush to ensure file is written
+    f.flush()
+    os.fsync(f.fileno())
 
 def safe_rate(success, fail):
     total = success + fail

@@ -3,154 +3,131 @@
 import os
 import json
 from .stats_tracker import global_stats, error_stats
+import pytest
+import time
+from datetime import datetime
 
-def pytest_sessionstart(session):
-    """Clear error stats at the start of each test session (if they exist)"""
-    error_file = "test_output/error_stats.json"
-    stats_file = "test_output/global_stats.json"
+def pytest_configure(config):
+    """Configure pytest to collect custom markers"""
+    config.addinivalue_line("markers", "slow: marks tests as slow (deselect with '-m \"not slow\"')")
+
+def pytest_collection_modifyitems(config, items):
+    """Add markers to tests based on their names"""
+    for item in items:
+        if "testnet" in item.nodeid.lower():
+            item.add_marker(pytest.mark.testnet)
+        if "mainnet" in item.nodeid.lower():
+            item.add_marker(pytest.mark.mainnet)
+
+@pytest.fixture(scope="session", autouse=True)
+def setup_test_environment():
+    """Setup test environment before running tests"""
+    # Create test_output directory if it doesn't exist
+    os.makedirs("test_output", exist_ok=True)
     
-    if os.path.exists(error_file):
-        os.remove(error_file)
-    if os.path.exists(stats_file):
-        os.remove(stats_file)
-
-def pytest_sessionfinish(session, exitstatus):
-    print("\n\n📊 Global Publish Summary:")
-
-    stats_file = "test_output/global_stats.json"
-    error_file = "test_output/error_stats.json"
-
-    global_data = {}
-    if os.path.exists(stats_file):
-        with open(stats_file, 'r') as f:
+    # Clear any existing error files at the start of the session
+    error_files = [
+        "test_output/error_stats.json",
+        "test_output/global_stats.json"
+    ]
+    
+    for error_file in error_files:
+        if os.path.exists(error_file):
             try:
-                global_data = json.load(f)
-            except json.JSONDecodeError:
-                global_data = {}
+                os.remove(error_file)
+            except:
+                pass
 
-    for blockchain, node_data in global_data.items():
-        print(f"\n🔗 Blockchain: {blockchain}")
-        for node_name, results in node_data.items():
-            print(f"  • {node_name}:")
+def get_error_breakdown(node_name):
+    """Get error breakdown for a specific node from multiple sources"""
+    all_errors = {}
+    
+    # Source 1: Aggregated error file
+    aggregated_file = "test_output/error_stats.json"
+    if os.path.exists(aggregated_file):
+        try:
+            with open(aggregated_file, 'r') as f:
+                aggregated_errors = json.load(f)
+                if node_name in aggregated_errors:
+                    all_errors.update(aggregated_errors[node_name])
+        except Exception:
+            pass
+    
+    # Source 2: Individual node error file
+    node_file = f"test_output/errors_{node_name.replace(' ', '_')}.json"
+    if os.path.exists(node_file):
+        try:
+            with open(node_file, 'r') as f:
+                node_errors = json.load(f)
+                all_errors.update(node_errors)
+        except Exception:
+            pass
+    
+    # Source 3: In-memory error stats (if available)
+    try:
+        from tests.testnet.stats_tracker import error_stats
+        if node_name in error_stats:
+            all_errors.update(error_stats[node_name])
+    except ImportError:
+        pass
+    
+    return all_errors
 
-            # Publish
-            p_success = results.get("publish_success", 0)
-            p_failed = results.get("publish_failed", 0)
-            p_rate = round(p_success / (p_success + p_failed) * 100, 2) if (p_success + p_failed) > 0 else 0.0
-            print(f"    🔸 Publish: ✅ {p_success} / ❌ {p_failed} -> {p_rate}%")
-
-            # Query
-            q_success = results.get("query_success", 0)
-            q_failed = results.get("query_failed", 0)
-            q_rate = round(q_success / (q_success + q_failed) * 100, 2) if (q_success + q_failed) > 0 else 0.0
-            print(f"    🔸 Query:   ✅ {q_success} / ❌ {q_failed} -> {q_rate}%")
-
-            # Local Get
-            lg_success = results.get("local_get_success", 0)
-            lg_failed = results.get("local_get_failed", 0)
-            lg_rate = round(lg_success / (lg_success + lg_failed) * 100, 2) if (lg_success + lg_failed) > 0 else 0.0
-            print(f"    🔸 Local Get: ✅ {lg_success} / ❌ {lg_failed} -> {lg_rate}%")
-
-            # Remote Get
-            rg_success = results.get("remote_get_success", 0)
-            rg_failed = results.get("remote_get_failed", 0)
-            rg_rate = round(rg_success / (rg_success + rg_failed) * 100, 2) if (rg_success + rg_failed) > 0 else 0.0
-            print(f"    🔸 Get: ✅ {rg_success} / ❌ {rg_failed} -> {rg_rate}%")
-
-            # Timing
-            def format_time(seconds):
-                return f"{int(seconds // 60)} min {seconds % 60:.2f} sec" if seconds >= 60 else f"{seconds:.2f} seconds"
-
-            def avg_time(times):
-                return sum(times) / len(times) if times else 0.0
-
-            print(f"    ⏱️ Avg Publish Time: {format_time(avg_time(results.get('publish_times', [])))}")
-            print(f"    ⏱️ Avg Query Time: {format_time(avg_time(results.get('query_times', [])))}")
-            print(f"    ⏱️ Avg Local Get Time: {format_time(avg_time(results.get('local_get_times', [])))}")
-            print(f"    ⏱️ Avg Get Time: {format_time(avg_time(results.get('remote_get_times', [])))}")
-
-    print("\n📊 Error Breakdown by Node:")
-
+def pytest_terminal_summary(terminalreporter, exitstatus, config):
+    """Generate a comprehensive test summary at the end"""
+    print("\n" + "="*80)
+    print("🎯 COMPREHENSIVE TEST SUMMARY")
+    print("="*80)
+    
+    # Wait a moment for any pending file writes
+    time.sleep(1)
+    
+    # Get all test nodes from the environment
     node_to_test = os.getenv("NODE_TO_TEST")
+    
     if node_to_test:
-        # Try to get errors from multiple sources to ensure we capture everything
-        all_errors = {}
-        
-        print(f"DEBUG: Looking for errors for {node_to_test}")
-        
-        # Source 1: Aggregated error file
-        if os.path.exists(error_file):
-            print(f"DEBUG: Found aggregated error file: {error_file}")
-            with open(error_file, 'r') as f:
-                try:
-                    aggregated_errors = json.load(f)
-                    print(f"DEBUG: Aggregated file contains {len(aggregated_errors)} nodes: {list(aggregated_errors.keys())}")
-                    if node_to_test in aggregated_errors:
-                        node_errors = aggregated_errors[node_to_test]
-                        print(f"DEBUG: Found {len(node_errors)} errors for {node_to_test} in aggregated file")
-                        all_errors.update(node_errors)
-                    else:
-                        print(f"DEBUG: {node_to_test} not found in aggregated file")
-                except json.JSONDecodeError as e:
-                    print(f"DEBUG: Failed to parse aggregated file: {e}")
-        else:
-            print(f"DEBUG: Aggregated error file not found: {error_file}")
-        
-        # Source 2: Individual node error file
-        node_error_file = f"test_output/errors_{node_to_test.replace(' ', '_')}.json"
-        if os.path.exists(node_error_file):
-            print(f"DEBUG: Found individual error file: {node_error_file}")
-            with open(node_error_file, 'r') as f:
-                try:
-                    node_errors = json.load(f)
-                    print(f"DEBUG: Individual file contains {len(node_errors)} errors for {node_to_test}")
-                    all_errors.update(node_errors)
-                except json.JSONDecodeError as e:
-                    print(f"DEBUG: Failed to parse individual file: {e}")
-        else:
-            print(f"DEBUG: Individual error file not found: {node_error_file}")
-        
-        # Source 3: Global error_stats from memory (if available)
-        if hasattr(error_stats, 'get') and node_to_test in error_stats:
-            print(f"DEBUG: Found {len(error_stats[node_to_test])} errors in memory for {node_to_test}")
-            all_errors.update(error_stats[node_to_test])
-        else:
-            print(f"DEBUG: No errors found in memory for {node_to_test}")
-        
-        print(f"DEBUG: Total errors collected: {len(all_errors)}")
-        for key, count in all_errors.items():
-            print(f"DEBUG: Error key: {key} (count: {count})")
-        
-        if all_errors:
-            print(f"🔧 {node_to_test}")
-            for message, count in all_errors.items():
-                print(f"  • {count}x {message}")
-        else:
-            print(f"✅ {node_to_test}: No errors")
+        # Test specific nodes
+        nodes_to_check = [node.strip() for node in node_to_test.split(",")]
     else:
-        # Fallback to global if no specific node is targeted
-        print("\n📊 Error Breakdown by Node:")
-        error_data = {}
-        if os.path.exists(error_file):
-            with open(error_file, 'r') as f:
-                try:
-                    error_data = json.load(f)
-                except json.JSONDecodeError:
-                    error_data = {}
-
-        if not error_data:
-            print("✅ No errors recorded.")
+        # Check all possible nodes
+        nodes_to_check = [
+            "Node 01", "Node 04", "Node 05", "Node 06", "Node 07", "Node 08", 
+            "Node 09", "Node 10", "Node 13", "Node 14", "Node 21", "Node 23", "Node 37"
+        ]
+    
+    # Get global stats
+    global_stats_file = "test_output/global_stats.json"
+    global_stats = {}
+    if os.path.exists(global_stats_file):
+        try:
+            with open(global_stats_file, 'r') as f:
+                global_stats = json.load(f)
+        except Exception:
+            pass
+    
+    # Process each node
+    for node_name in nodes_to_check:
+        print(f"\n🔧 {node_name}")
+        
+        # Get errors for this node
+        errors = get_error_breakdown(node_name)
+        
+        if errors:
+            for error_key, count in errors.items():
+                print(f"  • {count}x {error_key}")
         else:
-            for node_name, errors in error_data.items():
-                if errors:
-                    print(f"\n🔧 {node_name}")
-                    for message, count in errors.items():
-                        print(f"  • {count}x {message}")
-                else:
-                    print(f"✅ {node_name}: No errors")
-
-    # Clean up after printing
-    if os.path.exists(error_file):
-        os.remove(error_file)
-    if os.path.exists(stats_file):
-        os.remove(stats_file)
+            print("  • No errors")
+        
+        # Get performance stats if available
+        for blockchain, nodes in global_stats.items():
+            if node_name in nodes:
+                node_stats = nodes[node_name]
+                print(f"  📊 Performance:")
+                print(f"    - Publish: {node_stats.get('publish_success', 0)}/{node_stats.get('publish_success', 0) + node_stats.get('publish_failed', 0)}")
+                print(f"    - Query: {node_stats.get('query_success', 0)}/{node_stats.get('query_success', 0) + node_stats.get('query_failed', 0)}")
+                print(f"    - Local Get: {node_stats.get('local_get_success', 0)}/{node_stats.get('local_get_success', 0) + node_stats.get('local_get_failed', 0)}")
+                print(f"    - Remote Get: {node_stats.get('remote_get_success', 0)}/{node_stats.get('remote_get_success', 0) + node_stats.get('remote_get_failed', 0)}")
+                break
+    
+    print(f"\n⏰ Summary generated at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print("="*80)

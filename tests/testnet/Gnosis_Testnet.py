@@ -112,8 +112,6 @@ def log_error(error, node_name, step='unknown', remote_node=None):
     else:
         key = f"{step} — {type(error).__name__}: {error_message}"
     
-    print(f"DEBUG: Generated error key: '{key}' for {node_name}")
-    
     # Store errors in the global error_stats for this node
     if node_name not in error_stats:
         error_stats[node_name] = {}
@@ -122,8 +120,6 @@ def log_error(error, node_name, step='unknown', remote_node=None):
         error_stats[node_name][key] += 1
     else:
         error_stats[node_name][key] = 1
-    
-    print(f"DEBUG: Stored error in memory for {node_name}: {key}")
     
     # Also store in a temporary file to ensure persistence across test session
     error_file = "test_output/error_stats.json"
@@ -139,7 +135,7 @@ def log_error(error, node_name, step='unknown', remote_node=None):
     else:
         error_data = {}
     
-    # Update errors
+    # Update errors - merge instead of overwrite
     if node_name not in error_data:
         error_data[node_name] = {}
     
@@ -148,11 +144,13 @@ def log_error(error, node_name, step='unknown', remote_node=None):
     else:
         error_data[node_name][key] = 1
     
-    print(f"DEBUG: Stored error in file for {node_name}: {key}")
-    
-    # Save back to file
+    # Save back to file immediately
     with open(error_file, 'w') as f:
         json.dump(error_data, f, indent=2)
+    
+    # Force flush to ensure file is written
+    f.flush()
+    os.fsync(f.fileno())
 
 def safe_rate(success, fail):
     total = success + fail
@@ -200,7 +198,6 @@ def run_test_for_node(node, index):
             publish_success += 1
             publish_times.append(end - start)
         except Exception as e:
-            print(f"DEBUG: Publish exception caught: {type(e).__name__}: {str(e)}")
             log_error(e, name, "publishing")
             ual = "did:dkg:otp:20430/0xcdb28e93ed340ec10a71bba00a31dbfcf1bd5d37/179542"
             print(f"⚠️ Using fallback UAL: {ual}")
