@@ -56,11 +56,17 @@ def get_all_errors_for_node(node_name):
 def print_all_errors():
     print("\n📊 Error Breakdown by Node:\n")
     
-    # Define all possible nodes
-    all_nodes = [
+    # Define all possible nodes for both testnet and mainnet
+    testnet_nodes = [
         "Node 01", "Node 04", "Node 05", "Node 06", "Node 07", "Node 08", 
         "Node 09", "Node 10", "Node 13", "Node 14", "Node 21", "Node 23", "Node 37"
     ]
+    
+    mainnet_nodes = [
+        "Node 25", "Node 26", "Node 27", "Node 28", "Node 29", "Node 30"
+    ]
+    
+    all_nodes = testnet_nodes + mainnet_nodes
     
     # Check for aggregated error file first
     aggregated_file = os.path.join(ERROR_DIR, "error_stats.json")

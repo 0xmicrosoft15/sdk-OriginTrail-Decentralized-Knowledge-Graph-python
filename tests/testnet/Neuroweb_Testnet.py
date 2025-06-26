@@ -11,11 +11,11 @@ from datetime import datetime
 import concurrent.futures
 from concurrent.futures import TimeoutError
 
+from tests.patched_blockchain_provider import BlockchainProvider
 from dkg import DKG
-from dkg.providers import BlockchainProvider, NodeHTTPProvider
+from dkg.providers import NodeHTTPProvider
 from dkg.constants import BlockchainIds
 from tests.testnet.stats_tracker import global_stats, error_stats
-from tests.patched_blockchain_provider import BlockchainProvider
 
 load_dotenv()
 

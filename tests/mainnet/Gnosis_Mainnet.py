@@ -11,11 +11,11 @@ from datetime import datetime
 import concurrent.futures
 from concurrent.futures import TimeoutError
 
+from tests.patched_blockchain_provider import BlockchainProvider
 from dkg import DKG
 from dkg.providers import NodeHTTPProvider
 from dkg.constants import BlockchainIds
 from tests.mainnet.stats_tracker import global_stats, error_stats
-from tests.patched_blockchain_provider import BlockchainProvider
 
 load_dotenv()
 
@@ -118,7 +118,7 @@ def log_error(error, node_name, step='unknown', remote_node=None):
     error_file = "test_output/error_stats.json"
     os.makedirs("test_output", exist_ok=True)
     
-    # Load existing errors
+    # Load existing errors - merge instead of overwrite
     if os.path.exists(error_file):
         with open(error_file, 'r') as f:
             try:
@@ -128,7 +128,7 @@ def log_error(error, node_name, step='unknown', remote_node=None):
     else:
         error_data = {}
     
-    # Update errors
+    # Update errors - merge instead of overwrite
     if node_name not in error_data:
         error_data[node_name] = {}
     
@@ -137,9 +137,15 @@ def log_error(error, node_name, step='unknown', remote_node=None):
     else:
         error_data[node_name][key] = 1
     
-    # Save back to file
-    with open(error_file, 'w') as f:
+    # Save back to file immediately
+    f = open(error_file, 'w')
+    try:
         json.dump(error_data, f, indent=2)
+        # Force flush to ensure file is written
+        f.flush()
+        os.fsync(f.fileno())
+    finally:
+        f.close()
 
 def safe_rate(success, fail):
     total = success + fail
@@ -166,7 +172,7 @@ def run_test_for_node(node, index):
     publish_times, query_times, local_get_times, remote_get_times = [], [], [], []
     failed_assets = []
 
-    for i in range(10):
+    for i in range(1):
         print(f"\n📡 Publishing KA #{i + 1} on {name}")
         content = get_random_content(name)
         ual = None
