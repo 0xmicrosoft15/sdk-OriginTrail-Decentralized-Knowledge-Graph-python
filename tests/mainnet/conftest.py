@@ -6,6 +6,8 @@ from .stats_tracker import global_stats, error_stats
 
 def pytest_sessionstart(session):
     """Clear error stats at the start of each test session"""
+    os.makedirs("test_output", exist_ok=True)  # Ensure the directory exists
+
     error_file = "test_output/error_stats.json"
     stats_file = "test_output/global_stats.json"
     
@@ -109,4 +111,4 @@ def pytest_sessionfinish(session, exitstatus):
     if os.path.exists(error_file):
         os.remove(error_file)
     if os.path.exists(stats_file):
-        os.remove(stats_file) 
+        os.remove(stats_file)
