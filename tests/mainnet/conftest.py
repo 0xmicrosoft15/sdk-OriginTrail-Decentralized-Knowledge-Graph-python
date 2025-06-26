@@ -74,16 +74,23 @@ def pytest_sessionfinish(session, exitstatus):
     node_to_test = os.getenv("NODE_TO_TEST")
     if node_to_test:
         print(f"\n🔧 {node_to_test}:\n")
-        node_file = f"test_output/errors_{node_to_test.replace(' ', '_')}.json"
-        if os.path.exists(node_file):
-            with open(node_file, "r") as f:
-                node_errors = json.load(f)
-            if node_errors:
-                print(f"🔧 {node_to_test}")
-                for message, count in node_errors.items():
-                    print(f"  • {count}x {message}")
-            else:
-                print(f"✅ {node_to_test}: No errors")
+        
+        # Read from aggregated error file instead of individual node file
+        error_data = {}
+        if os.path.exists(error_file):
+            with open(error_file, 'r') as f:
+                try:
+                    error_data = json.load(f)
+                except json.JSONDecodeError:
+                    error_data = {}
+        
+        # Get errors for the specific node
+        node_errors = error_data.get(node_to_test, {})
+        
+        if node_errors:
+            print(f"🔧 {node_to_test}")
+            for message, count in node_errors.items():
+                print(f"  • {count}x {message}")
         else:
             print(f"✅ {node_to_test}: No errors")
     else:
