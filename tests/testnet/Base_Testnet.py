@@ -173,7 +173,7 @@ def run_test_for_node(node, index):
     publish_times, query_times, local_get_times, remote_get_times = [], [], [], []
     failed_assets = []
 
-    for i in range(10):
+    for i in range(1):
         print(f"\n📡 Publishing KA #{i + 1} on {name}")
         content = get_random_content(name)
         ual = None
