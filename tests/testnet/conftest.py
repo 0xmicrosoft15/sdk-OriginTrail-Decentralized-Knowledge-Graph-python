@@ -76,11 +76,65 @@ def get_error_breakdown(node_name):
 def pytest_terminal_summary(terminalreporter, exitstatus, config):
     """Generate a comprehensive test summary at the end"""
     print("\n" + "="*80)
-    print("🎯 COMPREHENSIVE TEST SUMMARY")
+    print("📊 Global Publish Summary:")
     print("="*80)
     
     # Wait a moment for any pending file writes
     time.sleep(1)
+    
+    # Get global stats
+    global_stats_file = "test_output/global_stats.json"
+    global_stats = {}
+    if os.path.exists(global_stats_file):
+        try:
+            with open(global_stats_file, 'r') as f:
+                global_stats = json.load(f)
+        except Exception:
+            pass
+    
+    # Display blockchain summaries
+    for blockchain, nodes in global_stats.items():
+        print(f"\n🔗 Blockchain: {blockchain}")
+        for node_name, node_stats in nodes.items():
+            print(f"  • {node_name}:")
+            
+            # Publish stats
+            p_success = node_stats.get('publish_success', 0)
+            p_failed = node_stats.get('publish_failed', 0)
+            p_rate = round(p_success / (p_success + p_failed) * 100, 2) if (p_success + p_failed) > 0 else 0.0
+            print(f"    🔸 Publish: ✅ {p_success} / ❌ {p_failed} -> {p_rate}%")
+            
+            # Query stats
+            q_success = node_stats.get('query_success', 0)
+            q_failed = node_stats.get('query_failed', 0)
+            q_rate = round(q_success / (q_success + q_failed) * 100, 2) if (q_success + q_failed) > 0 else 0.0
+            print(f"    🔸 Query:   ✅ {q_success} / ❌ {q_failed} -> {q_rate}%")
+            
+            # Local Get stats
+            lg_success = node_stats.get('local_get_success', 0)
+            lg_failed = node_stats.get('local_get_failed', 0)
+            lg_rate = round(lg_success / (lg_success + lg_failed) * 100, 2) if (lg_success + lg_failed) > 0 else 0.0
+            print(f"    🔸 Local Get: ✅ {lg_success} / ❌ {lg_failed} -> {lg_rate}%")
+            
+            # Remote Get stats
+            rg_success = node_stats.get('remote_get_success', 0)
+            rg_failed = node_stats.get('remote_get_failed', 0)
+            rg_rate = round(rg_success / (rg_success + rg_failed) * 100, 2) if (rg_success + rg_failed) > 0 else 0.0
+            print(f"    🔸 Get: ✅ {rg_success} / ❌ {rg_failed} -> {rg_rate}%")
+            
+            # Timing stats
+            def format_time(seconds):
+                return f"{int(seconds // 60)} min {seconds % 60:.2f} sec" if seconds >= 60 else f"{seconds:.2f} seconds"
+            
+            def avg_time(times):
+                return sum(times) / len(times) if times else 0.0
+            
+            print(f"    ⏱️ Avg Publish Time: {format_time(avg_time(node_stats.get('publish_times', [])))}")
+            print(f"    ⏱️ Avg Query Time: {format_time(avg_time(node_stats.get('query_times', [])))}")
+            print(f"    ⏱️ Avg Local Get Time: {format_time(avg_time(node_stats.get('local_get_times', [])))}")
+            print(f"    ⏱️ Avg Get Time: {format_time(avg_time(node_stats.get('remote_get_times', [])))}")
+    
+    print("\n📊 Error Breakdown by Node:")
     
     # Get all test nodes from the environment
     node_to_test = os.getenv("NODE_TO_TEST")
@@ -95,17 +149,7 @@ def pytest_terminal_summary(terminalreporter, exitstatus, config):
             "Node 09", "Node 10", "Node 13", "Node 14", "Node 21", "Node 23", "Node 37"
         ]
     
-    # Get global stats
-    global_stats_file = "test_output/global_stats.json"
-    global_stats = {}
-    if os.path.exists(global_stats_file):
-        try:
-            with open(global_stats_file, 'r') as f:
-                global_stats = json.load(f)
-        except Exception:
-            pass
-    
-    # Process each node
+    # Process each node for errors
     for node_name in nodes_to_check:
         print(f"\n🔧 {node_name}")
         
@@ -117,17 +161,6 @@ def pytest_terminal_summary(terminalreporter, exitstatus, config):
                 print(f"  • {count}x {error_key}")
         else:
             print("  • No errors")
-        
-        # Get performance stats if available
-        for blockchain, nodes in global_stats.items():
-            if node_name in nodes:
-                node_stats = nodes[node_name]
-                print(f"  📊 Performance:")
-                print(f"    - Publish: {node_stats.get('publish_success', 0)}/{node_stats.get('publish_success', 0) + node_stats.get('publish_failed', 0)}")
-                print(f"    - Query: {node_stats.get('query_success', 0)}/{node_stats.get('query_success', 0) + node_stats.get('query_failed', 0)}")
-                print(f"    - Local Get: {node_stats.get('local_get_success', 0)}/{node_stats.get('local_get_success', 0) + node_stats.get('local_get_failed', 0)}")
-                print(f"    - Remote Get: {node_stats.get('remote_get_success', 0)}/{node_stats.get('remote_get_success', 0) + node_stats.get('remote_get_failed', 0)}")
-                break
     
     print(f"\n⏰ Summary generated at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print("="*80)
