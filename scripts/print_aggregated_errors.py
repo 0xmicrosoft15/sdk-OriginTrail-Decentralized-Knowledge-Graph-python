@@ -37,6 +37,20 @@ def get_all_errors_for_node(node_name):
         except Exception:
             pass
     
+    # Source 3: Check for any other error files that might contain this node's errors
+    # This handles cases where errors might be stored in different formats
+    for filename in os.listdir(ERROR_DIR):
+        if filename.endswith('.json') and 'error' in filename.lower():
+            file_path = os.path.join(ERROR_DIR, filename)
+            try:
+                with open(file_path, 'r') as f:
+                    file_data = json.load(f)
+                    if isinstance(file_data, dict) and node_name in file_data:
+                        if isinstance(file_data[node_name], dict):
+                            all_errors.update(file_data[node_name])
+            except Exception:
+                pass
+    
     return all_errors
 
 def print_all_errors():

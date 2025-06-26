@@ -25,18 +25,8 @@ def setup_test_environment():
     # Create test_output directory if it doesn't exist
     os.makedirs("test_output", exist_ok=True)
     
-    # Clear any existing error files at the start of the session
-    error_files = [
-        "test_output/error_stats.json",
-        "test_output/global_stats.json"
-    ]
-    
-    for error_file in error_files:
-        if os.path.exists(error_file):
-            try:
-                os.remove(error_file)
-            except:
-                pass
+    # Don't clear error files - we want to preserve errors from previous runs
+    # This allows errors from both chunks to be preserved in the aggregate pipeline
 
 def get_error_breakdown(node_name):
     """Get error breakdown for a specific node from multiple sources"""
