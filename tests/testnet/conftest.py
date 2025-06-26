@@ -76,29 +76,50 @@ def pytest_sessionfinish(session, exitstatus):
         # Try to get errors from multiple sources to ensure we capture everything
         all_errors = {}
         
+        print(f"DEBUG: Looking for errors for {node_to_test}")
+        
         # Source 1: Aggregated error file
         if os.path.exists(error_file):
+            print(f"DEBUG: Found aggregated error file: {error_file}")
             with open(error_file, 'r') as f:
                 try:
                     aggregated_errors = json.load(f)
+                    print(f"DEBUG: Aggregated file contains {len(aggregated_errors)} nodes: {list(aggregated_errors.keys())}")
                     if node_to_test in aggregated_errors:
-                        all_errors.update(aggregated_errors[node_to_test])
-                except json.JSONDecodeError:
-                    pass
+                        node_errors = aggregated_errors[node_to_test]
+                        print(f"DEBUG: Found {len(node_errors)} errors for {node_to_test} in aggregated file")
+                        all_errors.update(node_errors)
+                    else:
+                        print(f"DEBUG: {node_to_test} not found in aggregated file")
+                except json.JSONDecodeError as e:
+                    print(f"DEBUG: Failed to parse aggregated file: {e}")
+        else:
+            print(f"DEBUG: Aggregated error file not found: {error_file}")
         
         # Source 2: Individual node error file
         node_error_file = f"test_output/errors_{node_to_test.replace(' ', '_')}.json"
         if os.path.exists(node_error_file):
+            print(f"DEBUG: Found individual error file: {node_error_file}")
             with open(node_error_file, 'r') as f:
                 try:
                     node_errors = json.load(f)
+                    print(f"DEBUG: Individual file contains {len(node_errors)} errors for {node_to_test}")
                     all_errors.update(node_errors)
-                except json.JSONDecodeError:
-                    pass
+                except json.JSONDecodeError as e:
+                    print(f"DEBUG: Failed to parse individual file: {e}")
+        else:
+            print(f"DEBUG: Individual error file not found: {node_error_file}")
         
         # Source 3: Global error_stats from memory (if available)
         if hasattr(error_stats, 'get') and node_to_test in error_stats:
+            print(f"DEBUG: Found {len(error_stats[node_to_test])} errors in memory for {node_to_test}")
             all_errors.update(error_stats[node_to_test])
+        else:
+            print(f"DEBUG: No errors found in memory for {node_to_test}")
+        
+        print(f"DEBUG: Total errors collected: {len(all_errors)}")
+        for key, count in all_errors.items():
+            print(f"DEBUG: Error key: {key} (count: {count})")
         
         if all_errors:
             print(f"🔧 {node_to_test}")
