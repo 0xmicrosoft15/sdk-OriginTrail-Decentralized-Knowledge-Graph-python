@@ -125,7 +125,7 @@ def log_error(error, node_name, step='unknown', remote_node=None):
     error_file = "test_output/error_stats.json"
     os.makedirs("test_output", exist_ok=True)
     
-    # Load existing errors
+    # Load existing errors - merge instead of overwrite
     if os.path.exists(error_file):
         with open(error_file, 'r') as f:
             try:

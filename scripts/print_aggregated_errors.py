@@ -12,34 +12,82 @@ def safe_rate(success, fail):
 def avg(times):
     return round(sum(times) / len(times), 2) if times else 0.0
 
-def print_global_summary():
-    summary_file = os.path.join(ERROR_DIR, "global_stats.json")
+def get_all_errors_for_node(node_name):
+    """Get all errors for a specific node from multiple sources"""
+    all_errors = {}
+    
+    # Source 1: Aggregated error file
+    aggregated_file = os.path.join(ERROR_DIR, "error_stats.json")
+    if os.path.exists(aggregated_file):
+        try:
+            with open(aggregated_file, 'r') as f:
+                aggregated_errors = json.load(f)
+                if node_name in aggregated_errors:
+                    all_errors.update(aggregated_errors[node_name])
+        except Exception:
+            pass
+    
+    # Source 2: Individual node error file
+    node_file = os.path.join(ERROR_DIR, f"errors_{node_name.replace(' ', '_')}.json")
+    if os.path.exists(node_file):
+        try:
+            with open(node_file, 'r') as f:
+                node_errors = json.load(f)
+                all_errors.update(node_errors)
+        except Exception:
+            pass
+    
+    return all_errors
 
-    if not os.path.exists(summary_file):
-        print("⚠️ global_stats.json not found.")
-        return
-
-    try:
-        with open(summary_file, "r") as f:
-            summary_data = json.load(f)
-    except Exception as e:
-        print(f"⚠️ Failed to read global_stats.json: {str(e)}")
-        return
-
-    print("\n📊 Global Publish Summary:\n")
-    for blockchain, nodes in summary_data.items():
-        print(f"🔗 Blockchain: {blockchain}")
-        for node_name, node in nodes.items():
-            print(f"  • {node_name}:")
-            print(f"    🔸 Publish: ✅ {node['publish_success']} / ❌ {node['publish_failed']} -> {safe_rate(node['publish_success'], node['publish_failed'])}%")
-            print(f"    🔸 Query:   ✅ {node['query_success']} / ❌ {node['query_failed']} -> {safe_rate(node['query_success'], node['query_failed'])}%")
-            print(f"    🔸 Local Get: ✅ {node['local_get_success']} / ❌ {node['local_get_failed']} -> {safe_rate(node['local_get_success'], node['local_get_failed'])}%")
-            print(f"    🔸 Get: ✅ {node['remote_get_success']} / ❌ {node['remote_get_failed']} -> {safe_rate(node['remote_get_success'], node['remote_get_failed'])}%")
-            print(f"    ⏱️ Avg Publish Time: {avg(node['publish_times'])} seconds")
-            print(f"    ⏱️ Avg Query Time: {avg(node['query_times'])} seconds")
-            print(f"    ⏱️ Avg Local Get Time: {avg(node['local_get_times'])} seconds")
-            print(f"    ⏱️ Avg Get Time: {avg(node['remote_get_times'])} seconds")
+def print_all_errors():
+    print("\n📊 Error Breakdown by Node:\n")
+    
+    # Define all possible nodes
+    all_nodes = [
+        "Node 01", "Node 04", "Node 05", "Node 06", "Node 07", "Node 08", 
+        "Node 09", "Node 10", "Node 13", "Node 14", "Node 21", "Node 23", "Node 37"
+    ]
+    
+    # Check for aggregated error file first
+    aggregated_file = os.path.join(ERROR_DIR, "error_stats.json")
+    nodes_with_errors = []
+    
+    if os.path.exists(aggregated_file):
+        try:
+            with open(aggregated_file, "r") as f:
+                error_data = json.load(f)
+                nodes_with_errors = list(error_data.keys())
+        except Exception:
+            pass
+    
+    # If no aggregated file or no errors, check individual files
+    if not nodes_with_errors:
+        for node_name in all_nodes:
+            node_file = os.path.join(ERROR_DIR, f"errors_{node_name.replace(' ', '_')}.json")
+            if os.path.exists(node_file):
+                try:
+                    with open(node_file, 'r') as f:
+                        node_errors = json.load(f)
+                        if node_errors:
+                            nodes_with_errors.append(node_name)
+                except Exception:
+                    pass
+    
+    # If still no nodes with errors, check all nodes anyway
+    if not nodes_with_errors:
+        nodes_with_errors = all_nodes
+    
+    # Process each node
+    for node_name in nodes_with_errors:
+        errors = get_all_errors_for_node(node_name)
+        
+        if errors:
+            print(f"🔧 {node_name}")
+            for error_key, count in errors.items():
+                print(f"  • {count}x {error_key}")
             print()
+        else:
+            print(f"✅ {node_name}: No errors\n")
 
 def print_error_for_node():
     node_to_test = os.getenv("NODE_TO_TEST")
@@ -48,56 +96,18 @@ def print_error_for_node():
 
     print("\n📊 Error Breakdown by Node:\n")
 
-    error_file = os.path.join(ERROR_DIR, f"errors_{node_to_test.replace(' ', '_')}.json")
-    if not os.path.exists(error_file):
-        print(f"🔧 {node_to_test}\n  ✅ No errors\n")
-        return
-
-    try:
-        with open(error_file, 'r') as f:
-            node_errors = json.load(f)
-
-        print(f"🔧 {node_to_test}")
-        if not node_errors:
-            print("  ✅ No errors\n")
-        else:
-            for error_key, count in node_errors.items():
-                print(f"  • {count}x {error_key}")
+    errors = get_all_errors_for_node(node_to_test)
+    
+    print(f"🔧 {node_to_test}")
+    if not errors:
+        print("  ✅ No errors\n")
+    else:
+        for error_key, count in errors.items():
+            print(f"  • {count}x {error_key}")
         print()
-    except Exception as e:
-        print(f"⚠️ Failed to read or parse {error_file}: {str(e)}")
-
-def print_all_errors():
-    print("\n📊 Error Breakdown by Node:\n")
-    error_file = os.path.join(ERROR_DIR, "error_stats.json")
-
-    if not os.path.exists(error_file):
-        print("✅ No errors recorded.")
-        return
-
-    try:
-        with open(error_file, "r") as f:
-            error_data = json.load(f)
-    except Exception as e:
-        print(f"⚠️ Failed to read error_stats.json: {str(e)}")
-        return
-
-    if not error_data:
-        print("✅ No errors recorded.")
-        return
-
-    for node_name, errors in error_data.items():
-        if not errors:
-            print(f"✅ {node_name}: No errors")
-        else:
-            print(f"🔧 {node_name}")
-            for message, count in errors.items():
-                print(f"  • {count}x {message}")
-            print()
 
 if __name__ == "__main__":
     if os.getenv("AGGREGATE_MODE") == "true":
-        print_global_summary()
         print_all_errors()
     else:
         print_error_for_node()
