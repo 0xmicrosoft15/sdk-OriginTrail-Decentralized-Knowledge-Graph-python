@@ -73,23 +73,36 @@ def pytest_sessionfinish(session, exitstatus):
 
     node_to_test = os.getenv("NODE_TO_TEST")
     if node_to_test:
-        print(f"\n🔧 {node_to_test}:\n")
+        # Try to get errors from multiple sources to ensure we capture everything
+        all_errors = {}
         
-        # Read from aggregated error file instead of individual node file
-        error_data = {}
+        # Source 1: Aggregated error file
         if os.path.exists(error_file):
             with open(error_file, 'r') as f:
                 try:
-                    error_data = json.load(f)
+                    aggregated_errors = json.load(f)
+                    if node_to_test in aggregated_errors:
+                        all_errors.update(aggregated_errors[node_to_test])
                 except json.JSONDecodeError:
-                    error_data = {}
+                    pass
         
-        # Get errors for the specific node
-        node_errors = error_data.get(node_to_test, {})
+        # Source 2: Individual node error file
+        node_error_file = f"test_output/errors_{node_to_test.replace(' ', '_')}.json"
+        if os.path.exists(node_error_file):
+            with open(node_error_file, 'r') as f:
+                try:
+                    node_errors = json.load(f)
+                    all_errors.update(node_errors)
+                except json.JSONDecodeError:
+                    pass
         
-        if node_errors:
+        # Source 3: Global error_stats from memory (if available)
+        if hasattr(error_stats, 'get') and node_to_test in error_stats:
+            all_errors.update(error_stats[node_to_test])
+        
+        if all_errors:
             print(f"🔧 {node_to_test}")
-            for message, count in node_errors.items():
+            for message, count in all_errors.items():
                 print(f"  • {count}x {message}")
         else:
             print(f"✅ {node_to_test}: No errors")
