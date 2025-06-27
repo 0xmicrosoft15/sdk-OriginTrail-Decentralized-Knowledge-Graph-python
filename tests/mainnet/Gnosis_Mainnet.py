@@ -22,6 +22,8 @@ load_dotenv()
 BLOCKCHAIN = BlockchainIds.GNOSIS_MAINNET.value
 OT_NODE_PORT = 8900
 
+# https://positron.origin-trail.network - public node
+
 nodes = [
     {"name": "Node 25", "hostname": "https://v6-pegasus-node-25.origin-trail.network"},
     {"name": "Node 26", "hostname": "https://v6-pegasus-node-26.origin-trail.network"},
