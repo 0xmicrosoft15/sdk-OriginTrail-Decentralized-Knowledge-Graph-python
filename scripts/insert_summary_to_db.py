@@ -34,7 +34,7 @@ for file in files:
 
     blockchain_name = summary.get('blockchain_name', '')
     mainnet = is_mainnet(blockchain_name)
-    table_name = 'publish_mainnet_summary' if mainnet else 'publish_testnet_summary'
+    table_name = 'publish_mainnet_summary_py' if mainnet else 'publish_testnet_summary_py'
 
     try:
         conn = get_db_connection(mainnet)
