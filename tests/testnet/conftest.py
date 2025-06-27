@@ -35,18 +35,16 @@ def setup_test_environment():
         if os.path.exists(error_file):
             try:
                 os.remove(error_file)
-                print(f"🧹 Cleared previous error file: {error_file}")
-            except Exception as e:
-                print(f"⚠️ Could not clear {error_file}: {e}")
+            except Exception:
+                pass
     
     # Also clear individual node error files
     import glob
     for node_error_file in glob.glob("test_output/errors_*.json"):
         try:
             os.remove(node_error_file)
-            print(f"🧹 Cleared previous node error file: {node_error_file}")
-        except Exception as e:
-            print(f"⚠️ Could not clear {node_error_file}: {e}")
+        except Exception:
+            pass
 
 def get_error_breakdown(node_name):
     """Get error breakdown for a specific node from multiple sources"""
