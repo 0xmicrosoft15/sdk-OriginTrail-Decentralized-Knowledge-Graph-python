@@ -165,55 +165,55 @@ test-base-node_37-testnet:
 	NODE_TO_TEST="Node 37" PYTHONUNBUFFERED=1 PYTHONPATH=. poetry run python -u -m pytest -o log_cli=true -o log_cli_level=INFO -s tests/testnet/Base_Testnet.py
 
 test-neuroweb-node_25-mainnet:
-	NODE_TO_TEST="Node 25" PYTHONUNBUFFERED=1 PYTHONPATH=. poetry run python -u -m pytest -o log_cli=true -o log_cli_level=INFO -s --json-report --json-report-file=.report/mainnet_neuroweb.json --html=.report/mainnet_neuroweb.html --self-contained-html tests/mainnet/Neuroweb_Mainnet.py
+	NODE_TO_TEST="Node 25" PYTHONUNBUFFERED=1 PYTHONPATH=. poetry run python -u -m pytest -o log_cli=true -o log_cli_level=INFO -s tests/mainnet/Neuroweb_Mainnet.py
 
 test-neuroweb-node_26-mainnet:
-	NODE_TO_TEST="Node 26" PYTHONUNBUFFERED=1 PYTHONPATH=. poetry run python -u -m pytest -o log_cli=true -o log_cli_level=INFO -s --json-report --json-report-file=.report/mainnet_neuroweb.json --html=.report/mainnet_neuroweb.html --self-contained-html tests/mainnet/Neuroweb_Mainnet.py
+	NODE_TO_TEST="Node 26" PYTHONUNBUFFERED=1 PYTHONPATH=. poetry run python -u -m pytest -o log_cli=true -o log_cli_level=INFO -s tests/mainnet/Neuroweb_Mainnet.py
 
 test-neuroweb-node_27-mainnet:
-	NODE_TO_TEST="Node 27" PYTHONUNBUFFERED=1 PYTHONPATH=. poetry run python -u -m pytest -o log_cli=true -o log_cli_level=INFO -s --json-report --json-report-file=.report/mainnet_neuroweb.json --html=.report/mainnet_neuroweb.html --self-contained-html tests/mainnet/Neuroweb_Mainnet.py
+	NODE_TO_TEST="Node 27" PYTHONUNBUFFERED=1 PYTHONPATH=. poetry run python -u -m pytest -o log_cli=true -o log_cli_level=INFO -s tests/mainnet/Neuroweb_Mainnet.py
 
 test-neuroweb-node_28-mainnet:
-	NODE_TO_TEST="Node 28" PYTHONUNBUFFERED=1 PYTHONPATH=. poetry run python -u -m pytest -o log_cli=true -o log_cli_level=INFO -s --json-report --json-report-file=.report/mainnet_neuroweb.json --html=.report/mainnet_neuroweb.html --self-contained-html tests/mainnet/Neuroweb_Mainnet.py
+	NODE_TO_TEST="Node 28" PYTHONUNBUFFERED=1 PYTHONPATH=. poetry run python -u -m pytest -o log_cli=true -o log_cli_level=INFO -s tests/mainnet/Neuroweb_Mainnet.py
 
 test-neuroweb-node_29-mainnet:
-	NODE_TO_TEST="Node 29" PYTHONUNBUFFERED=1 PYTHONPATH=. poetry run python -u -m pytest -o log_cli=true -o log_cli_level=INFO -s --json-report --json-report-file=.report/mainnet_neuroweb.json --html=.report/mainnet_neuroweb.html --self-contained-html tests/mainnet/Neuroweb_Mainnet.py
+	NODE_TO_TEST="Node 29" PYTHONUNBUFFERED=1 PYTHONPATH=. poetry run python -u -m pytest -o log_cli=true -o log_cli_level=INFO -s tests/mainnet/Neuroweb_Mainnet.py
 
 test-neuroweb-node_30-mainnet:
-	NODE_TO_TEST="Node 30" PYTHONUNBUFFERED=1 PYTHONPATH=. poetry run python -u -m pytest -o log_cli=true -o log_cli_level=INFO -s --json-report --json-report-file=.report/mainnet_neuroweb.json --html=.report/mainnet_neuroweb.html --self-contained-html tests/mainnet/Neuroweb_Mainnet.py
+	NODE_TO_TEST="Node 30" PYTHONUNBUFFERED=1 PYTHONPATH=. poetry run python -u -m pytest -o log_cli=true -o log_cli_level=INFO -s tests/mainnet/Neuroweb_Mainnet.py
 
 test-gnosis-node_25-mainnet:
-	NODE_TO_TEST="Node 25" PYTHONUNBUFFERED=1 PYTHONPATH=. poetry run python -u -m pytest -o log_cli=true -o log_cli_level=INFO -s --json-report --json-report-file=.report/mainnet_gnosis.json --html=.report/mainnet_gnosis.html --self-contained-html tests/mainnet/Gnosis_Mainnet.py
+	NODE_TO_TEST="Node 25" PYTHONUNBUFFERED=1 PYTHONPATH=. poetry run python -u -m pytest -o log_cli=true -o log_cli_level=INFO -s tests/mainnet/Gnosis_Mainnet.py
 
 test-gnosis-node_26-mainnet:
-	NODE_TO_TEST="Node 26" PYTHONUNBUFFERED=1 PYTHONPATH=. poetry run python -u -m pytest -o log_cli=true -o log_cli_level=INFO -s --json-report --json-report-file=.report/mainnet_gnosis.json --html=.report/mainnet_gnosis.html --self-contained-html tests/mainnet/Gnosis_Mainnet.py
+	NODE_TO_TEST="Node 26" PYTHONUNBUFFERED=1 PYTHONPATH=. poetry run python -u -m pytest -o log_cli=true -o log_cli_level=INFO -s tests/mainnet/Gnosis_Mainnet.py
 
 test-gnosis-node_27-mainnet:
-	NODE_TO_TEST="Node 27" PYTHONUNBUFFERED=1 PYTHONPATH=. poetry run python -u -m pytest -o log_cli=true -o log_cli_level=INFO -s --json-report --json-report-file=.report/mainnet_gnosis.json --html=.report/mainnet_gnosis.html --self-contained-html tests/mainnet/Gnosis_Mainnet.py
+	NODE_TO_TEST="Node 27" PYTHONUNBUFFERED=1 PYTHONPATH=. poetry run python -u -m pytest -o log_cli=true -o log_cli_level=INFO -s tests/mainnet/Gnosis_Mainnet.py
 
 test-gnosis-node_28-mainnet:
-	NODE_TO_TEST="Node 28" PYTHONUNBUFFERED=1 PYTHONPATH=. poetry run python -u -m pytest -o log_cli=true -o log_cli_level=INFO -s --json-report --json-report-file=.report/mainnet_gnosis.json --html=.report/mainnet_gnosis.html --self-contained-html tests/mainnet/Gnosis_Mainnet.py
+	NODE_TO_TEST="Node 28" PYTHONUNBUFFERED=1 PYTHONPATH=. poetry run python -u -m pytest -o log_cli=true -o log_cli_level=INFO -s tests/mainnet/Gnosis_Mainnet.py
 
 test-gnosis-node_29-mainnet:
-	NODE_TO_TEST="Node 29" PYTHONUNBUFFERED=1 PYTHONPATH=. poetry run python -u -m pytest -o log_cli=true -o log_cli_level=INFO -s --json-report --json-report-file=.report/mainnet_gnosis.json --html=.report/mainnet_gnosis.html --self-contained-html tests/mainnet/Gnosis_Mainnet.py
+	NODE_TO_TEST="Node 29" PYTHONUNBUFFERED=1 PYTHONPATH=. poetry run python -u -m pytest -o log_cli=true -o log_cli_level=INFO -s tests/mainnet/Gnosis_Mainnet.py
 
 test-gnosis-node_30-mainnet:
-	NODE_TO_TEST="Node 30" PYTHONUNBUFFERED=1 PYTHONPATH=. poetry run python -u -m pytest -o log_cli=true -o log_cli_level=INFO -s --json-report --json-report-file=.report/mainnet_gnosis.json --html=.report/mainnet_gnosis.html --self-contained-html tests/mainnet/Gnosis_Mainnet.py
+	NODE_TO_TEST="Node 30" PYTHONUNBUFFERED=1 PYTHONPATH=. poetry run python -u -m pytest -o log_cli=true -o log_cli_level=INFO -s tests/mainnet/Gnosis_Mainnet.py
 
 test-base-node_25-mainnet:
-	NODE_TO_TEST="Node 25" PYTHONUNBUFFERED=1 PYTHONPATH=. poetry run python -u -m pytest -o log_cli=true -o log_cli_level=INFO -s --json-report --json-report-file=.report/mainnet_base.json --html=.report/mainnet_base.html --self-contained-html tests/mainnet/Base_Mainnet.py
+	NODE_TO_TEST="Node 25" PYTHONUNBUFFERED=1 PYTHONPATH=. poetry run python -u -m pytest -o log_cli=true -o log_cli_level=INFO -s tests/mainnet/Base_Mainnet.py
 
 test-base-node_26-mainnet:
-	NODE_TO_TEST="Node 26" PYTHONUNBUFFERED=1 PYTHONPATH=. poetry run python -u -m pytest -o log_cli=true -o log_cli_level=INFO -s --json-report --json-report-file=.report/mainnet_base.json --html=.report/mainnet_base.html --self-contained-html tests/mainnet/Base_Mainnet.py
+	NODE_TO_TEST="Node 26" PYTHONUNBUFFERED=1 PYTHONPATH=. poetry run python -u -m pytest -o log_cli=true -o log_cli_level=INFO -s tests/mainnet/Base_Mainnet.py
 
 test-base-node_27-mainnet:
-	NODE_TO_TEST="Node 27" PYTHONUNBUFFERED=1 PYTHONPATH=. poetry run python -u -m pytest -o log_cli=true -o log_cli_level=INFO -s --json-report --json-report-file=.report/mainnet_base.json --html=.report/mainnet_base.html --self-contained-html tests/mainnet/Base_Mainnet.py
+	NODE_TO_TEST="Node 27" PYTHONUNBUFFERED=1 PYTHONPATH=. poetry run python -u -m pytest -o log_cli=true -o log_cli_level=INFO -s tests/mainnet/Base_Mainnet.py
 
 test-base-node_28-mainnet:
-	NODE_TO_TEST="Node 28" PYTHONUNBUFFERED=1 PYTHONPATH=. poetry run python -u -m pytest -o log_cli=true -o log_cli_level=INFO -s --json-report --json-report-file=.report/mainnet_base.json --html=.report/mainnet_base.html --self-contained-html tests/mainnet/Base_Mainnet.py
+	NODE_TO_TEST="Node 28" PYTHONUNBUFFERED=1 PYTHONPATH=. poetry run python -u -m pytest -o log_cli=true -o log_cli_level=INFO -s tests/mainnet/Base_Mainnet.py
 
 test-base-node_29-mainnet:
-	NODE_TO_TEST="Node 29" PYTHONUNBUFFERED=1 PYTHONPATH=. poetry run python -u -m pytest -o log_cli=true -o log_cli_level=INFO -s --json-report --json-report-file=.report/mainnet_base.json --html=.report/mainnet_base.html --self-contained-html tests/mainnet/Base_Mainnet.py
+	NODE_TO_TEST="Node 29" PYTHONUNBUFFERED=1 PYTHONPATH=. poetry run python -u -m pytest -o log_cli=true -o log_cli_level=INFO -s tests/mainnet/Base_Mainnet.py
 
 test-base-node_30-mainnet:
-	NODE_TO_TEST="Node 30" PYTHONUNBUFFERED=1 PYTHONPATH=. poetry run python -u -m pytest -o log_cli=true -o log_cli_level=INFO -s --json-report --json-report-file=.report/mainnet_base.json --html=.report/mainnet_base.html --self-contained-html tests/mainnet/Base_Mainnet.py
+	NODE_TO_TEST="Node 30" PYTHONUNBUFFERED=1 PYTHONPATH=. poetry run python -u -m pytest -o log_cli=true -o log_cli_level=INFO -s tests/mainnet/Base_Mainnet.py
