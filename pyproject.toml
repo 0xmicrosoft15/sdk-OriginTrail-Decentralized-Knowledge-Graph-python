@@ -19,6 +19,7 @@ hexbytes = "^1.2.1"
 eth-account = "^0.13.4"
 eth-typing = "^5.0.0"
 python-dotenv = "^1.0.1"
+psycopg2-binary = "^2.9.10"
 
 
 [tool.poetry.group.dev.dependencies]
