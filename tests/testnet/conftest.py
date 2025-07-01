@@ -2,10 +2,10 @@
 
 import os
 import json
-from .stats_tracker import global_stats, error_stats
 import pytest
 import time
 from datetime import datetime
+from tests.testnet.stats_tracker import global_stats, error_stats
 
 def pytest_configure(config):
     """Configure pytest to collect custom markers"""
@@ -73,7 +73,6 @@ def get_error_breakdown(node_name):
     
     # Source 3: In-memory error stats (if available)
     try:
-        from tests.testnet.stats_tracker import error_stats
         if node_name in error_stats:
             all_errors.update(error_stats[node_name])
     except ImportError:
