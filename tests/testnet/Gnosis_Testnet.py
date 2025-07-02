@@ -201,7 +201,7 @@ def run_test_for_node(node, index):
             publish_times.append(end - start)
         except Exception as e:
             log_error(e, name, "publishing")
-            ual = "did:dkg:otp:20430/0xcdb28e93ed340ec10a71bba00a31dbfcf1bd5d37/179542"
+            ual = "did:dkg:otp:20430/0xcdb28e93ed340ec10a71bba00a31dbfcf1bd5d37/180388"
             print(f"⚠️ Using fallback UAL: {ual}")
             failed_assets.append(f"KA #{i + 1} (Publish failed — No UAL)")
             publish_fail += 1
