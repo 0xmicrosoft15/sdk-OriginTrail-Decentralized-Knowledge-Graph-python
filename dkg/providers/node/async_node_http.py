@@ -30,8 +30,10 @@ class AsyncNodeHTTPProvider(BaseNodeHTTPProvider):
         endpoint_uri: URI | str,
         api_version: str = "v1",
         auth_token: str | None = None,
+        timeout: int = 60,  # timeout in seconds
     ):
         super().__init__(endpoint_uri, api_version, auth_token)
+        self.timeout = timeout
 
     async def make_request(
         self,
@@ -42,7 +44,9 @@ class AsyncNodeHTTPProvider(BaseNodeHTTPProvider):
     ) -> NodeResponseDict:
         url = f"{self.url}/{path}"
 
-        async with aiohttp.ClientSession() as session:
+        timeout_config = aiohttp.ClientTimeout(total=self.timeout)
+
+        async with aiohttp.ClientSession(timeout=timeout_config) as session:
             try:
                 if method == HTTPRequestMethod.GET:
                     async with session.get(
