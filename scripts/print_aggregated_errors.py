@@ -12,6 +12,41 @@ def safe_rate(success, fail):
 def avg(times):
     return round(sum(times) / len(times), 2) if times else 0.0
 
+def create_aggregated_error_file():
+    """Create aggregated error_stats.json from individual node files"""
+    aggregated_errors = {}
+    
+    # Define all possible nodes
+    testnet_nodes = [
+        "Node 01", "Node 04", "Node 05", "Node 06", "Node 07", "Node 08", 
+        "Node 09", "Node 10", "Node 13", "Node 14", "Node 21", "Node 23", "Node 37"
+    ]
+    
+    mainnet_nodes = [
+        "Node 25", "Node 26", "Node 27", "Node 28", "Node 29", "Node 30"
+    ]
+    
+    all_nodes = testnet_nodes + mainnet_nodes
+    
+    # Read each individual node error file
+    for node_name in all_nodes:
+        node_file = os.path.join(ERROR_DIR, f"errors_{node_name.replace(' ', '_')}.json")
+        if os.path.exists(node_file):
+            try:
+                with open(node_file, 'r') as f:
+                    node_errors = json.load(f)
+                    if node_errors:  # Only add if there are errors
+                        aggregated_errors[node_name] = node_errors
+            except Exception as e:
+                print(f"⚠️ Warning: Could not read {node_file}: {e}")
+    
+    # Write aggregated file
+    aggregated_file = os.path.join(ERROR_DIR, "error_stats.json")
+    with open(aggregated_file, 'w') as f:
+        json.dump(aggregated_errors, f, indent=2)
+    
+    return aggregated_errors
+
 def get_all_errors_for_node(node_name):
     """Get all errors for a specific node from multiple sources"""
     all_errors = {}
@@ -56,6 +91,9 @@ def get_all_errors_for_node(node_name):
 def print_all_errors():
     print("\n📊 Error Breakdown by Node:\n")
     
+    # Create aggregated error file from individual files
+    aggregated_errors = create_aggregated_error_file()
+    
     # Define all possible nodes for both testnet and mainnet
     testnet_nodes = [
         "Node 01", "Node 04", "Node 05", "Node 06", "Node 07", "Node 08", 
@@ -68,19 +106,10 @@ def print_all_errors():
     
     all_nodes = testnet_nodes + mainnet_nodes
     
-    # Check for aggregated error file first
-    aggregated_file = os.path.join(ERROR_DIR, "error_stats.json")
-    nodes_with_errors = []
+    # Get nodes that have errors
+    nodes_with_errors = list(aggregated_errors.keys())
     
-    if os.path.exists(aggregated_file):
-        try:
-            with open(aggregated_file, "r") as f:
-                error_data = json.load(f)
-                nodes_with_errors = list(error_data.keys())
-        except Exception:
-            pass
-    
-    # If no aggregated file or no errors, check individual files
+    # If no aggregated errors, check individual files
     if not nodes_with_errors:
         for node_name in all_nodes:
             node_file = os.path.join(ERROR_DIR, f"errors_{node_name.replace(' ', '_')}.json")

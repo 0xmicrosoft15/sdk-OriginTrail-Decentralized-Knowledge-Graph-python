@@ -116,38 +116,29 @@ def log_error(error, node_name, step='unknown', remote_node=None):
     else:
         error_stats[node_name][key] = 1
     
-    # Also store in a temporary file to ensure persistence across test session
-    error_file = "test_output/error_stats.json"
+    # Write to individual node error file (parallel-safe)
+    node_error_file = f"test_output/errors_{node_name.replace(' ', '_')}.json"
     os.makedirs("test_output", exist_ok=True)
     
-    # Load existing errors - merge instead of overwrite
-    if os.path.exists(error_file):
-        with open(error_file, 'r') as f:
+    # Load existing errors for this node
+    if os.path.exists(node_error_file):
+        with open(node_error_file, 'r') as f:
             try:
-                error_data = json.load(f)
+                node_errors = json.load(f)
             except:
-                error_data = {}
+                node_errors = {}
     else:
-        error_data = {}
+        node_errors = {}
     
-    # Update errors - merge instead of overwrite
-    if node_name not in error_data:
-        error_data[node_name] = {}
-    
-    if key in error_data[node_name]:
-        error_data[node_name][key] += 1
+    # Update errors for this node
+    if key in node_errors:
+        node_errors[key] += 1
     else:
-        error_data[node_name][key] = 1
+        node_errors[key] = 1
     
-    # Save back to file immediately
-    f = open(error_file, 'w')
-    try:
-        json.dump(error_data, f, indent=2)
-        # Force flush to ensure file is written
-        f.flush()
-        os.fsync(f.fileno())
-    finally:
-        f.close()
+    # Save back to individual node file
+    with open(node_error_file, 'w') as f:
+        json.dump(node_errors, f, indent=2)
 
 def safe_rate(success, fail):
     total = success + fail
