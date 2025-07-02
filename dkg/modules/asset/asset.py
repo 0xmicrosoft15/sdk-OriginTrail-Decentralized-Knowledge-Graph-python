@@ -386,24 +386,16 @@ class KnowledgeAsset(Module):
         if token_amount:
             estimated_publishing_cost = token_amount
         else:
-            time_until_next_epoch = self.blockchain_service.time_until_next_epoch()
-            epoch_length = self.blockchain_service.epoch_length()
             stake_weighted_average_ask = (
                 self.blockchain_service.get_stake_weighted_average_ask()
             )
 
             # Convert to integers and perform calculation
             estimated_publishing_cost = (
-                (
-                    int(stake_weighted_average_ask)
-                    * (
-                        int(epochs_num) * int(1e18)
-                        + (int(time_until_next_epoch) * int(1e18)) // int(epoch_length)
-                    )
-                    * int(dataset_size)
-                )
+                int(stake_weighted_average_ask)
+                * int(epochs_num)
+                * int(dataset_size)
                 // 1024
-                // int(1e18)
             )
 
         knowledge_collection_id = None
