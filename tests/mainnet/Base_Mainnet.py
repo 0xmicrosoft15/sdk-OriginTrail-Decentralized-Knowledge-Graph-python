@@ -240,7 +240,7 @@ def run_test_for_node(node, index):
 
         try:
             remote_dkg = DKG(
-                NodeHTTPProvider(f"{remote_node['hostname']}:{OT_NODE_PORT}", "v1", timeout=(60, 120)),
+                NodeHTTPProvider(f"{remote_node['hostname']}:{OT_NODE_PORT}", "v1", timeout=(120, 180)),
                 BlockchainProvider(BLOCKCHAIN),
                 {"max_number_of_retries": 90, "frequency": 2}
             )
