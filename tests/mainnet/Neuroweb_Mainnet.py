@@ -25,13 +25,13 @@ OT_NODE_PORT = 8900
 # https://positron.origin-trail.network - public node
 
 nodes = [
-    {"name": "Node 25", "hostname": "https://v6-pegasus-node-25.origin-trail.network"},
-    {"name": "Node 26", "hostname": "https://v6-pegasus-node-26.origin-trail.network"},
-    {"name": "Node 27", "hostname": "https://v6-pegasus-node-27.origin-trail.network"},
-    {"name": "Node 28", "hostname": "https://v6-pegasus-node-28.origin-trail.network"},
-    {"name": "Node 29", "hostname": "https://v6-pegasus-node-29.origin-trail.network"},
-    {"name": "Node 30", "hostname": "https://v6-pegasus-node-30.origin-trail.network"},
-]
+  { name: 'Node 25', hostname: 'https://proxima-node-25.origin-trail.network' },
+  { name: 'Node 26', hostname: 'https://proxima-node-26.origin-trail.network' },
+  { name: 'Node 27', hostname: 'https://proxima-node-27.origin-trail.network' },
+  { name: 'Node 28', hostname: 'https://proxima-node-28.origin-trail.network' },
+  { name: 'Node 29', hostname: 'https://proxima-node-29.origin-trail.network' },
+  { name: 'Node 30', hostname: 'https://proxima-node-30.origin-trail.network' },
+];
 
 node_keys = {
     name: {
@@ -155,7 +155,7 @@ def run_test_for_node(node, index):
     os.environ["PRIVATE_KEY"] = private_key
 
     dkg = DKG(
-        NodeHTTPProvider(f"{node['hostname']}:{OT_NODE_PORT}", "v1", timeout=(120, 180)),
+        NodeHTTPProvider(f"{node['hostname']}:{OT_NODE_PORT}", "v1"),
         BlockchainProvider(BLOCKCHAIN),
         {"max_number_of_retries": 90, "frequency": 2}
     )
