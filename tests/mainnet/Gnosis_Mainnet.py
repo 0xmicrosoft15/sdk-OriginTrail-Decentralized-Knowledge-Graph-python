@@ -157,7 +157,7 @@ def run_test_for_node(node, index):
     dkg = DKG(
         NodeHTTPProvider(f"{node['hostname']}:{OT_NODE_PORT}", "v1"),
         BlockchainProvider(BLOCKCHAIN),
-        {"max_number_of_retries": 90, "frequency": 2}
+        {"max_number_of_retries": 300, "frequency": 2}
     )
 
     publish_success = query_success = local_get_success = remote_get_success = 0

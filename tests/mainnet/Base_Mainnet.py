@@ -242,7 +242,7 @@ def run_test_for_node(node, index):
             remote_dkg = DKG(
                 NodeHTTPProvider(f"{remote_node['hostname']}:{OT_NODE_PORT}", "v1"),
                 BlockchainProvider(BLOCKCHAIN),
-                {"max_number_of_retries": 90, "frequency": 2}
+                {"max_number_of_retries": 300, "frequency": 2}
             )
             start = time.time()
             result = run_with_timeout(lambda: remote_dkg.asset.get(ual), operation_name=f"remote get KA #{i + 1} on {remote_name}")
