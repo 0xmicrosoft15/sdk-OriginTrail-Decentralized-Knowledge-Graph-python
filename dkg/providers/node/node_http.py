@@ -31,10 +31,8 @@ class NodeHTTPProvider(BaseNodeHTTPProvider):
         endpoint_uri: URI | str,
         api_version: str = "v1",
         auth_token: str | None = None,
-        timeout: tuple[int, int] = (30, 60),  # (connect_timeout, read_timeout)
     ):
         super().__init__(endpoint_uri, api_version, auth_token)
-        self.timeout = timeout
 
     def make_request(
         self,
@@ -47,13 +45,9 @@ class NodeHTTPProvider(BaseNodeHTTPProvider):
 
         try:
             if method == HTTPRequestMethod.GET:
-                response = requests.get(
-                    url, params=params, headers=self.headers, timeout=self.timeout
-                )
+                response = requests.get(url, params=params, headers=self.headers)
             elif method == HTTPRequestMethod.POST:
-                response = requests.post(
-                    url, json=data, headers=self.headers, timeout=self.timeout
-                )
+                response = requests.post(url, json=data, headers=self.headers)
             else:
                 raise HTTPRequestMethodNotSupported(
                     f"{method.name} method isn't supported"
