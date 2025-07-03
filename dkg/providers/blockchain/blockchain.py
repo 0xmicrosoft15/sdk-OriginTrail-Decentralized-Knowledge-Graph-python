@@ -168,10 +168,10 @@ class BlockchainProvider(BaseBlockchainProvider):
                 response.raise_for_status()
                 data: dict = response.json()
 
-                if "result" in data:
+                if "fast" in data:
+                    return self.w3.to_wei(data["fast"], "gwei")
+                elif "result" in data:
                     return int(data["result"], 16)
-                elif "average" in data:
-                    return self.w3.to_wei(data["average"], "gwei")
                 else:
                     return None
             except Exception:
