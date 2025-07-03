@@ -16,7 +16,8 @@ def create_aggregated_error_file():
     """Create aggregated error_stats.json from individual node files"""
     aggregated_errors = {}
     
-    # Define all possible nodes
+    # Determine which nodes to check based on environment
+    # Check if we're in a mainnet or testnet context by looking at existing files
     testnet_nodes = [
         "Node 01", "Node 04", "Node 05", "Node 06", "Node 07", "Node 08", 
         "Node 09", "Node 10", "Node 13", "Node 14", "Node 21", "Node 23", "Node 37"
@@ -26,10 +27,23 @@ def create_aggregated_error_file():
         "Node 25", "Node 26", "Node 27", "Node 28", "Node 29", "Node 30"
     ]
     
-    all_nodes = testnet_nodes + mainnet_nodes
+    # Check which type of nodes have error files to determine context
+    testnet_files_exist = any(os.path.exists(os.path.join(ERROR_DIR, f"errors_{node.replace(' ', '_')}.json")) for node in testnet_nodes)
+    mainnet_files_exist = any(os.path.exists(os.path.join(ERROR_DIR, f"errors_{node.replace(' ', '_')}.json")) for node in mainnet_nodes)
+    
+    # Determine which nodes to process
+    if mainnet_files_exist and not testnet_files_exist:
+        # Mainnet context
+        nodes_to_check = mainnet_nodes
+    elif testnet_files_exist and not mainnet_files_exist:
+        # Testnet context
+        nodes_to_check = testnet_nodes
+    else:
+        # Mixed context or no files - check all
+        nodes_to_check = testnet_nodes + mainnet_nodes
     
     # Read each individual node error file
-    for node_name in all_nodes:
+    for node_name in nodes_to_check:
         node_file = os.path.join(ERROR_DIR, f"errors_{node_name.replace(' ', '_')}.json")
         if os.path.exists(node_file):
             try:
@@ -94,7 +108,7 @@ def print_all_errors():
     # Create aggregated error file from individual files
     aggregated_errors = create_aggregated_error_file()
     
-    # Define all possible nodes for both testnet and mainnet
+    # Determine which nodes to show based on context
     testnet_nodes = [
         "Node 01", "Node 04", "Node 05", "Node 06", "Node 07", "Node 08", 
         "Node 09", "Node 10", "Node 13", "Node 14", "Node 21", "Node 23", "Node 37"
@@ -104,14 +118,27 @@ def print_all_errors():
         "Node 25", "Node 26", "Node 27", "Node 28", "Node 29", "Node 30"
     ]
     
-    all_nodes = testnet_nodes + mainnet_nodes
+    # Check which type of nodes have error files to determine context
+    testnet_files_exist = any(os.path.exists(os.path.join(ERROR_DIR, f"errors_{node.replace(' ', '_')}.json")) for node in testnet_nodes)
+    mainnet_files_exist = any(os.path.exists(os.path.join(ERROR_DIR, f"errors_{node.replace(' ', '_')}.json")) for node in mainnet_nodes)
+    
+    # Determine which nodes to process
+    if mainnet_files_exist and not testnet_files_exist:
+        # Mainnet context
+        nodes_to_show = mainnet_nodes
+    elif testnet_files_exist and not mainnet_files_exist:
+        # Testnet context
+        nodes_to_show = testnet_nodes
+    else:
+        # Mixed context or no files - check all
+        nodes_to_show = testnet_nodes + mainnet_nodes
     
     # Get nodes that have errors
     nodes_with_errors = list(aggregated_errors.keys())
     
     # If no aggregated errors, check individual files
     if not nodes_with_errors:
-        for node_name in all_nodes:
+        for node_name in nodes_to_show:
             node_file = os.path.join(ERROR_DIR, f"errors_{node_name.replace(' ', '_')}.json")
             if os.path.exists(node_file):
                 try:
@@ -124,10 +151,10 @@ def print_all_errors():
     
     # If still no nodes with errors, check all nodes anyway
     if not nodes_with_errors:
-        nodes_with_errors = all_nodes
+        nodes_with_errors = nodes_to_show
     
     # Process each node
-    for node_name in nodes_with_errors:
+    for node_name in nodes_to_show:
         errors = get_all_errors_for_node(node_name)
         
         if errors:
