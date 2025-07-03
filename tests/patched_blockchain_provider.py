@@ -14,6 +14,13 @@ BLOCKCHAIN_RPC_CONFIG = {
     'otp:20430':       ("NEUROWEB_TESTNET_RPC", ["testnet", "otp:20430"]),
 }
 
+# Gas price oracles for mainnet networks
+GAS_PRICE_ORACLES = {
+    'base:8453': "https://api.basescan.org/api?module=gastracker&action=gasoracle",
+    'gnosis:100': "https://api.gnosisscan.io/api?module=gastracker&action=gasoracle", 
+    'otp:2043': "https://api.origintrail.io/api?module=gastracker&action=gasoracle",
+}
+
 class BlockchainProvider(OriginalBlockchainProvider):
     def __init__(self, blockchain_id):
         config = BLOCKCHAIN_RPC_CONFIG.get(blockchain_id)
@@ -27,6 +34,61 @@ class BlockchainProvider(OriginalBlockchainProvider):
             for key in path[:-1]:
                 d = d[key]
             d[path[-1]]["rpc"] = rpc_url
+            
+            # Add gas price oracle for mainnet networks
+            if blockchain_id in GAS_PRICE_ORACLES:
+                d[path[-1]]["gas_price_oracle"] = GAS_PRICE_ORACLES[blockchain_id]
+                
         super().__init__(blockchain_id)
         self.environment = path[0] if config else None
         self.name = blockchain_id
+    
+    def _get_network_gas_price(self):
+        """Override the gas price method with enhanced logic"""
+        if self.environment == "development":
+            return None
+
+        def fetch_gas_price(oracle_url: str):
+            try:
+                import requests
+                response = requests.get(oracle_url)
+                response.raise_for_status()
+                data: dict = response.json()
+
+                gas_price = None
+                if "fast" in data:
+                    gas_price = self.w3.to_wei(data["fast"], "gwei")
+                elif "result" in data:
+                    gas_price = int(data["result"], 16)
+                else:
+                    return None
+                
+                # Ensure minimum gas price (2 gwei = 2,000,000,000 wei)
+                min_gas_price = self.w3.to_wei(2, "gwei")
+                if gas_price < min_gas_price:
+                    return min_gas_price
+                
+                return gas_price
+            except Exception:
+                return None
+
+        oracles = self.gas_price_oracle
+        if oracles is not None:
+            if isinstance(oracles, str):
+                oracles = [oracles]
+
+            for oracle_url in oracles:
+                gas_price = fetch_gas_price(oracle_url)
+                if gas_price is not None:
+                    return gas_price
+
+        # Fallback: use network gas price with minimum
+        try:
+            network_gas_price = self.w3.eth.gas_price
+            min_gas_price = self.w3.to_wei(2, "gwei")
+            if network_gas_price < min_gas_price:
+                return min_gas_price
+            return network_gas_price
+        except Exception:
+            # Final fallback: return minimum gas price
+            return self.w3.to_wei(2, "gwei")

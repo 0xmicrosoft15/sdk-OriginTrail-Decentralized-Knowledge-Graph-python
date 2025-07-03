@@ -168,20 +168,12 @@ class BlockchainProvider(BaseBlockchainProvider):
                 response.raise_for_status()
                 data: dict = response.json()
 
-                gas_price = None
-                if "fast" in data:
-                    gas_price = self.w3.to_wei(data["fast"], "gwei")
-                elif "result" in data:
-                    gas_price = int(data["result"], 16)
+                if "result" in data:
+                    return int(data["result"], 16)
+                elif "average" in data:
+                    return self.w3.to_wei(data["average"], "gwei")
                 else:
                     return None
-                
-                # Ensure minimum gas price (2 gwei = 2,000,000,000 wei)
-                min_gas_price = self.w3.to_wei(2, "gwei")
-                if gas_price < min_gas_price:
-                    return min_gas_price
-                
-                return gas_price
             except Exception:
                 return None
 
@@ -195,16 +187,7 @@ class BlockchainProvider(BaseBlockchainProvider):
                 if gas_price is not None:
                     return gas_price
 
-        # Fallback: use network gas price with minimum
-        try:
-            network_gas_price = self.w3.eth.gas_price
-            min_gas_price = self.w3.to_wei(2, "gwei")
-            if network_gas_price < min_gas_price:
-                return min_gas_price
-            return network_gas_price
-        except Exception:
-            # Final fallback: return minimum gas price
-            return self.w3.to_wei(2, "gwei")
+        return None
 
     def _init_contracts(self):
         for contract in self.abi.keys():
