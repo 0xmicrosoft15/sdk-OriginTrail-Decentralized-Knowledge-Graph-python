@@ -194,7 +194,6 @@ class AsyncBlockchainProvider(BaseBlockchainProvider):
                         # Ensure minimum gas price (2 gwei = 2,000,000,000 wei)
                         min_gas_price = self.w3.to_wei(2, "gwei")
                         if gas_price < min_gas_price:
-                            print(f"⚠️ Gas price from oracle too low ({gas_price} wei), using minimum ({min_gas_price} wei)")
                             return min_gas_price
                         
                         return gas_price
@@ -216,7 +215,6 @@ class AsyncBlockchainProvider(BaseBlockchainProvider):
             network_gas_price = await self.w3.eth.gas_price
             min_gas_price = self.w3.to_wei(2, "gwei")
             if network_gas_price < min_gas_price:
-                print(f"⚠️ Network gas price too low ({network_gas_price} wei), using minimum ({min_gas_price} wei)")
                 return min_gas_price
             return network_gas_price
         except Exception:
