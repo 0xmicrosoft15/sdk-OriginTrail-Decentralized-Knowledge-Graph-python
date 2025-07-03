@@ -25,6 +25,10 @@ def setup_test_environment():
     # Create test_output directory if it doesn't exist
     os.makedirs("test_output", exist_ok=True)
     
+    # Clear global dictionaries to prevent errors from previous runs
+    global_stats.clear()
+    error_stats.clear()
+    
     # Clear error files at the start of each test run to show only current run errors
     error_files_to_clear = [
         "test_output/error_stats.json",
