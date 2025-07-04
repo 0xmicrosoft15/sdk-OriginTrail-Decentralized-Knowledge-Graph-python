@@ -16,7 +16,9 @@ BLOCKCHAIN_RPC_CONFIG = {
 
 # Gas price oracles for mainnet networks
 GAS_PRICE_ORACLES = {
+    'base:8453': "https://api.basescan.org/api?module=gastracker&action=gasoracle",
     'gnosis:100': "https://api.gnosisscan.io/api?module=gastracker&action=gasoracle", 
+    'otp:2043': "https://api.origintrail.io/api?module=gastracker&action=gasoracle",
 }
 
 class BlockchainProvider(OriginalBlockchainProvider):
@@ -42,10 +44,10 @@ class BlockchainProvider(OriginalBlockchainProvider):
         self.name = blockchain_id
     
     def _get_network_gas_price(self):
-        """Override the gas price method with enhanced logic - only for Gnosis"""
-        # Only apply gas price fix for Gnosis mainnet
-        if self.name != 'gnosis:100':
-            # For all other blockchains, use the original behavior
+        """Override the gas price method with enhanced logic for all mainnet networks"""
+        # Only apply gas price fix for mainnet networks
+        if self.name not in GAS_PRICE_ORACLES:
+            # For testnet and other blockchains, use the original behavior
             return super()._get_network_gas_price()
 
         def fetch_gas_price(oracle_url: str):
