@@ -13,17 +13,6 @@
   {
     "inputs": [
       {
-        "internalType": "uint256",
-        "name": "id",
-        "type": "uint256"
-      }
-    ],
-    "name": "CannotUpdateImmutableKnowledgeCollection",
-    "type": "error"
-  },
-  {
-    "inputs": [
-      {
         "internalType": "uint72",
         "name": "identityId",
         "type": "uint72"
@@ -198,11 +187,6 @@
   {
     "inputs": [],
     "name": "ZeroAddressHub",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "ZeroTokenAmount",
     "type": "error"
   },
   {
@@ -383,29 +367,6 @@
     "type": "function"
   },
   {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "id",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint96",
-        "name": "tokenAmount",
-        "type": "uint96"
-      },
-      {
-        "internalType": "address",
-        "name": "paymaster",
-        "type": "address"
-      }
-    ],
-    "name": "increaseKnowledgeCollectionTokenAmount",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
     "inputs": [],
     "name": "initialize",
     "outputs": [],
@@ -444,6 +405,45 @@
     "outputs": [
       {
         "internalType": "contract ParametersStorage",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "paranetKnowledgeCollectionsRegistry",
+    "outputs": [
+      {
+        "internalType": "contract ParanetKnowledgeCollectionsRegistry",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "paranetKnowledgeMinersRegistry",
+    "outputs": [
+      {
+        "internalType": "contract ParanetKnowledgeMinersRegistry",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "paranetsRegistry",
+    "outputs": [
+      {
+        "internalType": "contract ParanetsRegistry",
         "name": "",
         "type": "address"
       }
@@ -514,84 +514,6 @@
       }
     ],
     "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "id",
-        "type": "uint256"
-      },
-      {
-        "internalType": "string",
-        "name": "updateOperationId",
-        "type": "string"
-      },
-      {
-        "internalType": "bytes32",
-        "name": "merkleRoot",
-        "type": "bytes32"
-      },
-      {
-        "internalType": "uint256",
-        "name": "mintKnowledgeAssetsAmount",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256[]",
-        "name": "knowledgeAssetsToBurn",
-        "type": "uint256[]"
-      },
-      {
-        "internalType": "uint88",
-        "name": "byteSize",
-        "type": "uint88"
-      },
-      {
-        "internalType": "uint96",
-        "name": "tokenAmount",
-        "type": "uint96"
-      },
-      {
-        "internalType": "address",
-        "name": "paymaster",
-        "type": "address"
-      },
-      {
-        "internalType": "uint72",
-        "name": "publisherNodeIdentityId",
-        "type": "uint72"
-      },
-      {
-        "internalType": "bytes32",
-        "name": "publisherNodeR",
-        "type": "bytes32"
-      },
-      {
-        "internalType": "bytes32",
-        "name": "publisherNodeVS",
-        "type": "bytes32"
-      },
-      {
-        "internalType": "uint72[]",
-        "name": "identityIds",
-        "type": "uint72[]"
-      },
-      {
-        "internalType": "bytes32[]",
-        "name": "r",
-        "type": "bytes32[]"
-      },
-      {
-        "internalType": "bytes32[]",
-        "name": "vs",
-        "type": "bytes32[]"
-      }
-    ],
-    "name": "updateKnowledgeCollection",
-    "outputs": [],
-    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
