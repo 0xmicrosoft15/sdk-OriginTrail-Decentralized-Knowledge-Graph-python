@@ -207,7 +207,10 @@ def group_nquads_by_subject(nquads_list: list[str], sort: bool = False):
 
     # Return grouped quads (sorted if requested)
     grouped_items = sorted(grouped.items()) if sort else grouped.items()
-    return [quads for _, quads in grouped_items]
+    if sort:
+        return [sorted(quads) for _, quads in grouped_items]
+    else:
+        return [quads for _, quads in grouped_items]
 
 
 def calculate_number_of_chunks(quads, chunk_size_bytes=CHUNK_BYTE_SIZE):
