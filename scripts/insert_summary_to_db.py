@@ -14,13 +14,13 @@ def is_mainnet(blockchain_name):
     return any(blockchain_name.endswith(port) for port in MAINNET_PORTS)
 
 def get_db_connection(mainnet=False):
-    host = os.getenv('DB_HOST_MAINNET') if mainnet else os.getenv('DB_HOST_TESTNET')
+    host = os.getenv('DB_HOST_PUBLISH_MAINNET') if mainnet else os.getenv('DB_HOST_PUBLISH_TESTNET')
     return psycopg2.connect(
         host=host,
-        user=os.getenv('DB_USER'),
-        password=os.getenv('DB_PASSWORD'),
-        dbname=os.getenv('DB_NAME'),
-        port=os.getenv('DB_PORT', 5432)
+        user=os.getenv('DB_USER_PUBLISH'),
+        password=os.getenv('DB_PASSWORD_PUBLISH'),
+        dbname=os.getenv('DB_NAME_PUBLISH'),
+        port= 5432
     )
 
 for file in files:
